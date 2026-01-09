@@ -66,7 +66,7 @@ export default function CreateHostForm() {
     
     if (state?.success) {
       toast.success("Host created successfully!");
-      // router.push("/dashboard/hosts");
+      router.push("/admin/dashboard/users-management");
     }
   }, [state, router]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,15 +39,47 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Calculate available spots
-  const availableSpots = tour.maxGroupSize - (tour.currentGroupSize || 0);
-  const isTourAvailable = availableSpots > 0 && tour.isActive;
-  const tourStartDate = new Date(tour.startDate);
+  // Check if tour is defined
+  if (!tour) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Tour Not Found</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 space-y-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Tour information could not be loaded. Please try again.
+              </AlertDescription>
+            </Alert>
+            <Button onClick={() => router.push("/tours")}>
+              Browse Other Tours
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Use safe defaults for tour properties
+  const maxGroupSize = tour.maxGroupSize || 1;
+  const currentGroupSize = tour.currentGroupSize || 0;
+  const price = tour.price || 0;
+  const isActive = tour.isActive || false;
+  
+  // Calculate available spots with safe defaults
+  const availableSpots = Math.max(0, maxGroupSize - currentGroupSize);
+  const isTourAvailable = availableSpots > 0 && isActive;
+  
+  // Handle date safely
+  const tourStartDate = tour.startDate ? new Date(tour.startDate) : new Date();
   const currentDate = new Date();
   const isTourInFuture = tourStartDate > currentDate;
 
   // Calculate total amount
-  const totalAmount = tour.price * numberOfPeople;
+  const totalAmount = price * numberOfPeople;
 
   // Validate number of people
   const validateNumberOfPeople = (value: number) => {
@@ -123,8 +155,7 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
         numberOfPeople: numberOfPeople,
         totalAmount: totalAmount,
         specialRequests: specialRequests || undefined,
-        // Add paymentMethod based on your backend requirements
-        paymentMethod: "STRIPE", // Default to STRIPE, or let user choose
+        paymentMethod: "STRIPE",
       };
 
       console.log("Submitting booking data:", bookingData);
@@ -133,25 +164,36 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
 
       if (result.success) {
         toast.success("Booking created successfully!");
-
-        // Redirect to bookings page
-        router.push("/user/dashboard/my-bookings");
-        router.refresh();
+        
+        // Add a small delay to ensure toast is shown
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Redirect to bookings page - use replace instead of push
+        router.replace("/user/dashboard/my-bookings");
       } else {
         toast.error(result.message || "Failed to create booking");
         if (result.errors) {
           const flattenedErrors: { [key: string]: string } = {};
           for (const key in result.errors) {
             if (result.errors[key] && result.errors[key].length > 0) {
-              flattenedErrors[key] = result.errors[key][0]; // take first error
+              flattenedErrors[key] = result.errors[key][0];
             }
           }
           setErrors(flattenedErrors);
         }
       }
-    } catch (error) {
-      toast.error("An error occurred while creating the booking");
-      console.error(error);
+    } catch (error: any) {
+      console.error("Booking error:", error);
+      
+      // Check for specific error message
+      if (error.message?.includes("Invalid profile provided") || 
+          error.message?.includes("my-bookings-profile")) {
+        toast.error("Please try again. If the issue persists, contact support.");
+        // Try alternative redirect
+        window.location.href = "/user/dashboard/my-bookings";
+      } else {
+        toast.error("An error occurred while creating the booking");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -194,14 +236,14 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Tour Summary */}
           <div className="rounded-lg border p-4 space-y-3">
-            <h3 className="font-semibold text-lg">{tour.title}</h3>
+            <h3 className="font-semibold text-lg">{tour.title || "Tour"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <span className="text-muted-foreground">Destination:</span>
                   <p className="font-medium">
-                    {tour.destination}, {tour.city}
+                    {tour.destination || "Not specified"}, {tour.city || "Not specified"}
                   </p>
                 </div>
               </div>
@@ -210,8 +252,8 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
                 <div>
                   <span className="text-muted-foreground">Dates:</span>
                   <p className="font-medium">
-                    {new Date(tour.startDate).toLocaleDateString()} -{" "}
-                    {new Date(tour.endDate).toLocaleDateString()}
+                    {tour.startDate ? new Date(tour.startDate).toLocaleDateString() : "TBD"} -{" "}
+                    {tour.endDate ? new Date(tour.endDate).toLocaleDateString() : "TBD"}
                   </p>
                 </div>
               </div>
@@ -219,7 +261,7 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <span className="text-muted-foreground">Duration:</span>
-                  <p className="font-medium">{tour.duration} days</p>
+                  <p className="font-medium">{tour.duration || 1} days</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -232,7 +274,7 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
                     <Badge
                       variant={availableSpots > 0 ? "default" : "destructive"}
                     >
-                      {availableSpots} of {tour.maxGroupSize}
+                      {availableSpots} of {maxGroupSize}
                     </Badge>
                   </p>
                 </div>
@@ -322,7 +364,7 @@ export default function CreateBookingForm({ tour }: CreateBookingFormProps) {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Price per person:</span>
-                <span className="font-medium">${tour.price.toFixed(2)}</span>
+                <span className="font-medium">${price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Number of people:</span>

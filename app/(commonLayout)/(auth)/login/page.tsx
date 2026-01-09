@@ -2,7 +2,6 @@
 
 import LoginForm from "@/components/module/Auth/login-form";
 
-
 const LoginPage = async ({
   searchParams,
 }: {

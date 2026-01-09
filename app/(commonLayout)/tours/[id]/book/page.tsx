@@ -1,3 +1,7 @@
+// app/(commonLayout)/tours/[id]/book/page.tsx
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +54,21 @@ async function BookingContent({ tourId }: { tourId: string }) {
           </p>
         </CardHeader>
         <CardContent>
-          <CreateBookingForm tour={tour} />
+          {/* Make sure tour object has all required properties */}
+          <CreateBookingForm tour={{
+            ...tour,
+            // Ensure these properties exist with fallbacks
+            maxGroupSize: tour.maxGroupSize || 1,
+            currentGroupSize: tour.currentGroupSize || 0,
+            isActive: tour.isActive || false,
+            price: tour.price || 0,
+            startDate: tour.startDate,
+            endDate: tour.endDate || tour.startDate,
+            duration: tour.duration || 1,
+            destination: tour.destination || "",
+            city: tour.city || "",
+            title: tour.title || "",
+          }} />
         </CardContent>
       </Card>
     </div>

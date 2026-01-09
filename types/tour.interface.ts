@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const CATEGORIES = [
-  'ADVENTURE', 'CULTURAL', 'BEACH', 'MOUNTAIN', 'URBAN', 'NATURE', 'FOOD'
+  'ADVENTURE', 'CULTURE', 'BEACH', 'MOUNTAIN', 'URBAN', 'NATURE', 'FOOD',"RELAXATION"
 ] as const;
+ 
 
 export const DIFFICULTIES = ['EASY', 'MODERATE', 'DIFFICULT', 'EXTREME'] as const;
 

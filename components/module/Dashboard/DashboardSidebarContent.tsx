@@ -107,12 +107,7 @@ const DashboardSidebarContent = ({
       {/* User Info at Bottom */}
       <div className="border-t border-blue-100 p-4 bg-white shrink-0">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/50 transition-all duration-200 cursor-pointer group">
-          <Avatar className="h-10 w-10 ring-2 ring-blue-200 ring-offset-2 transition-transform duration-200 group-hover:scale-105">
-            <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop" />
-            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-700 text-white font-semibold">
-              {userInfo?.email?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+         
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-semibold truncate text-gray-900">
               {userInfo?.name}

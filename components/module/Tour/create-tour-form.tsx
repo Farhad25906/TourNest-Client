@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { CATEGORIES, DIFFICULTIES } from "@/types/tour.interface";
 import { Plus, Trash2, GripVertical, Calendar, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Define the expected error state interface
 interface ErrorState {
@@ -64,6 +65,7 @@ export default function CreateTourForm() {
   const [excludedItems, setExcludedItems] = useState<string[]>([""]);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const router = useRouter();
 
   // Improved itinerary state
   const [itinerary, setItinerary] = useState<
@@ -95,6 +97,7 @@ export default function CreateTourForm() {
       toast.error(state.message);
     } else if (state.success) {
       toast.success(state.message);
+      
 
       // Use requestAnimationFrame to batch updates
       requestAnimationFrame(() => {
@@ -114,6 +117,9 @@ export default function CreateTourForm() {
           },
         ]);
       });
+       setTimeout(() => {
+        router.push("/host/dashboard/tours");
+      }, 1000);
     }
   }, [state]);
 

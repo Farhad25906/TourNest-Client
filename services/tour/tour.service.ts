@@ -150,10 +150,7 @@ export const createTour = async (
 
     if (result.success) {
       // Revalidate cache
-      revalidateTag("my-tours", "my-tours-profile");
-      revalidateTag("my-tour-stats", "my-tour-stats-profile");
-      revalidateTag("tours-list", "tours-list-profile");
-      revalidateTag("all-tours-admin", "all-tours-admin-profile");
+      revalidateTag("my-tours", "my-tour-stats");
 
       return {
         success: true,
@@ -284,12 +281,12 @@ export const updateTour = async (
     const result = await res.json();
 
     if (result.success) {
-      revalidateTag("my-tours", "my-tours-profile");
-      revalidateTag("my-tour-stats", "my-tour-stats-profile");
-      revalidateTag(`my-tour-${tourId}`, `my-tour-${tourId}-profile`);
-      revalidateTag("tours-list", "tours-list-profile");
-      revalidateTag("all-tours-admin", "all-tours-admin-profile");
-      revalidateTag(`tour-${tourId}`, `tour-${tourId}-profile`);
+      // revalidateTag("my-tours", "my-tours-profile");
+      // revalidateTag("my-tour-stats", "my-tour-stats-profile");
+      // revalidateTag(`my-tour-${tourId}`, `my-tour-${tourId}-profile`);
+      // revalidateTag("tours-list", "tours-list-profile");
+      // revalidateTag("all-tours-admin", "all-tours-admin-profile");
+      // revalidateTag(`tour-${tourId}`, `tour-${tourId}-profile`);
 
       return {
         success: true,
@@ -469,11 +466,7 @@ export async function deleteTour(tourId: string): Promise<ApiResponse> {
     const result = await response.json();
 
     if (result.success) {
-      revalidateTag("tours-list", "tours-list-profile");
-      revalidateTag("my-tours", "my-tours-profile");
-      revalidateTag("my-tour-stats", "my-tour-stats-profile");
-      revalidateTag(`tour-${tourId}`, `tour-${tourId}-profile`);
-      revalidateTag("all-tours-admin", "all-tours-admin-profile");
+      revalidateTag("my-tours", "my-tour-stats");
 
       return {
         success: true,

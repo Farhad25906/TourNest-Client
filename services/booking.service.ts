@@ -36,10 +36,8 @@ export const createBooking = async (bookingData: {
 
     if (result.success) {
       // Revalidate cache with required second parameter
-      revalidateTag("my-bookings", "my-bookings-profile");
-      revalidateTag("user-booking-stats", "user-booking-stats-profile");
-      revalidateTag("host-bookings", "host-bookings-profile");
-      revalidateTag("host-booking-stats", "host-booking-stats-profile");
+      revalidateTag("my-bookings", "my-booking-stats");
+      revalidateTag("host-bookings", "host-bookings-stats");
 
       return {
         success: true,
@@ -74,6 +72,9 @@ export const initiateBookingPayment = async (
     const result = await res.json();
 
     if (result.success) {
+      revalidateTag("my-bookings", "my-booking-stats");
+      revalidateTag("host-bookings", "host-bookings-stats");
+
       return {
         success: true,
         message: "Payment initiated successfully!",
@@ -119,10 +120,8 @@ export const updateBooking = async (
 
     if (result.success) {
       // Revalidate cache
-      revalidateTag("my-bookings", "my-bookings-profile");
-      revalidateTag("user-booking-stats", "user-booking-stats-profile");
-      revalidateTag("host-bookings", "host-bookings-profile");
-      revalidateTag("host-booking-stats", `booking-${bookingId}`);
+      revalidateTag("my-bookings", "my-booking-stats");
+      revalidateTag("host-bookings", "host-bookings-stats");
 
       return {
         success: true,
@@ -163,10 +162,8 @@ export const updateBookingStatus = async (
 
     if (result.success) {
       // Revalidate cache
-     revalidateTag("my-bookings", "my-bookings-profile");
-      revalidateTag("user-booking-stats", "user-booking-stats-profile");
-      revalidateTag("host-bookings", "host-bookings-profile");
-      revalidateTag("host-booking-stats", `booking-${bookingId}`);
+      revalidateTag("my-bookings", "my-booking-stats");
+      revalidateTag("host-bookings", "host-bookings-stats");
 
       return {
         success: true,
