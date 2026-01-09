@@ -32,6 +32,20 @@ export interface AuthResponse {
   redirectToLogin?: boolean;
 }
 
+// Helper async function to format validation errors
+const formatValidationErrors = async (validationResult: any): Promise<Array<{ field: string; message: string }>> => {
+  if (!validationResult.errors) {
+    return [{ field: "general", message: "Validation failed" }];
+  }
+
+  return Object.entries(validationResult.errors).map(([field, messages]) => ({
+    field,
+    message: Array.isArray(messages) && messages.length > 0 
+      ? messages[0] 
+      : `Invalid ${field}`
+  }));
+};
+
 // ==================== LOGIN ====================
 
 export const loginUser = async (
@@ -42,19 +56,45 @@ export const loginUser = async (
     const redirectTo = formData.get("redirect") || null;
     let accessTokenObject: null | any = null;
     let refreshTokenObject: null | any = null;
+    
+    // Get form values
+    const email = formData.get("email");
+    const password = formData.get("password");
+    
+    // Validate required fields
+    if (!email || email.trim() === "") {
+      return {
+        success: false,
+        message: "Email is required",
+        errors: [{ field: "email", message: "Email is required" }]
+      };
+    }
+    
+    if (!password || password.trim() === "") {
+      return {
+        success: false,
+        message: "Password is required",
+        errors: [{ field: "password", message: "Password is required" }]
+      };
+    }
+    
     const payload = {
-      email: formData.get("email"),
-      password: formData.get("password"),
+      email,
+      password,
     };
 
-    if (zodValidator(payload, loginValidationZodSchema).success === false) {
-      return zodValidator(payload, loginValidationZodSchema);
+    // Server-side validation using Zod
+    const validationResult = zodValidator(payload, loginValidationZodSchema);
+    
+    if (!validationResult.success) {
+      return {
+        success: false,
+        message: "Validation failed",
+        errors: await formatValidationErrors(validationResult)
+      };
     }
 
-    const validatedPayload = zodValidator(
-      payload,
-      loginValidationZodSchema
-    ).data;
+    const validatedPayload = validationResult.data;
 
     const res = await serverFetch.post("/auth/login", {
       body: JSON.stringify(validatedPayload),
@@ -135,7 +175,7 @@ export const loginUser = async (
     if (error?.digest?.startsWith("NEXT_REDIRECT")) {
       throw error;
     }
-    console.log(error);
+    console.error("Login error:", error);
     return {
       success: false,
       message: `${
@@ -143,6 +183,7 @@ export const loginUser = async (
           ? error.message
           : "Login Failed. You might have entered incorrect email or password."
       }`,
+      errors: [{ field: "general", message: "Login failed. Please check your credentials." }]
     };
   }
 };
@@ -154,25 +195,88 @@ export const registerPatient = async (
   formData: any
 ): Promise<any> => {
   try {
-    const payload = {
-      name: formData.get("name"),
-      address: formData.get("address"),
-      email: formData.get("email"),
-      password: formData.get("password"),
-      confirmPassword: formData.get("confirmPassword"),
-    };
-
-    if (
-      zodValidator(payload, registerPatientValidationZodSchema).success ===
-      false
-    ) {
-      return zodValidator(payload, registerPatientValidationZodSchema);
+    // Get form values
+    const name = formData.get("name");
+    const address = formData.get("address");
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirmPassword");
+    
+    // Validate required fields
+    if (!name || name.trim() === "") {
+      return {
+        success: false,
+        message: "Name is required",
+        errors: [{ field: "name", message: "Name is required" }]
+      };
+    }
+    
+    if (!address || address.trim() === "") {
+      return {
+        success: false,
+        message: "Address is required",
+        errors: [{ field: "address", message: "Address is required" }]
+      };
+    }
+    
+    if (!email || email.trim() === "") {
+      return {
+        success: false,
+        message: "Email is required",
+        errors: [{ field: "email", message: "Email is required" }]
+      };
+    }
+    
+    if (!password || password.trim() === "") {
+      return {
+        success: false,
+        message: "Password is required",
+        errors: [{ field: "password", message: "Password is required" }]
+      };
+    }
+    
+    if (!confirmPassword || confirmPassword.trim() === "") {
+      return {
+        success: false,
+        message: "Confirm Password is required",
+        errors: [{ field: "confirmPassword", message: "Confirm Password is required" }]
+      };
+    }
+    
+    // Validate password match
+    if (password !== confirmPassword) {
+      return {
+        success: false,
+        message: "Passwords do not match",
+        errors: [{ field: "confirmPassword", message: "Passwords do not match" }]
+      };
     }
 
-    const validatedPayload: any = zodValidator(
+    const payload = {
+      name,
+      address,
+      email,
+      password,
+      confirmPassword,
+    };
+
+    // Server-side validation using Zod
+    const validationResult = zodValidator(
       payload,
       registerPatientValidationZodSchema
-    ).data;
+    );
+
+    if (!validationResult.success) {
+      return {
+        success: false,
+        message: "Validation failed",
+        errors: await formatValidationErrors(validationResult)
+      };
+    }
+
+    const validatedPayload: any = validationResult.data;
+
+    // Build the register data payload
     const registerData = {
       password: validatedPayload.password,
       tourist: {
@@ -185,10 +289,12 @@ export const registerPatient = async (
     const newFormData = new FormData();
     newFormData.append("data", JSON.stringify(registerData));
 
+    // Handle file upload if present
     if (formData.get("file")) {
       newFormData.append("file", formData.get("file") as Blob);
     }
 
+    // Make API request
     const res = await serverFetch.post("/users/create-tourist", {
       body: newFormData,
     });
@@ -196,22 +302,36 @@ export const registerPatient = async (
     const result = await res.json();
 
     if (result.success) {
+      // Automatically log in the user after successful registration
       await loginUser(_currentState, formData);
+
+      return {
+        success: true,
+        message: "Account created successfully!",
+        data: result.data
+      };
     }
 
-    return result;
+    return {
+      success: false,
+      message: result.message || "Registration failed. Please try again.",
+      errors: [{ field: "general", message: result.message || "Registration failed" }]
+    };
   } catch (error: any) {
+    // Allow Next.js redirects to propagate
     if (error?.digest?.startsWith("NEXT_REDIRECT")) {
       throw error;
     }
-    console.log(error);
+
+    console.error("Registration error:", error);
+
     return {
       success: false,
-      message: `${
+      message:
         process.env.NODE_ENV === "development"
           ? error.message
-          : "Registration Failed. Please try again."
-      }`,
+          : "Registration failed. Please try again.",
+      errors: [{ field: "general", message: "Registration failed. Please try again." }]
     };
   }
 };
@@ -223,18 +343,65 @@ export const createHost = async (
   formData: FormData
 ): Promise<AuthResponse> => {
   try {
+    // Get form values
+    const password = formData.get("password") as string;
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const visitedLocations = formData.get("visitedLocations") as string;
+    
+    // Validate required fields
+    if (!name || name.trim() === "") {
+      return {
+        success: false,
+        message: "Name is required",
+        errors: [{ field: "name", message: "Name is required" }],
+        formData: Object.fromEntries(formData.entries())
+      };
+    }
+    
+    if (!email || email.trim() === "") {
+      return {
+        success: false,
+        message: "Email is required",
+        errors: [{ field: "email", message: "Email is required" }],
+        formData: Object.fromEntries(formData.entries())
+      };
+    }
+    
+    if (!password || password.trim() === "") {
+      return {
+        success: false,
+        message: "Password is required",
+        errors: [{ field: "password", message: "Password is required" }],
+        formData: Object.fromEntries(formData.entries())
+      };
+    }
+    
+    // Validate visitedLocations JSON
+    if (visitedLocations) {
+      try {
+        JSON.parse(visitedLocations);
+      } catch {
+        return {
+          success: false,
+          message: "Invalid visited locations format",
+          errors: [{ field: "visitedLocations", message: "Must be valid JSON array" }],
+          formData: Object.fromEntries(formData.entries())
+        };
+      }
+    }
+
     const data = {
-      password: formData.get("password") as string,
+      password,
       host: {
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
+        name,
+        email,
         profilePhoto: (formData.get("profilePhoto") as string) || "",
-        phone: (formData.get("phone") as string) || "",
+        phone: phone || "",
         bio: (formData.get("bio") as string) || "",
         hometown: (formData.get("hometown") as string) || "",
-        visitedLocations: JSON.parse(
-          (formData.get("visitedLocations") as string) || "[]"
-        ),
+        visitedLocations: visitedLocations ? JSON.parse(visitedLocations) : [],
         isVerified: formData.get("isVerified") === "true",
         tourLimit: formData.get("tourLimit")
           ? parseInt(formData.get("tourLimit") as string)
@@ -251,12 +418,7 @@ export const createHost = async (
       return {
         success: false,
         message: "Validation failed",
-        errors: Object.entries(validationResult.errors || {}).map(
-          ([field, messages]) => ({
-            field,
-            message: (messages as string[])?.[0] || `Invalid ${field}`,
-          })
-        ),
+        errors: await formatValidationErrors(validationResult),
         formData: data,
       };
     }
@@ -303,6 +465,7 @@ export const createHost = async (
     return {
       success: false,
       message: error.message || "Failed to create host. Please try again.",
+      errors: [{ field: "general", message: "Failed to create host" }]
     };
   }
 };
@@ -314,10 +477,63 @@ export const changePassword = async (
   formData: FormData
 ): Promise<AuthResponse> => {
   try {
+    // Get form values
+    const oldPassword = formData.get("oldPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+    
+    // Validate required fields
+    if (!oldPassword || oldPassword.trim() === "") {
+      return {
+        success: false,
+        message: "Current password is required",
+        errors: [{ field: "oldPassword", message: "Current password is required" }],
+        formData: { oldPassword, newPassword, confirmPassword }
+      };
+    }
+    
+    if (!newPassword || newPassword.trim() === "") {
+      return {
+        success: false,
+        message: "New password is required",
+        errors: [{ field: "newPassword", message: "New password is required" }],
+        formData: { oldPassword, newPassword, confirmPassword }
+      };
+    }
+    
+    if (!confirmPassword || confirmPassword.trim() === "") {
+      return {
+        success: false,
+        message: "Confirm password is required",
+        errors: [{ field: "confirmPassword", message: "Confirm password is required" }],
+        formData: { oldPassword, newPassword, confirmPassword }
+      };
+    }
+    
+    // Validate password match
+    if (newPassword !== confirmPassword) {
+      return {
+        success: false,
+        message: "New passwords do not match",
+        errors: [{ field: "confirmPassword", message: "New passwords do not match" }],
+        formData: { oldPassword, newPassword, confirmPassword }
+      };
+    }
+    
+    // Validate new password is different from old
+    if (oldPassword === newPassword) {
+      return {
+        success: false,
+        message: "New password must be different from current password",
+        errors: [{ field: "newPassword", message: "Must be different from current password" }],
+        formData: { oldPassword, newPassword, confirmPassword }
+      };
+    }
+
     const data = {
-      oldPassword: formData.get("oldPassword") as string,
-      newPassword: formData.get("newPassword") as string,
-      confirmPassword: formData.get("confirmPassword") as string,
+      oldPassword,
+      newPassword,
+      confirmPassword,
     };
 
     const validationResult = zodValidator(
@@ -328,12 +544,7 @@ export const changePassword = async (
       return {
         success: false,
         message: "Validation failed",
-        errors: Object.entries(validationResult.errors || {}).map(
-          ([field, messages]) => ({
-            field,
-            message: (messages as string[])?.[0] || `Invalid ${field}`,
-          })
-        ),
+        errors: await formatValidationErrors(validationResult),
         formData: data,
       };
     }
@@ -374,6 +585,7 @@ export const changePassword = async (
     return {
       success: false,
       message: error.message || "Failed to change password. Please try again.",
+      errors: [{ field: "general", message: "Failed to change password" }]
     };
   }
 };
@@ -386,6 +598,27 @@ export const forgotPassword = async (
 ): Promise<AuthResponse> => {
   try {
     const email = formData.get("email") as string;
+    
+    // Validate email field
+    if (!email || email.trim() === "") {
+      return {
+        success: false,
+        message: "Email is required",
+        errors: [{ field: "email", message: "Email is required" }],
+        formData: { email }
+      };
+    }
+    
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return {
+        success: false,
+        message: "Please enter a valid email address",
+        errors: [{ field: "email", message: "Please enter a valid email address" }],
+        formData: { email }
+      };
+    }
 
     const validationResult = zodValidator(
       { email },
@@ -395,12 +628,7 @@ export const forgotPassword = async (
       return {
         success: false,
         message: "Validation failed",
-        errors: Object.entries(validationResult.errors || {}).map(
-          ([field, messages]) => ({
-            field,
-            message: (messages as string[])?.[0] || `Invalid ${field}`,
-          })
-        ),
+        errors: await formatValidationErrors(validationResult),
         formData: { email },
       };
     }
@@ -427,12 +655,14 @@ export const forgotPassword = async (
       success: false,
       message: result.message || "Failed to send reset link",
       formData: { email },
+      errors: [{ field: "email", message: result.message || "Failed to send reset link" }]
     };
   } catch (error: any) {
     console.error("Forgot password error:", error);
     return {
       success: false,
       message: "Failed to send reset link. Please try again.",
+      errors: [{ field: "general", message: "Failed to send reset link" }]
     };
   }
 };
@@ -447,10 +677,53 @@ export const resetPassword = async (
     const userId = formData.get("userId") as string;
     const token = formData.get("token") as string;
     const isEmailReset = formData.get("isEmailReset") === "true";
+    
+    // Get password fields
+    const password = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+    
+    // Validate required fields
+    if (!password || password.trim() === "") {
+      return {
+        success: false,
+        message: "New password is required",
+        errors: [{ field: "newPassword", message: "New password is required" }],
+        formData: { userId, token, isEmailReset }
+      };
+    }
+    
+    if (!confirmPassword || confirmPassword.trim() === "") {
+      return {
+        success: false,
+        message: "Confirm password is required",
+        errors: [{ field: "confirmPassword", message: "Confirm password is required" }],
+        formData: { userId, token, isEmailReset }
+      };
+    }
+    
+    // Validate password match
+    if (password !== confirmPassword) {
+      return {
+        success: false,
+        message: "Passwords do not match",
+        errors: [{ field: "confirmPassword", message: "Passwords do not match" }],
+        formData: { userId, token, isEmailReset }
+      };
+    }
+    
+    // Validate password strength (optional)
+    if (password.length < 8) {
+      return {
+        success: false,
+        message: "Password must be at least 8 characters long",
+        errors: [{ field: "newPassword", message: "Must be at least 8 characters" }],
+        formData: { userId, token, isEmailReset }
+      };
+    }
 
     const data = {
-      password: formData.get("newPassword") as string,
-      confirmPassword: formData.get("confirmPassword") as string,
+      password,
+      confirmPassword,
     };
 
     const validationResult = zodValidator(
@@ -461,28 +734,10 @@ export const resetPassword = async (
       return {
         success: false,
         message: "Validation failed",
-        errors: Object.entries(validationResult.errors || {}).map(
-          ([field, messages]) => ({
-            field,
-            message: (messages as string[])?.[0] || `Invalid ${field}`,
-          })
-        ),
-        formData: { ...data, userId, token },
+        errors: await formatValidationErrors(validationResult),
+        formData: { ...data, userId, token, isEmailReset },
       };
     }
-    // if (!validationResult.success) {
-    //   return {
-    //     success: false,
-    //     message: "Validation failed",
-    //     errors: Object.entries(
-    //       validationResult.error?.flatten().fieldErrors || {}
-    //     ).map(([field, messages]) => ({
-    //       field,
-    //       message: messages?.[0] || `Invalid ${field}`,
-    //     })),
-    //     formData: { ...data, userId, token },
-    //   };
-    // }
 
     if (isEmailReset && (!userId || !token)) {
       return {
@@ -526,6 +781,7 @@ export const resetPassword = async (
         success: false,
         message: result.message || "Failed to reset password",
         formData: data,
+        errors: [{ field: "general", message: result.message || "Failed to reset password" }]
       };
     } else {
       const res = await serverFetch.post(url, {
@@ -550,6 +806,7 @@ export const resetPassword = async (
         success: false,
         message: result.message || "Failed to reset password",
         formData: data,
+        errors: [{ field: "general", message: result.message || "Failed to reset password" }]
       };
     }
   } catch (error: any) {
@@ -557,20 +814,49 @@ export const resetPassword = async (
     return {
       success: false,
       message: error.message || "Failed to reset password. Please try again.",
+      errors: [{ field: "general", message: "Failed to reset password" }]
     };
   }
 };
 
 // ==================== LOGOUT ====================
 
-export const logoutUser = async () => {
+export const logoutUser = async (): Promise<AuthResponse> => {
   try {
+    // Validate if user is logged in before logging out
+    const accessToken = await getCookie("accessToken");
+    if (!accessToken) {
+      return {
+        success: false,
+        message: "No active session found",
+        errors: [{ field: "general", message: "No active session found" }]
+      };
+    }
+    
     await deleteCookie("accessToken");
     await deleteCookie("refreshToken");
-    redirect("/login?loggedOut=true");
-  } catch (error) {
+    
+    return {
+      success: true,
+      message: "Logged out successfully",
+      redirectToLogin: true
+    };
+    
+    // Note: redirect will happen in the component that calls this function
+  } catch (error: any) {
     console.error("Logout error:", error);
-    redirect("/login?loggedOut=true");
+    
+    // Try to clear cookies anyway
+    try {
+      await deleteCookie("accessToken");
+      await deleteCookie("refreshToken");
+    } catch {}
+    
+    return {
+      success: false,
+      message: "Logout failed. Please try again.",
+      errors: [{ field: "general", message: "Logout failed" }]
+    };
   }
 };
 
@@ -578,9 +864,23 @@ export const logoutUser = async () => {
 
 export const getUserInfo = async (): Promise<UserInfo | null> => {
   try {
+    // Validate if user has access token
+    const accessToken = await getCookie("accessToken");
+    if (!accessToken) {
+      console.log("No access token found");
+      return null;
+    }
+
     const res = await serverFetch.get("/auth/me");
+    
+    // Check if response is ok
+    if (!res.ok) {
+      console.error("Failed to fetch user info, status:", res.status);
+      return null;
+    }
+    
     const result = await res.json();
-    console.log(result, "From Auth");
+    console.log("User info result:", result);
 
     if (result.success && result.data) {
       return result.data as UserInfo;
@@ -593,29 +893,51 @@ export const getUserInfo = async (): Promise<UserInfo | null> => {
   }
 };
 
-// Alternative with AuthResponse wrapper if needed elsewhere:`
+// Alternative with AuthResponse wrapper if needed elsewhere:
 export const getUserInfoWithResponse = async (): Promise<AuthResponse> => {
   try {
+    // Validate if user has access token
+    const accessToken = await getCookie("accessToken");
+    if (!accessToken) {
+      return {
+        success: false,
+        message: "No active session found",
+        errors: [{ field: "auth", message: "Please login to continue" }]
+      };
+    }
+
     const res = await serverFetch.get("/users/me");
+    
+    // Check if response is ok
+    if (!res.ok) {
+      return {
+        success: false,
+        message: `Server error: ${res.status}`,
+        errors: [{ field: "server", message: "Server error occurred" }]
+      };
+    }
+    
     const result = await res.json();
 
     if (result.success) {
       return {
         success: true,
         data: result.data,
-        message: result.message,
+        message: result.message || "User data retrieved successfully",
       };
     }
 
     return {
       success: false,
       message: result.message || "Failed to get user data",
+      errors: [{ field: "data", message: result.message || "Failed to get user data" }]
     };
   } catch (error: any) {
     console.error("Get current user error:", error);
     return {
       success: false,
       message: "Failed to get user data. Please login again.",
+      errors: [{ field: "connection", message: "Network error occurred" }]
     };
   }
 };
@@ -624,7 +946,27 @@ export const getUserInfoWithResponse = async (): Promise<AuthResponse> => {
 
 export const refreshToken = async (): Promise<AuthResponse> => {
   try {
+    // Validate if refresh token exists
+    const refreshTokenCookie = await getCookie("refreshToken");
+    if (!refreshTokenCookie) {
+      return {
+        success: false,
+        message: "No refresh token found",
+        errors: [{ field: "auth", message: "Session expired. Please login again." }]
+      };
+    }
+
     const res = await serverFetch.post("/auth/refresh-token");
+    
+    // Check if response is ok
+    if (!res.ok) {
+      return {
+        success: false,
+        message: `Token refresh failed: ${res.status}`,
+        errors: [{ field: "server", message: "Token refresh failed" }]
+      };
+    }
+    
     const result = await res.json();
 
     if (result.success) {
@@ -638,12 +980,44 @@ export const refreshToken = async (): Promise<AuthResponse> => {
     return {
       success: false,
       message: result.message || "Failed to refresh token",
+      errors: [{ field: "auth", message: result.message || "Failed to refresh token" }]
     };
   } catch (error: any) {
     console.error("Refresh token error:", error);
     return {
       success: false,
       message: "Session expired. Please login again.",
+      errors: [{ field: "connection", message: "Session refresh failed" }]
     };
   }
+};
+
+// ==================== HELPER FUNCTION FOR VALIDATION ====================
+
+export const validateFormData = async (
+  formData: FormData,
+  requiredFields: string[]
+): Promise<AuthResponse | null> => {
+  const errors: Array<{ field: string; message: string }> = [];
+  
+  for (const field of requiredFields) {
+    const value = formData.get(field) as string;
+    if (!value || value.trim() === "") {
+      errors.push({
+        field,
+        message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
+      });
+    }
+  }
+  
+  if (errors.length > 0) {
+    return {
+      success: false,
+      message: "Please fill in all required fields",
+      errors,
+      formData: Object.fromEntries(formData.entries())
+    };
+  }
+  
+  return null;
 };
