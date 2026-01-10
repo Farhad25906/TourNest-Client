@@ -75,7 +75,7 @@ export const loginUser = async (
         "Content-Type": "application/json",
       },
     });
-    console.log(res);
+    // console.log(res.json());
 
     const result = await res.json();
     if (!result.success) {
@@ -113,7 +113,7 @@ export const loginUser = async (
     await setCookie("accessToken", accessToken, {
       secure: true,
       httpOnly: true,
-      maxAge: parseInt(accessOptions["Max-Age"]) ||60 * 60 * 24, // seconds
+      maxAge: parseInt(accessOptions["Max-Age"]) || 60 * 60 * 24, // seconds
       path: accessOptions.Path || "/",
       sameSite: accessOptions["SameSite"] || "lax",
     });
@@ -851,7 +851,7 @@ export const logoutUser = async (): Promise<AuthResponse> => {
   try {
     // Validate if user is logged in before logging out
     const accessToken = await getCookie("accessToken");
-    
+
     // Clear all auth-related cookies
     await deleteCookie("accessToken");
     await deleteCookie("refreshToken");
@@ -880,7 +880,7 @@ export const logoutUser = async (): Promise<AuthResponse> => {
       await deleteCookie("refreshToken");
       await deleteCookie("user");
       await deleteCookie("token");
-      
+
       if (typeof window !== "undefined") {
         localStorage.clear();
         sessionStorage.clear();
@@ -995,42 +995,109 @@ export const refreshToken = async (): Promise<AuthResponse> => {
       };
     }
 
-    const res = await serverFetch.post("/auth/refresh-token");
-    console.log("Token Refreshingh");
-    
+    // Call refresh endpoint with refresh token
+    const res = await serverFetch.post("/auth/refresh-token", {
+      useRefreshToken: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    // Check if response is ok
-    if (!res.ok) {
-      return {
-        success: false,
-        message: `Token refresh failed: ${res.status}`,
-        errors: [{ field: "server", message: "Token refresh failed" }],
-      };
-    }
+    console.log("Token Refreshing");
 
     const result = await res.json();
 
-    if (result.success) {
-      return {
-        success: true,
-        message: "Token refreshed successfully",
-        data: result.data,
-      };
+    if (!result.success) {
+      throw new Error(result.message || "Token refresh failed");
+    }
+
+    // Extract cookies from Set-Cookie headers
+    const setCookieHeaders = res.headers.getSetCookie();
+    if (!setCookieHeaders || setCookieHeaders.length === 0) {
+      throw new Error("No Set-Cookie header found in refresh response");
+    }
+
+    let newAccessToken: string | null = null;
+    let newRefreshToken: string | null = null;
+    let accessOptions: any = {};
+    let refreshOptions: any = {};
+
+    // Parse cookies from Set-Cookie headers
+    setCookieHeaders.forEach((cookie: string) => {
+      const parsed = parse(cookie);
+      if (parsed.accessToken) {
+        newAccessToken = parsed.accessToken;
+        accessOptions = parsed;
+      }
+      if (parsed.refreshToken) {
+        newRefreshToken = parsed.refreshToken;
+        refreshOptions = parsed;
+      }
+    });
+
+    if (!newAccessToken) {
+      throw new Error("Access token not found in refresh response");
+    }
+
+    // Set new access token cookie
+    await setCookie("accessToken", newAccessToken, {
+      secure: true,
+      httpOnly: true,
+      maxAge: parseInt(accessOptions["Max-Age"]) || 60 * 60 * 24, // 1 day default
+      path: accessOptions.Path || "/",
+      sameSite: accessOptions.SameSite || "lax",
+    });
+
+    // Set new refresh token cookie if backend rotates it
+    if (newRefreshToken) {
+      await setCookie("refreshToken", newRefreshToken, {
+        secure: true,
+        httpOnly: true,
+        maxAge: parseInt(refreshOptions["Max-Age"]) || 60 * 60 * 24 * 7, // 7 days default
+        path: refreshOptions.Path || "/",
+        sameSite: refreshOptions.SameSite || "lax",
+      });
+    }
+
+    // Small delay to ensure cookies are set
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Optionally verify the new token
+    let verifiedToken: JwtPayload;
+    try {
+      const decoded = jwt.verify(
+        newAccessToken,
+        process.env.JWT_SECRET as string
+      );
+      if (typeof decoded === "string") throw new Error("Invalid token");
+      verifiedToken = decoded as JwtPayload;
+    } catch (err) {
+      throw new Error("Invalid or expired token received from refresh");
     }
 
     return {
-      success: false,
-      message: result.message || "Failed to refresh token",
-      errors: [
-        { field: "auth", message: result.message || "Failed to refresh token" },
-      ],
+      success: true,
+      message: "Token refreshed successfully",
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: result.data?.user || verifiedToken,
+      },
     };
   } catch (error: any) {
     console.error("Refresh token error:", error);
     return {
       success: false,
-      message: "Session expired. Please login again.",
-      errors: [{ field: "connection", message: "Session refresh failed" }],
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Session expired. Please login again.",
+      errors: [
+        {
+          field: "auth",
+          message: error.message || "Failed to refresh token",
+        },
+      ],
     };
   }
 };

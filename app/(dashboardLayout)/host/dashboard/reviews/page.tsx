@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -21,21 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -44,10 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  Search,
-  Filter,
   Star,
   User,
   Calendar,
@@ -65,7 +46,6 @@ interface Review {
   rating: number;
   comment: string;
   isApproved: boolean;
-  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   tourist?: {
@@ -93,28 +73,12 @@ interface ReviewStats {
     4: number;
     5: number;
   };
-  recentReviews: any[];
 }
 
 export default function HostReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    minRating: "",
-    maxRating: "",
-    page: 1,
-    limit: 10,
-    sortBy: "createdAt",
-    sortOrder: "desc" as "asc" | "desc",
-  });
-  const [meta, setMeta] = useState({
-    total: 0,
-    totalPages: 1,
-    page: 1,
-    limit: 10,
-  });
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
@@ -124,19 +88,10 @@ export default function HostReviewsPage() {
   const loadReviews = async () => {
     try {
       setLoading(true);
-      const params: any = {
-        ...filters,
-        minRating: filters.minRating || undefined,
-        maxRating: filters.maxRating || undefined,
-      };
-
-      const result = await getHostReviews(hostId, params);
+      const result = await getHostReviews(hostId);
 
       if (result.success) {
         setReviews(result.data || []);
-        if (result.meta) {
-          setMeta(result.meta);
-        }
       } else {
         toast.error("Failed to load reviews", {
           description: result.message,
@@ -164,15 +119,7 @@ export default function HostReviewsPage() {
   useEffect(() => {
     loadReviews();
     loadStats();
-  }, [filters]);
-
-  const handleSearch = () => {
-    setFilters(prev => ({ ...prev, page: 1 }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
-  };
+  }, []);
 
   const handleView = (review: Review) => {
     setSelectedReview(review);
@@ -201,6 +148,32 @@ export default function HostReviewsPage() {
     return format(new Date(dateString), "MMM dd, yyyy");
   };
 
+  // Calculate statistics from reviews if API doesn't provide them
+  const calculateStats = () => {
+    if (reviews.length === 0) {
+      return {
+        totalReviews: 0,
+        averageRating: 0,
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      };
+    }
+
+    const totalReviews = reviews.length;
+    const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
+    
+    const ratingDistribution = {
+      1: reviews.filter(r => r.rating === 1).length,
+      2: reviews.filter(r => r.rating === 2).length,
+      3: reviews.filter(r => r.rating === 3).length,
+      4: reviews.filter(r => r.rating === 4).length,
+      5: reviews.filter(r => r.rating === 5).length,
+    };
+
+    return { totalReviews, averageRating, ratingDistribution };
+  };
+
+  const displayStats = stats || calculateStats();
+
   if (loading && reviews.length === 0) {
     return (
       <div className="container mx-auto py-8">
@@ -221,102 +194,97 @@ export default function HostReviewsPage() {
       </div>
 
       {/* Stats Overview */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="text-3xl font-bold">{stats.averageRating.toFixed(1)}</div>
-                <div className="flex items-center mt-2">
-                  {renderStars(Math.round(stats.averageRating))}
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">Average Rating</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="text-3xl font-bold">{displayStats.averageRating.toFixed(1)}</div>
+              <div className="flex items-center mt-2">
+                {renderStars(Math.round(displayStats.averageRating))}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="text-3xl font-bold">{stats.totalReviews}</div>
-                <p className="text-sm text-muted-foreground mt-2">Total Reviews</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="text-3xl font-bold">
-                  {stats.ratingDistribution[5] + stats.ratingDistribution[4]}
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">Positive Reviews (4-5 stars)</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="text-3xl font-bold">{stats.ratingDistribution[1]}</div>
-                <p className="text-sm text-muted-foreground mt-2">Critical Reviews (1 star)</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      {/* <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by comment or tourist name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="pl-10"
-                />
-              </div>
+              <p className="text-sm text-muted-foreground mt-2">Average Rating</p>
             </div>
-            <div className="flex gap-4">
-              <Select
-                value={filters.minRating}
-                onValueChange={(value) =>
-                  setFilters(prev => ({ ...prev, minRating: value, page: 1 }))
-                }
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Min Rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any Rating</SelectItem>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <SelectItem key={rating} value={rating.toString()}>
-                      {rating}+ Stars
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          </CardContent>
+        </Card>
 
-              <Button onClick={handleSearch}>
-                <Filter className="w-4 h-4 mr-2" />
-                Apply Filters
-              </Button>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="text-3xl font-bold">{displayStats.totalReviews}</div>
+              <p className="text-sm text-muted-foreground mt-2">Total Reviews</p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="text-3xl font-bold">
+                {displayStats.ratingDistribution[5] + displayStats.ratingDistribution[4]}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">Positive Reviews (4-5 stars)</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="text-3xl font-bold">{displayStats.ratingDistribution[1]}</div>
+              <p className="text-sm text-muted-foreground mt-2">Critical Reviews (1 star)</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Rating Distribution Chart */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Rating Distribution</CardTitle>
+          <CardDescription>
+            Breakdown of reviews by star rating
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[5, 4, 3, 2, 1].map((rating) => {
+              const count = displayStats.ratingDistribution[rating as keyof typeof displayStats.ratingDistribution];
+              const percentage = displayStats.totalReviews > 0 
+                ? (count / displayStats.totalReviews) * 100 
+                : 0;
+              
+              return (
+                <div key={rating} className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 w-24">
+                    <span className="font-medium">{rating} stars</span>
+                    <span className="text-sm text-muted-foreground">({count})</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-yellow-400 rounded-full" 
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="w-12 text-right">
+                    <span className="text-sm font-medium">
+                      {percentage.toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
-      </Card> */}
+      </Card>
 
       {/* Reviews Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Reviews ({meta.total})</CardTitle>
+          <CardTitle>All Reviews ({reviews.length})</CardTitle>
           <CardDescription>
-            Showing {reviews.length} of {meta.total} reviews
+            All reviews about your tours
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -328,13 +296,14 @@ export default function HostReviewsPage() {
                 <TableHead>Rating</TableHead>
                 <TableHead>Comment</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {reviews.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No reviews found
                   </TableCell>
                 </TableRow>
@@ -386,6 +355,18 @@ export default function HostReviewsPage() {
                         {formatDate(review.createdAt)}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={review.isApproved ? "default" : "secondary"}
+                        className={
+                          review.isApproved
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                        }
+                      >
+                        {review.isApproved ? "Approved" : "Pending"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -400,62 +381,6 @@ export default function HostReviewsPage() {
               )}
             </TableBody>
           </Table>
-
-          {/* Pagination */}
-          {meta.totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => handlePageChange(Math.max(1, filters.page - 1))}
-                      className={
-                        filters.page === 1
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: Math.min(5, meta.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (meta.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (filters.page <= 3) {
-                      pageNum = i + 1;
-                    } else if (filters.page >= meta.totalPages - 2) {
-                      pageNum = meta.totalPages - 4 + i;
-                    } else {
-                      pageNum = filters.page - 2 + i;
-                    }
-                    
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(pageNum)}
-                          isActive={filters.page === pageNum}
-                          className="cursor-pointer"
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => handlePageChange(Math.min(meta.totalPages, filters.page + 1))}
-                      className={
-                        filters.page === meta.totalPages
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -509,18 +434,32 @@ export default function HostReviewsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground">Booking Date</Label>
-                  <p className="font-medium mt-2">
-                    {selectedReview.booking?.bookingDate
-                      ? formatDate(selectedReview.booking.bookingDate)
-                      : "N/A"}
-                  </p>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <Badge
+                    variant={selectedReview.isApproved ? "default" : "secondary"}
+                    className={
+                      selectedReview.isApproved
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }
+                  >
+                    {selectedReview.isApproved ? "Approved" : "Pending"}
+                  </Badge>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Review Date</Label>
                   <p className="font-medium mt-2">{formatDate(selectedReview.createdAt)}</p>
                 </div>
               </div>
+
+              {selectedReview.booking?.bookingDate && (
+                <div>
+                  <Label className="text-muted-foreground">Booking Date</Label>
+                  <p className="font-medium">
+                    {formatDate(selectedReview.booking.bookingDate)}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

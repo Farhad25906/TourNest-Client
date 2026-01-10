@@ -913,3 +913,40 @@ export async function duplicateTour(tourId: string): Promise<ApiResponse> {
     };
   }
 }
+
+export async function completeTour(tourId: string): Promise<ApiResponse<{ tour: ITour; bookingsUpdated: number; message: string }>> {
+  try {
+    const response = await serverFetch.patch(`/tour/${tourId}/complete`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Revalidate all relevant cache tags
+      revalidateTag("my-tours","my-tour-stats");
+      revalidateTag(`my-tour-${tourId}`,"tours-list");
+
+
+      return {
+        success: true,
+        message: result.message || "Tour completed successfully! All confirmed bookings updated to COMPLETED.",
+        data: result.data,
+      };
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("Complete tour error:", error);
+    return {
+      success: false,
+      message: `${
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Failed to complete tour. Please try again."
+      }`,
+    };
+  }
+}

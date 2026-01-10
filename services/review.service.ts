@@ -23,7 +23,6 @@ export interface Review {
   rating: number;
   comment: string;
   isApproved: boolean;
-  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   tourist?: {
@@ -40,29 +39,11 @@ export interface Review {
     id: string;
     title: string;
     destination: string;
-    images?: string[];
   };
   booking?: {
-    id: string;
     bookingDate: string;
     numberOfPeople: number;
-    totalAmount: number;
   };
-}
-
-export interface ReviewFilters {
-  searchTerm?: string;
-  rating?: number;
-  hostId?: string;
-  touristId?: string;
-  tourId?: string;
-  minRating?: number;
-  maxRating?: number;
-  isApproved?: boolean;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
 }
 
 export interface ReviewStats {
@@ -75,24 +56,12 @@ export interface ReviewStats {
     4: number;
     5: number;
   };
-  recentReviews: Array<{
-    rating: number;
-    createdAt: string;
-    tourTitle?: string;
-    touristName?: string;
-  }>;
 }
 
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
-  meta?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
   errors?: Record<string, string[]>;
 }
 
@@ -104,7 +73,6 @@ export const createReview = async (
   try {
     console.log("Creating review with data:", reviewData);
 
-    // Make API call
     const res = await serverFetch.post("/reviews", {
       body: JSON.stringify(reviewData),
       headers: {
@@ -112,23 +80,10 @@ export const createReview = async (
       },
     });
 
-    let result;
-    const contentType = res.headers.get("content-type");
-
-    if (contentType && contentType.includes("application/json")) {
-      result = await res.json();
-    } else {
-      const text = await res.text();
-      console.error("Non-JSON response:", text);
-      return {
-        success: false,
-        message: "Server returned invalid response",
-      };
-    }
-
-    console.log("API response:", result);
+    const result = await res.json();
 
     if (!res.ok) {
+      console.error("API Error:", result);
       return {
         success: false,
         message: result?.message || `HTTP error! status: ${res.status}`,
@@ -136,27 +91,14 @@ export const createReview = async (
       };
     }
 
-    if (result.success) {
-      // Revalidate cache
-      revalidateTag("my-reviews", "my-reviews-profile");
-      revalidateTag("tour-reviews", "tour-reviews-profile");
-      revalidateTag("host-reviews", "host-reviews-profile");
-      revalidateTag(
-        `booking-${reviewData.bookingId}`,
-        `booking-${reviewData.bookingId}-profile`
-      );
-
-      return {
-        success: true,
-        message: "Review created successfully!",
-        data: result.data,
-      };
-    }
+    // Revalidate cache
+    revalidateTag("my-reviews",`booking-${reviewData.bookingId}`);
+    // revalidateTag();
 
     return {
-      success: false,
-      message: result.message || "Failed to create review",
-      errors: result.errors,
+      success: true,
+      message: "Review created successfully!",
+      data: result.data,
     };
   } catch (error: any) {
     console.error("Create review error:", error);
@@ -191,21 +133,14 @@ export const updateReview = async (
       };
     }
 
-    if (result.success) {
-      // Revalidate cache
-      revalidateTag("my-reviews", "my-reviews-profile");
-      revalidateTag("tour-reviews", "tour-reviews-profile");
-      revalidateTag("host-reviews", "host-reviews-profile");
-      revalidateTag(`review-${reviewId}`, `review-${reviewId}-profile`);
-      revalidateTag("all-reviews-admin", "all-reviews-admin-profile");
-      return {
-        success: true,
-        message: "Review updated successfully!",
-        data: result.data,
-      };
-    }
+    // Revalidate cache
+    revalidateTag("my-reviews","review-${reviewId}");
 
-    return result;
+    return {
+      success: true,
+      message: "Review updated successfully!",
+      data: result.data,
+    };
   } catch (error: any) {
     console.error("Update review error:", error);
     return {
@@ -229,21 +164,14 @@ export async function deleteReview(reviewId: string): Promise<ApiResponse> {
       };
     }
 
-    if (result.success) {
-      revalidateTag("my-reviews", "my-reviews-profile");
-      revalidateTag("tour-reviews", "tour-reviews-profile");
-      revalidateTag("host-reviews", "host-reviews-profile");
-      revalidateTag(`review-${reviewId}`, `review-${reviewId}-profile`);
-      revalidateTag("all-reviews-admin", "all-reviews-admin-profile");
+    // Revalidate cache
+    revalidateTag("my-reviews","reviews");
 
-      return {
-        success: true,
-        message: "Review deleted successfully",
-        data: result.data,
-      };
-    }
-
-    return result;
+    return {
+      success: true,
+      message: "Review deleted successfully",
+      data: result.data,
+    };
   } catch (error: any) {
     console.error("Delete review error:", error);
     return {
@@ -255,36 +183,8 @@ export async function deleteReview(reviewId: string): Promise<ApiResponse> {
 
 // ==================== GET ALL REVIEWS (ADMIN) ====================
 
-export async function getAllReviews(
-  filters?: ReviewFilters
-): Promise<ApiResponse<Review[]>> {
+export async function getAllReviews(): Promise<ApiResponse<Review[]>> {
   try {
-    const queryParams = new URLSearchParams();
-
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
-    // Only append default values if not explicitly provided in filters
-    if (!filters?.page && queryParams.get("page") === null) {
-      queryParams.append("page", "1");
-    }
-    if (!filters?.limit && queryParams.get("limit") === null) {
-      queryParams.append("limit", "10");
-    }
-    if (!filters?.sortBy && queryParams.get("sortBy") === null) {
-      queryParams.append("sortBy", "createdAt");
-    }
-    if (!filters?.sortOrder && queryParams.get("sortOrder") === null) {
-      queryParams.append("sortOrder", "desc");
-    }
-
-    const queryString = queryParams.toString();
-
     const response = await serverFetch.get(`/reviews`, {
       next: {
         tags: ["all-reviews-admin"],
@@ -293,11 +193,9 @@ export async function getAllReviews(
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error("Get all reviews error response:", error);
       return {
         success: false,
-        message: `HTTP error! status: ${response.status}`,
+        message: `Failed to fetch reviews`,
         data: [],
       };
     }
@@ -305,10 +203,9 @@ export async function getAllReviews(
     const result = await response.json();
 
     return {
-      success: result.success,
-      message: result.message || "Reviews fetched successfully",
-      data: Array.isArray(result.data) ? result.data : [],
-      meta: result.meta,
+      success: true,
+      message: "Reviews fetched successfully",
+      data: Array.isArray(result) ? result : result.data || [],
     };
   } catch (error: any) {
     console.error("Get all reviews error:", error);
@@ -336,21 +233,17 @@ export async function getSingleReview(
     if (!response.ok) {
       return {
         success: false,
-        message: `HTTP error! status: ${response.status}`,
+        message: `Review not found`,
       };
     }
 
     const result = await response.json();
 
-    if (result.success) {
-      return {
-        success: true,
-        message: "Review fetched successfully",
-        data: result.data as Review,
-      };
-    }
-
-    return result;
+    return {
+      success: true,
+      message: "Review fetched successfully",
+      data: result,
+    };
   } catch (error: any) {
     console.error("Get single review error:", error);
     return {
@@ -363,67 +256,29 @@ export async function getSingleReview(
 // ==================== GET TOUR REVIEWS ====================
 
 export async function getTourReviews(
-  tourId: string,
-  filters?: {
-    minRating?: number;
-    maxRating?: number;
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-  }
+  tourId: string
 ): Promise<ApiResponse<any>> {
   try {
-    const queryParams = new URLSearchParams();
-
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
-    // Only append default values if not explicitly provided in filters
-    if (!filters?.page && queryParams.get("page") === null) {
-      queryParams.append("page", "1");
-    }
-    if (!filters?.limit && queryParams.get("limit") === null) {
-      queryParams.append("limit", "10");
-    }
-    if (!filters?.sortBy && queryParams.get("sortBy") === null) {
-      queryParams.append("sortBy", "createdAt");
-    }
-    if (!filters?.sortOrder && queryParams.get("sortOrder") === null) {
-      queryParams.append("sortOrder", "desc");
-    }
-
-    const queryString = queryParams.toString();
-
-    const response = await serverFetch.get(
-      `/reviews/tour/${tourId}${queryString ? `?${queryString}` : ""}`,
-      {
-        next: {
-          tags: [`tour-reviews-${tourId}`],
-          revalidate: 60,
-        },
-      }
-    );
+    const response = await serverFetch.get(`/reviews/tour/${tourId}`, {
+      next: {
+        tags: [`tour-reviews-${tourId}`],
+        revalidate: 60,
+      },
+    });
 
     if (!response.ok) {
       return {
         success: false,
-        message: `HTTP error! status: ${response.status}`,
+        message: `Failed to fetch tour reviews`,
       };
     }
 
     const result = await response.json();
 
     return {
-      success: result.success,
+      success: true,
       message: "Tour reviews fetched successfully",
-      data: result.data,
-      meta: result.meta,
+      data: result,
     };
   } catch (error: any) {
     console.error("Get tour reviews error:", error);
@@ -438,44 +293,10 @@ export async function getTourReviews(
 // ==================== GET HOST REVIEWS ====================
 
 export async function getHostReviews(
-  hostId: string,
-  filters?: {
-    minRating?: number;
-    maxRating?: number;
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-  }
+  hostId: string
 ): Promise<ApiResponse<Review[]>> {
   try {
-    const queryParams = new URLSearchParams();
-
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
-    // Only append default values if not explicitly provided in filters
-    if (!filters?.page && queryParams.get("page") === null) {
-      queryParams.append("page", "1");
-    }
-    if (!filters?.limit && queryParams.get("limit") === null) {
-      queryParams.append("limit", "10");
-    }
-    if (!filters?.sortBy && queryParams.get("sortBy") === null) {
-      queryParams.append("sortBy", "createdAt");
-    }
-    if (!filters?.sortOrder && queryParams.get("sortOrder") === null) {
-      queryParams.append("sortOrder", "desc");
-    }
-
-    const queryString = queryParams.toString();
-
-    const response = await serverFetch.get(`/reviews/my-reviews`, {
+    const response = await serverFetch.get(`/reviews/host/${hostId}`, {
       next: {
         tags: [`host-reviews-${hostId}`],
         revalidate: 60,
@@ -485,17 +306,16 @@ export async function getHostReviews(
     if (!response.ok) {
       return {
         success: false,
-        message: `HTTP error! status: ${response.status}`,
+        message: `Failed to fetch host reviews`,
       };
     }
 
     const result = await response.json();
 
     return {
-      success: result.success,
+      success: true,
       message: "Host reviews fetched successfully",
-      data: Array.isArray(result.data) ? result.data : [],
-      meta: result.meta,
+      data: Array.isArray(result) ? result : [],
     };
   } catch (error: any) {
     console.error("Get host reviews error:", error);
@@ -509,37 +329,8 @@ export async function getHostReviews(
 
 // ==================== GET MY REVIEWS ====================
 
-export async function getMyReviews(
-  filters?: ReviewFilters
-): Promise<ApiResponse<Review[]>> {
+export async function getMyReviews(): Promise<ApiResponse<Review[]>> {
   try {
-    const queryParams = new URLSearchParams();
-
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
-    // Only append default values if not explicitly provided in filters
-    // Check if the key exists in queryParams, not just in filters
-    if (!queryParams.has("page")) {
-      queryParams.append("page", "1");
-    }
-    if (!queryParams.has("limit")) {
-      queryParams.append("limit", "10");
-    }
-    if (!queryParams.has("sortBy")) {
-      queryParams.append("sortBy", "createdAt");
-    }
-    if (!queryParams.has("sortOrder")) {
-      queryParams.append("sortOrder", "desc");
-    }
-
-    const queryString = queryParams.toString();
-
     const response = await serverFetch.get(`/reviews/my-reviews`, {
       next: {
         tags: ["my-reviews"],
@@ -548,11 +339,9 @@ export async function getMyReviews(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Get my reviews error response:", errorText);
       return {
         success: false,
-        message: `HTTP error! status: ${response.status}`,
+        message: `Failed to fetch your reviews`,
         data: [],
       };
     }
@@ -560,10 +349,9 @@ export async function getMyReviews(
     const result = await response.json();
 
     return {
-      success: result.success,
-      message: result.message || "Reviews fetched successfully",
-      data: Array.isArray(result.data) ? result.data : [],
-      meta: result.meta,
+      success: true,
+      message: "Reviews fetched successfully",
+      data: Array.isArray(result) ? result : result.data || [],
     };
   } catch (error: any) {
     console.error("Get my reviews error:", error);
@@ -602,21 +390,17 @@ export async function getReviewStats(
     if (!response.ok) {
       return {
         success: false,
-        message: `HTTP error! status: ${response.status}`,
+        message: `Failed to fetch review statistics`,
       };
     }
 
     const result = await response.json();
 
-    if (result.success) {
-      return {
-        success: true,
-        message: "Review statistics fetched successfully",
-        data: result.data as ReviewStats,
-      };
-    }
-
-    return result;
+    return {
+      success: true,
+      message: "Review statistics fetched successfully",
+      data: result,
+    };
   } catch (error: any) {
     console.error("Get review stats error:", error);
     return {
@@ -650,23 +434,14 @@ export async function approveReview(
       };
     }
 
-    if (result.success) {
-      // Revalidate cache
-      revalidateTag("my-reviews", "my-reviews-profile");
-      revalidateTag("tour-reviews", "tour-reviews-profile");
-      revalidateTag("host-reviews", "host-reviews-profile");
-      revalidateTag(`review-${reviewId}`, `review-${reviewId}-profile`);
-      revalidateTag("all-reviews-admin", "all-reviews-admin-profile");
-      return {
-        success: true,
-        message: `Review ${
-          isApproved ? "approved" : "unapproved"
-        } successfully!`,
-        data: result.data,
-      };
-    }
+    // Revalidate cache
+    revalidateTag("my-reviews","review-${reviewId}");
 
-    return result;
+    return {
+      success: true,
+      message: `Review ${isApproved ? "approved" : "unapproved"} successfully!`,
+      data: result,
+    };
   } catch (error: any) {
     console.error("Approve review error:", error);
     return {
@@ -676,30 +451,25 @@ export async function approveReview(
   }
 }
 
-// ==================== ADDITIONAL HELPER FUNCTIONS ====================
+// ==================== GET RECENT REVIEWS ====================
 
-// Get recent reviews
 export async function getRecentReviews(
   limit: number = 5
 ): Promise<ApiResponse<Review[]>> {
   try {
-    const response = await serverFetch.get(
-      `/reviews?limit=${limit}&sortBy=createdAt&sortOrder=desc&isApproved=true`,
-      {
-        next: {
-          tags: ["recent-reviews"],
-          revalidate: 60,
-        },
-      }
-    );
+    const response = await serverFetch.get(`/reviews?limit=${limit}&isApproved=true`, {
+      next: {
+        tags: ["recent-reviews"],
+        revalidate: 60,
+      },
+    });
 
     const result = await response.json();
 
     return {
-      success: result.success,
+      success: true,
       message: "Recent reviews fetched successfully",
-      data: Array.isArray(result.data) ? result.data : [],
-      meta: result.meta,
+      data: Array.isArray(result) ? result.slice(0, limit) : [],
     };
   } catch (error: any) {
     console.error("Get recent reviews error:", error);
@@ -711,29 +481,32 @@ export async function getRecentReviews(
   }
 }
 
-// Get top rated reviews
+// ==================== GET TOP RATED REVIEWS ====================
+
 export async function getTopRatedReviews(
-  minRating: number = 4,
   limit: number = 5
 ): Promise<ApiResponse<Review[]>> {
   try {
-    const response = await serverFetch.get(
-      `/reviews?minRating=${minRating}&limit=${limit}&sortBy=rating&sortOrder=desc&isApproved=true`,
-      {
-        next: {
-          tags: ["top-rated-reviews"],
-          revalidate: 120,
-        },
-      }
-    );
+    const response = await serverFetch.get(`/reviews?limit=${limit}&isApproved=true`, {
+      next: {
+        tags: ["top-rated-reviews"],
+        revalidate: 120,
+      },
+    });
 
     const result = await response.json();
 
+    // Filter and sort by rating on client side since backend doesn't support sorting
+    const reviews = Array.isArray(result) ? result : [];
+    const topRated = reviews
+      .filter(review => review.rating >= 4)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, limit);
+
     return {
-      success: result.success,
+      success: true,
       message: "Top rated reviews fetched successfully",
-      data: Array.isArray(result.data) ? result.data : [],
-      meta: result.meta,
+      data: topRated,
     };
   } catch (error: any) {
     console.error("Get top rated reviews error:", error);
@@ -741,51 +514,6 @@ export async function getTopRatedReviews(
       success: false,
       data: [],
       message: "Failed to fetch top rated reviews",
-    };
-  }
-}
-
-// Search reviews
-export async function searchReviews(
-  query: string,
-  filters?: ReviewFilters
-): Promise<ApiResponse<Review[]>> {
-  try {
-    const queryParams = new URLSearchParams();
-    queryParams.append("searchTerm", query);
-
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
-    const response = await serverFetch.get(
-      `/reviews?${queryParams.toString()}`,
-      {
-        next: {
-          tags: ["search-reviews"],
-          revalidate: 60,
-        },
-      }
-    );
-
-    const result = await response.json();
-
-    return {
-      success: result.success,
-      message: "Reviews searched successfully",
-      data: Array.isArray(result.data) ? result.data : [],
-      meta: result.meta,
-    };
-  } catch (error: any) {
-    console.error("Search reviews error:", error);
-    return {
-      success: false,
-      data: [],
-      message: "Failed to search reviews",
     };
   }
 }

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -21,33 +20,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Search,
-  Filter,
   Star,
   Calendar,
   MapPin,
@@ -56,6 +39,7 @@ import {
   Trash2,
   RefreshCw,
   User,
+  AlertTriangle,
 } from "lucide-react";
 import { getMyReviews, updateReview, deleteReview } from "@/services/review.service";
 import { toast } from "sonner";
@@ -66,7 +50,6 @@ interface Review {
   rating: number;
   comment: string;
   isApproved: boolean;
-  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   host?: {
@@ -87,24 +70,10 @@ interface Review {
 export default function UserReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    minRating: "all",
-    maxRating: "all",
-    page: 1,
-    limit: 10,
-    sortBy: "createdAt",
-    sortOrder: "desc" as "asc" | "desc",
-  });
-  const [meta, setMeta] = useState({
-    total: 0,
-    totalPages: 1,
-    page: 1,
-    limit: 10,
-  });
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editData, setEditData] = useState({
     rating: 5,
     comment: "",
@@ -113,24 +82,10 @@ export default function UserReviewsPage() {
   const loadReviews = async () => {
     try {
       setLoading(true);
-      const params: any = {
-        ...filters,
-        searchTerm: searchTerm || undefined,
-        minRating: filters.minRating !== "all" ? filters.minRating : undefined,
-        maxRating: filters.maxRating !== "all" ? filters.maxRating : undefined,
-        page: filters.page,
-        limit: filters.limit,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-      };
-
-      const result = await getMyReviews(params);
+      const result = await getMyReviews();
 
       if (result.success) {
         setReviews(result.data || []);
-        if (result.meta) {
-          setMeta(result.meta);
-        }
       } else {
         toast.error("Failed to load reviews", {
           description: result.message,
@@ -146,29 +101,28 @@ export default function UserReviewsPage() {
 
   useEffect(() => {
     loadReviews();
-  }, [filters]);
+  }, []);
 
-  const handleSearch = () => {
-    setFilters(prev => ({ ...prev, page: 1 }));
+  const handleDeleteClick = (review: Review) => {
+    setSelectedReview(review);
+    setIsDeleteDialogOpen(true);
   };
 
-  const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
-  };
-
-  const handleDelete = async (reviewId: string) => {
-    if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) return;
+  const handleDeleteConfirm = async () => {
+    if (!selectedReview) return;
 
     try {
-      const result = await deleteReview(reviewId);
+      const result = await deleteReview(selectedReview.id);
       if (result.success) {
         toast.success("Review deleted successfully");
+        setIsDeleteDialogOpen(false);
         loadReviews();
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("Failed to delete review");
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error(error.message || "Failed to delete review");
     }
   };
 
@@ -193,8 +147,9 @@ export default function UserReviewsPage() {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("Failed to update review");
+    } catch (error: any) {
+      console.error("Update error:", error);
+      toast.error(error.message || "Failed to update review");
     }
   };
 
@@ -225,6 +180,9 @@ export default function UserReviewsPage() {
     return format(new Date(dateString), "MMM dd, yyyy");
   };
 
+  const approvedCount = reviews.filter(r => r.isApproved).length;
+  const pendingCount = reviews.filter(r => !r.isApproved).length;
+
   if (loading && reviews.length === 0) {
     return (
       <div className="container mx-auto py-8">
@@ -249,91 +207,27 @@ export default function UserReviewsPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">{meta.total}</div>
+              <div className="text-2xl font-bold">{reviews.length}</div>
               <p className="text-sm text-muted-foreground">Total Reviews</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                {reviews.filter(r => r.isApproved).length}
-              </div>
+              <div className="text-2xl font-bold">{approvedCount}</div>
               <p className="text-sm text-muted-foreground">Approved Reviews</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">
-                {reviews.filter(r => !r.isApproved).length}
-              </div>
+              <div className="text-2xl font-bold">{pendingCount}</div>
               <p className="text-sm text-muted-foreground">Pending Reviews</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Filters */}
-      {/* <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by comment or tour name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <Select
-                value={filters.minRating}
-                onValueChange={(value) =>
-                  setFilters(prev => ({ ...prev, minRating: value, page: 1 }))
-                }
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Min Rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any Rating</SelectItem>
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <SelectItem key={rating} value={rating.toString()}>
-                      {rating}+ Stars
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.sortBy}
-                onValueChange={(value) =>
-                  setFilters(prev => ({ ...prev, sortBy: value, page: 1 }))
-                }
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createdAt">Date</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button onClick={handleSearch}>
-                <Filter className="w-4 h-4 mr-2" />
-                Apply Filters
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card> */}
-
       {/* Reviews Table */}
       <Card>
         <CardHeader>
-          <CardTitle>My Reviews ({meta.total})</CardTitle>
+          <CardTitle>My Reviews ({reviews.length})</CardTitle>
           <CardDescription>
-            Showing {reviews.length} of {meta.total} reviews
+            All reviews you have submitted
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -432,7 +326,7 @@ export default function UserReviewsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(review.id)}
+                          onClick={() => handleDeleteClick(review)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -444,62 +338,6 @@ export default function UserReviewsPage() {
               )}
             </TableBody>
           </Table>
-
-          {/* Pagination */}
-          {meta.totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => handlePageChange(Math.max(1, filters.page - 1))}
-                      className={
-                        filters.page === 1
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: Math.min(5, meta.totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (meta.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (filters.page <= 3) {
-                      pageNum = i + 1;
-                    } else if (filters.page >= meta.totalPages - 2) {
-                      pageNum = meta.totalPages - 4 + i;
-                    } else {
-                      pageNum = filters.page - 2 + i;
-                    }
-                    
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(pageNum)}
-                          isActive={filters.page === pageNum}
-                          className="cursor-pointer"
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => handlePageChange(Math.min(meta.totalPages, filters.page + 1))}
-                      className={
-                        filters.page === meta.totalPages
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -654,6 +492,56 @@ export default function UserReviewsPage() {
               Cancel
             </Button>
             <Button onClick={handleUpdate}>Update Review</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Review
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this review? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedReview && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="font-medium">{selectedReview.tour?.title}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedReview.comment.substring(0, 100)}...
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  {renderStars(selectedReview.rating)}
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-700">
+                  <strong>Warning:</strong> Deleting this review will also update the tour and host ratings.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+            >
+              Delete Review
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

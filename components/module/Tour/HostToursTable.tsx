@@ -35,12 +35,16 @@ import {
   Copy,
   CheckCircle,
   XCircle,
+  CheckCheck,
+  AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
 import UpdateTourModal from "./UpdateTourModal";
 import DeleteTourDialog from "./DeleteTourDialog";
 import { formatCurrency, formatDate } from "@/lib/date-utils";
-import { ITour } from "@/types/tour.interface"
+import { ITour } from "@/types/tour.interface";
+import CompleteTourDialog from "./CompleteTourDialog";
+import { completeTour, updateTourStatus } from "@/services/tour/tour.service"; // Add updateTourStatus
 
 interface HostToursTableProps {
   tours: ITour[];
@@ -50,6 +54,9 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
   const router = useRouter();
   const [updatingTour, setUpdatingTour] = useState<ITour | null>(null);
   const [deletingTour, setDeletingTour] = useState<ITour | null>(null);
+  const [completingTour, setCompletingTour] = useState<ITour | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const handleView = (tour: ITour) => {
     router.push(`/host/dashboard/tours/${tour.id}`);
@@ -63,12 +70,76 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
     setDeletingTour(tour);
   };
 
+  // Handle Deactivate button click
+  const handleDeactivate = (tour: ITour) => {
+    setCompletingTour(tour);
+  };
+
+  const confirmCompleteTour = async (
+    tour: ITour,
+    option: "complete" | "deactivate"
+  ) => {
+    if (!tour || tour.isActive === false) return;
+
+    try {
+      setIsCompleting(true);
+
+      if (option === "complete") {
+        // Complete tour with booking updates
+        const result = await completeTour(tour.id);
+        if (result.success) {
+          toast.success(
+            result.message || "Tour marked as completed! All bookings updated."
+          );
+        } else {
+          throw new Error(result.message || "Failed to complete tour");
+        }
+      } else {
+        // Just deactivate without updating bookings
+        const result = await updateTourStatus(tour.id, false);
+        if (result.success) {
+          toast.success("Tour deactivated successfully!");
+        } else {
+          throw new Error(result.message || "Failed to deactivate tour");
+        }
+      }
+
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to process tour");
+      console.error(error);
+    } finally {
+      setIsCompleting(false);
+      setCompletingTour(null);
+    }
+  };
+
+  // Simple deactivate without updating bookings
+  const handleSimpleDeactivate = async (tour: ITour) => {
+    try {
+      setIsDeactivating(true);
+      const result = await updateTourStatus(tour.id, false);
+
+      if (result.success) {
+        toast.success("Tour deactivated successfully!");
+        router.refresh();
+      } else {
+        throw new Error(result.message || "Failed to deactivate tour");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to deactivate tour");
+      console.error(error);
+    } finally {
+      setIsDeactivating(false);
+    }
+  };
+
   const handleDuplicate = async (tour: ITour) => {
     try {
       const response = await fetch(`/api/host/tours/${tour.id}/duplicate`, {
         method: "POST",
       });
-      
+
       if (response.ok) {
         toast.success("Tour duplicated successfully!");
         router.refresh();
@@ -82,24 +153,24 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
   };
 
   const handleStatusToggle = async (tour: ITour) => {
-    try {
-      const response = await fetch(`/api/host/tours/${tour.id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isActive: !tour.isActive }),
-      });
-      
-      if (response.ok) {
-        toast.success(`Tour ${!tour.isActive ? "activated" : "deactivated"}!`);
-        router.refresh();
-      } else {
-        throw new Error("Failed to update status");
+    if (tour.isActive) {
+      // For active tours, show the complete dialog when clicking "Deactivate"
+      setCompletingTour(tour);
+    } else {
+      // For inactive tours, just activate normally
+      try {
+        const result = await updateTourStatus(tour.id, true);
+
+        if (result.success) {
+          toast.success("Tour activated successfully!");
+          router.refresh();
+        } else {
+          throw new Error(result.message || "Failed to activate tour");
+        }
+      } catch (error: any) {
+        toast.error(error.message || "Failed to activate tour");
+        console.error(error);
       }
-    } catch (error) {
-      toast.error("Failed to update tour status");
-      console.error(error);
     }
   };
 
@@ -112,9 +183,13 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
         },
         body: JSON.stringify({ isFeatured: !tour.isFeatured }),
       });
-      
+
       if (response.ok) {
-        toast.success(`Tour ${!tour.isFeatured ? "marked as featured" : "removed from featured"}!`);
+        toast.success(
+          `Tour ${
+            !tour.isFeatured ? "marked as featured" : "removed from featured"
+          }!`
+        );
         router.refresh();
       } else {
         throw new Error("Failed to update featured status");
@@ -123,6 +198,22 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
       toast.error("Failed to update featured status");
       console.error(error);
     }
+  };
+
+  // Check if a tour can be completed (tour has ended)
+  const canCompleteTour = (tour: ITour) => {
+    if (!tour.isActive) return false;
+    const tourEndDate = new Date(tour.endDate);
+    const currentDate = new Date();
+    return tourEndDate <= currentDate;
+  };
+
+  // Check if tour hasn't ended yet
+  const isTourActiveAndNotEnded = (tour: ITour) => {
+    if (!tour.isActive) return false;
+    const tourEndDate = new Date(tour.endDate);
+    const currentDate = new Date();
+    return tourEndDate > currentDate;
   };
 
   if (tours.length === 0) {
@@ -182,14 +273,18 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium line-clamp-1">{tour.title}</h4>
+                        <h4 className="font-medium line-clamp-1">
+                          {tour.title}
+                        </h4>
                         {tour.isFeatured && (
                           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                         <MapPin className="h-3 w-3" />
-                        <span className="line-clamp-1">{tour.destination}, {tour.city}</span>
+                        <span className="line-clamp-1">
+                          {tour.destination}, {tour.city}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline">{tour.category}</Badge>
@@ -211,10 +306,28 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                         Featured
                       </Badge>
                     )}
+                    {canCompleteTour(tour) && (
+                      <Badge
+                        variant="outline"
+                        className="w-fit bg-amber-50 text-amber-700 border-amber-200"
+                      >
+                        Ready to Complete
+                      </Badge>
+                    )}
+                    {isTourActiveAndNotEnded(tour) && (
+                      <Badge
+                        variant="outline"
+                        className="w-fit bg-blue-50 text-blue-700 border-blue-200"
+                      >
+                        Ongoing
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium">{formatCurrency(tour.price)}</div>
+                  <div className="font-medium">
+                    {formatCurrency(tour.price)}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     {tour.duration} days
                   </div>
@@ -245,6 +358,18 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                     <div className="text-xs text-muted-foreground">
                       to {formatDate(tour.endDate)}
                     </div>
+                    {canCompleteTour(tour) && (
+                      <div className="text-xs text-amber-600 mt-1">
+                        <AlertTriangle className="h-3 w-3 inline mr-1" />
+                        Tour has ended
+                      </div>
+                    )}
+                    {isTourActiveAndNotEnded(tour) && (
+                      <div className="text-xs text-blue-600 mt-1">
+                        <Calendar className="h-3 w-3 inline mr-1" />
+                        Still ongoing
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -254,7 +379,7 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleView(tour)}>
@@ -268,9 +393,12 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                       {/* <DropdownMenuItem onClick={() => handleDuplicate(tour)}>
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicate
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleStatusToggle(tour)}>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusToggle(tour)}
+                        disabled={isDeactivating}
+                      >
                         {tour.isActive ? (
                           <>
                             <XCircle className="h-4 w-4 mr-2" />
@@ -282,7 +410,7 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                             Activate
                           </>
                         )}
-                      </DropdownMenuItem> */}
+                      </DropdownMenuItem>
                       {/* <DropdownMenuItem onClick={() => handleFeaturedToggle(tour)}>
                         <Star className="h-4 w-4 mr-2" />
                         {tour.isFeatured ? "Remove Featured" : "Mark as Featured"}
@@ -323,6 +451,16 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
             setDeletingTour(null);
             router.refresh();
           }}
+        />
+      )}
+
+      {completingTour && (
+        <CompleteTourDialog
+          tour={completingTour}
+          open={!!completingTour}
+          onClose={() => setCompletingTour(null)}
+          onConfirm={(option) => confirmCompleteTour(completingTour, option)}
+          isCompleting={isCompleting}
         />
       )}
     </>

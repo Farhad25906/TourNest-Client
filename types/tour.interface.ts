@@ -1,13 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const CATEGORIES = [
-  'ADVENTURE', 'CULTURE', 'BEACH', 'MOUNTAIN', 'URBAN', 'NATURE', 'FOOD',"RELAXATION"
+  "ADVENTURE",
+  "CULTURE",
+  "FOOD",
+  "NATURE",
+  "RELAXATION",
+  "URBAN",
+  "BEACH",
+  "MOUNTAIN",
 ] as const;
- 
 
-export const DIFFICULTIES = ['EASY', 'MODERATE', 'DIFFICULT', 'EXTREME'] as const;
+export const DIFFICULTIES = [
+  "EASY",
+  "MODERATE",
+  "DIFFICULT",
+  "EXTREME",
+] as const;
 
-export type TourCategory = typeof CATEGORIES[number];
-export type DifficultyLevel = typeof DIFFICULTIES[number];
+export type TourCategory = (typeof CATEGORIES)[number];
+export type DifficultyLevel = (typeof DIFFICULTIES)[number];
 
 export type ItineraryItem = {
   day: number;
@@ -95,7 +106,7 @@ export interface HostTourFilters {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface HostTourStats {
@@ -143,7 +154,7 @@ export interface PaginationOptions {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface TourFilters {
@@ -163,5 +174,5 @@ export interface TourFilters {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }

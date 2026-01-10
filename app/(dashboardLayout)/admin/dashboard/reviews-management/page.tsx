@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -20,21 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,13 +34,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Search,
-  Filter,
   MoreHorizontal,
   Star,
   User,
@@ -68,6 +49,7 @@ import {
   Edit,
   Trash2,
   RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getAllReviews,
@@ -83,7 +65,6 @@ interface Review {
   rating: number;
   comment: string;
   isApproved: boolean;
-  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   tourist?: {
@@ -100,37 +81,20 @@ interface Review {
     id: string;
     title: string;
     destination: string;
-    images?: string[];
   };
   booking?: {
-    id: string;
     bookingDate: string;
     numberOfPeople: number;
-    totalAmount: number;
   };
 }
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    rating: "",
-    isApproved: "",
-    page: 1,
-    limit: 10,
-    sortBy: "createdAt",
-    sortOrder: "desc" as "asc" | "desc",
-  });
-  const [meta, setMeta] = useState({
-    total: 0,
-    totalPages: 1,
-    page: 1,
-    limit: 10,
-  });
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editData, setEditData] = useState({
     rating: 5,
     comment: "",
@@ -140,20 +104,10 @@ export default function AdminReviewsPage() {
   const loadReviews = async () => {
     try {
       setLoading(true);
-      const params: any = {
-        ...filters,
-        searchTerm: searchTerm || undefined,
-        rating: filters.rating || undefined,
-        isApproved: filters.isApproved || undefined,
-      };
-
-      const result = await getAllReviews(params);
+      const result = await getAllReviews();
 
       if (result.success) {
         setReviews(result.data || []);
-        if (result.meta) {
-          setMeta(result.meta);
-        }
       } else {
         toast.error("Failed to load reviews", {
           description: result.message,
@@ -169,15 +123,7 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     loadReviews();
-  }, [filters]);
-
-  const handleSearch = () => {
-    setFilters((prev) => ({ ...prev, page: 1 }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
-  };
+  }, []);
 
   const handleApprove = async (reviewId: string, approve: boolean) => {
     try {
@@ -190,24 +136,30 @@ export default function AdminReviewsPage() {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("Failed to update review status");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update review status");
     }
   };
 
-  const handleDelete = async (reviewId: string) => {
-    if (!confirm("Are you sure you want to delete this review?")) return;
+  const handleDeleteClick = (review: Review) => {
+    setSelectedReview(review);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedReview) return;
 
     try {
-      const result = await deleteReview(reviewId);
+      const result = await deleteReview(selectedReview.id);
       if (result.success) {
         toast.success("Review deleted successfully");
+        setIsDeleteDialogOpen(false);
         loadReviews();
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("Failed to delete review");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete review");
     }
   };
 
@@ -233,8 +185,8 @@ export default function AdminReviewsPage() {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("Failed to update review");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update review");
     }
   };
 
@@ -265,6 +217,9 @@ export default function AdminReviewsPage() {
     return format(new Date(dateString), "MMM dd, yyyy");
   };
 
+  const approvedCount = reviews.filter(r => r.isApproved).length;
+  const pendingCount = reviews.filter(r => !r.isApproved).length;
+
   if (loading && reviews.length === 0) {
     return (
       <div className="container mx-auto py-8">
@@ -286,77 +241,41 @@ export default function AdminReviewsPage() {
         </p>
       </div>
 
-      {/* Filters */}
-      {/* <Card className="mb-6">
+      {/* Stats Summary */}
+      <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by comment or tourist name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="pl-10"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold">{reviews.length}</div>
+              <p className="text-sm text-muted-foreground">Total Reviews</p>
             </div>
-            <div className="flex gap-4">
-              <Select
-                value={filters.rating}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, rating: value, page: 1 }))
+            <div className="text-center">
+              <div className="text-2xl font-bold">{approvedCount}</div>
+              <p className="text-sm text-muted-foreground">Approved Reviews</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">{pendingCount}</div>
+              <p className="text-sm text-muted-foreground">Pending Reviews</p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold">
+                {reviews.length > 0 
+                  ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+                  : "0.0"
                 }
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Ratings</SelectItem>
-                  {[5, 4, 3, 2, 1].map((rating) => (
-                    <SelectItem key={rating} value={rating.toString()}>
-                      {rating} Star{rating > 1 ? "s" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.isApproved}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    isApproved: value,
-                    page: 1,
-                  }))
-                }
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
-                  <SelectItem value="true">Approved</SelectItem>
-                  <SelectItem value="false">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button onClick={handleSearch}>
-                <Filter className="w-4 h-4 mr-2" />
-                Apply Filters
-              </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">Average Rating</p>
             </div>
           </div>
         </CardContent>
-      </Card> */}
+      </Card>
 
       {/* Reviews Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Reviews ({meta.total})</CardTitle>
+          <CardTitle>All Reviews ({reviews.length})</CardTitle>
           <CardDescription>
-            Showing {reviews.length} of {meta.total} reviews
+            All reviews in the system
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -480,7 +399,7 @@ export default function AdminReviewsPage() {
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
-                            onClick={() => handleDelete(review.id)}
+                            onClick={() => handleDeleteClick(review)}
                             className="text-red-600"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -494,71 +413,6 @@ export default function AdminReviewsPage() {
               )}
             </TableBody>
           </Table>
-
-          {/* Pagination */}
-          {meta.totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() =>
-                        handlePageChange(Math.max(1, filters.page - 1))
-                      }
-                      className={
-                        filters.page === 1
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-
-                  {Array.from(
-                    { length: Math.min(5, meta.totalPages) },
-                    (_, i) => {
-                      let pageNum;
-                      if (meta.totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (filters.page <= 3) {
-                        pageNum = i + 1;
-                      } else if (filters.page >= meta.totalPages - 2) {
-                        pageNum = meta.totalPages - 4 + i;
-                      } else {
-                        pageNum = filters.page - 2 + i;
-                      }
-
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink
-                            onClick={() => handlePageChange(pageNum)}
-                            isActive={filters.page === pageNum}
-                            className="cursor-pointer"
-                          >
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-                  )}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        handlePageChange(
-                          Math.min(meta.totalPages, filters.page + 1)
-                        )
-                      }
-                      className={
-                        filters.page === meta.totalPages
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -665,68 +519,71 @@ export default function AdminReviewsPage() {
             <DialogDescription>Update review details</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="rating">Rating</Label>
-              <div className="flex items-center gap-2 mt-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() =>
-                      setEditData((prev) => ({ ...prev, rating: star }))
-                    }
-                    className="p-1 focus:outline-none"
-                  >
-                    <Star
-                      className={`w-6 h-6 transition-colors ${
-                        star <= editData.rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  </button>
-                ))}
-                <span className="ml-2 font-medium">
-                  {editData.rating}.0 out of 5
-                </span>
+          {selectedReview && (
+            <div className="space-y-4">
+              <div>
+                <Label>Tour: {selectedReview.tour?.title}</Label>
+              </div>
+              
+              <div>
+                <Label htmlFor="rating">Rating</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() =>
+                        setEditData((prev) => ({ ...prev, rating: star }))
+                      }
+                      className="p-1 focus:outline-none"
+                    >
+                      <Star
+                        className={`w-6 h-6 transition-colors ${
+                          star <= editData.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-2 font-medium">
+                    {editData.rating}.0 out of 5
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="comment">Comment</Label>
+                <Textarea
+                  id="comment"
+                  value={editData.comment}
+                  onChange={(e) =>
+                    setEditData((prev) => ({ ...prev, comment: e.target.value }))
+                  }
+                  rows={4}
+                  className="mt-2"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isApproved"
+                  checked={editData.isApproved}
+                  onChange={(e) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      isApproved: e.target.checked,
+                    }))
+                  }
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="isApproved" className="cursor-pointer">
+                  Approved
+                </Label>
               </div>
             </div>
-
-            <div>
-              <Label htmlFor="comment">Comment</Label>
-              <Textarea
-                id="comment"
-                value={editData.comment}
-                onChange={(e) =>
-                  setEditData((prev) => ({ ...prev, comment: e.target.value }))
-                }
-                rows={4}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="isApproved">Status</Label>
-              <Select
-                value={editData.isApproved.toString()}
-                onValueChange={(value) =>
-                  setEditData((prev) => ({
-                    ...prev,
-                    isApproved: value === "true",
-                  }))
-                }
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Approved</SelectItem>
-                  <SelectItem value="false">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
 
           <DialogFooter>
             <Button
@@ -736,6 +593,59 @@ export default function AdminReviewsPage() {
               Cancel
             </Button>
             <Button onClick={handleUpdate}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Review
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this review? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedReview && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="font-medium">{selectedReview.tour?.title}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedReview.comment.substring(0, 100)}...
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  {renderStars(selectedReview.rating)}
+                </div>
+                <p className="text-sm mt-2">
+                  By: {selectedReview.tourist?.name}
+                </p>
+              </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-700">
+                  <strong>Warning:</strong> Deleting this review will also update the tour and host ratings.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+            >
+              Delete Review
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

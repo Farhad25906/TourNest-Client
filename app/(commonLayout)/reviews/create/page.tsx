@@ -16,7 +16,6 @@ import { getSingleTour } from "@/services/tour/tour.service";
 // Create a component that uses useSearchParams
 function CreateReviewContent() {
   const router = useRouter();
-
   const searchParams = useSearchParams();
   
   const [rating, setRating] = useState<number>(5);
@@ -42,11 +41,9 @@ function CreateReviewContent() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch booking and tour details in parallel
-        const [bookingResponse, tourResponse] = await Promise.all([
-          getSingleBooking(bookingId),
-          getSingleTour(tourId),
-        ]);
+        // Fetch booking and tour details
+        const bookingResponse = await getSingleBooking(bookingId);
+        const tourResponse = await getSingleTour(tourId);
 
         if (!bookingResponse.success || !bookingResponse.data) {
           setError("Failed to load booking details");
@@ -123,10 +120,10 @@ function CreateReviewContent() {
           description: result.message,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting review:", error);
       toast.error("Something went wrong", {
-        description: "Failed to submit review. Please try again.",
+        description: error.message || "Failed to submit review. Please try again.",
       });
     } finally {
       setIsSubmitting(false);

@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
         revalidate: 0,
         expire: 60,
       },
+      
       "all-tours-admin": {
         stale: 0,
         revalidate: 0,
@@ -75,6 +76,32 @@ const nextConfig: NextConfig = {
         revalidate: 0,
         expire: 60,
       },
+      // Review-related tags
+      "my-reviews": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "all-reviews-admin": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "recent-reviews": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "top-rated-reviews": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "search-reviews": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
       // Pattern matching for dynamic tags
       "tour-*": {
         stale: 0,
@@ -87,6 +114,31 @@ const nextConfig: NextConfig = {
         expire: 60,
       },
       "tours-category-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "review-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "tour-reviews-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "host-reviews-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "booking-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "review-stats-*": {
         stale: 0,
         revalidate: 0,
         expire: 60,
