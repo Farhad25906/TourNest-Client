@@ -154,19 +154,20 @@ export default function HostReviewsPage() {
       return {
         totalReviews: 0,
         averageRating: 0,
-        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
       };
     }
 
     const totalReviews = reviews.length;
-    const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
-    
+    const averageRating =
+      reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
+
     const ratingDistribution = {
-      1: reviews.filter(r => r.rating === 1).length,
-      2: reviews.filter(r => r.rating === 2).length,
-      3: reviews.filter(r => r.rating === 3).length,
-      4: reviews.filter(r => r.rating === 4).length,
-      5: reviews.filter(r => r.rating === 5).length,
+      1: reviews.filter((r) => r.rating === 1).length,
+      2: reviews.filter((r) => r.rating === 2).length,
+      3: reviews.filter((r) => r.rating === 3).length,
+      4: reviews.filter((r) => r.rating === 4).length,
+      5: reviews.filter((r) => r.rating === 5).length,
     };
 
     return { totalReviews, averageRating, ratingDistribution };
@@ -198,20 +199,15 @@ export default function HostReviewsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="text-3xl font-bold">{displayStats.averageRating.toFixed(1)}</div>
+              <div className="text-3xl font-bold">
+                {Number(displayStats.averageRating).toFixed(1)}
+              </div>
               <div className="flex items-center mt-2">
                 {renderStars(Math.round(displayStats.averageRating))}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Average Rating</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="text-3xl font-bold">{displayStats.totalReviews}</div>
-              <p className="text-sm text-muted-foreground mt-2">Total Reviews</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Average Rating
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -220,9 +216,11 @@ export default function HostReviewsPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <div className="text-3xl font-bold">
-                {displayStats.ratingDistribution[5] + displayStats.ratingDistribution[4]}
+                {displayStats.totalReviews}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Positive Reviews (4-5 stars)</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Total Reviews
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -230,8 +228,26 @@ export default function HostReviewsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="text-3xl font-bold">{displayStats.ratingDistribution[1]}</div>
-              <p className="text-sm text-muted-foreground mt-2">Critical Reviews (1 star)</p>
+              <div className="text-3xl font-bold">
+                {(displayStats.ratingDistribution?.[5] || 0) +
+                  (displayStats.ratingDistribution?.[4] || 0)}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Positive Reviews (4-5 stars)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="text-3xl font-bold">
+                {displayStats.ratingDistribution?.[1] || 0}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Critical Reviews (1 star)
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -241,28 +257,32 @@ export default function HostReviewsPage() {
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Rating Distribution</CardTitle>
-          <CardDescription>
-            Breakdown of reviews by star rating
-          </CardDescription>
+          <CardDescription>Breakdown of reviews by star rating</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {[5, 4, 3, 2, 1].map((rating) => {
-              const count = displayStats.ratingDistribution[rating as keyof typeof displayStats.ratingDistribution];
-              const percentage = displayStats.totalReviews > 0 
-                ? (count / displayStats.totalReviews) * 100 
-                : 0;
-              
+              const count =
+                displayStats.ratingDistribution?.[
+                  rating as keyof typeof displayStats.ratingDistribution
+                ] || 0;
+              const percentage =
+                displayStats.totalReviews > 0
+                  ? (count / displayStats.totalReviews) * 100
+                  : 0;
+
               return (
                 <div key={rating} className="flex items-center gap-4">
                   <div className="flex items-center gap-2 w-24">
                     <span className="font-medium">{rating} stars</span>
-                    <span className="text-sm text-muted-foreground">({count})</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({count})
+                    </span>
                   </div>
                   <div className="flex-1">
                     <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-yellow-400 rounded-full" 
+                      <div
+                        className="h-full bg-yellow-400 rounded-full"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -283,9 +303,7 @@ export default function HostReviewsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Reviews ({reviews.length})</CardTitle>
-          <CardDescription>
-            All reviews about your tours
-          </CardDescription>
+          <CardDescription>All reviews about your tours</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -303,7 +321,10 @@ export default function HostReviewsPage() {
             <TableBody>
               {reviews.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No reviews found
                   </TableCell>
                 </TableRow>
@@ -316,7 +337,9 @@ export default function HostReviewsPage() {
                           <User className="w-4 h-4 text-gray-600" />
                         </div>
                         <div>
-                          <p className="font-medium">{review.tourist?.name || "Unknown"}</p>
+                          <p className="font-medium">
+                            {review.tourist?.name || "Unknown"}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -334,9 +357,7 @@ export default function HostReviewsPage() {
                     <TableCell>{renderStars(review.rating)}</TableCell>
                     <TableCell>
                       <div className="max-w-[300px]">
-                        <p className="line-clamp-2">
-                          {review.comment}
-                        </p>
+                        <p className="line-clamp-2">{review.comment}</p>
                         {review.comment.length > 100 && (
                           <Button
                             variant="link"
@@ -389,11 +410,9 @@ export default function HostReviewsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Review Details</DialogTitle>
-            <DialogDescription>
-              Complete review from tourist
-            </DialogDescription>
+            <DialogDescription>Complete review from tourist</DialogDescription>
           </DialogHeader>
-          
+
           {selectedReview && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -404,13 +423,17 @@ export default function HostReviewsPage() {
                       <User className="w-5 h-5 text-gray-600" />
                     </div>
                     <div>
-                      <p className="font-medium">{selectedReview.tourist?.name || "Unknown"}</p>
+                      <p className="font-medium">
+                        {selectedReview.tourist?.name || "Unknown"}
+                      </p>
                     </div>
                   </div>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Tour</Label>
-                  <p className="font-medium mt-2">{selectedReview.tour?.title || "Unknown"}</p>
+                  <p className="font-medium mt-2">
+                    {selectedReview.tour?.title || "Unknown"}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {selectedReview.tour?.destination}
                   </p>
@@ -428,7 +451,9 @@ export default function HostReviewsPage() {
                   Comment
                 </Label>
                 <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                  <p className="whitespace-pre-wrap">{selectedReview.comment}</p>
+                  <p className="whitespace-pre-wrap">
+                    {selectedReview.comment}
+                  </p>
                 </div>
               </div>
 
@@ -436,7 +461,9 @@ export default function HostReviewsPage() {
                 <div>
                   <Label className="text-muted-foreground">Status</Label>
                   <Badge
-                    variant={selectedReview.isApproved ? "default" : "secondary"}
+                    variant={
+                      selectedReview.isApproved ? "default" : "secondary"
+                    }
                     className={
                       selectedReview.isApproved
                         ? "bg-green-100 text-green-800"
@@ -448,7 +475,9 @@ export default function HostReviewsPage() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Review Date</Label>
-                  <p className="font-medium mt-2">{formatDate(selectedReview.createdAt)}</p>
+                  <p className="font-medium mt-2">
+                    {formatDate(selectedReview.createdAt)}
+                  </p>
                 </div>
               </div>
 
@@ -464,7 +493,10 @@ export default function HostReviewsPage() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewDialogOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>

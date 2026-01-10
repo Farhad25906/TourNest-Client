@@ -7,22 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  MapPin, 
-  Calendar, 
-  Users, 
-  Clock, 
-  Star, 
+import {
+  MapPin,
+  Calendar,
+  Users,
+  Clock,
+  Star,
   DollarSign,
   CheckCircle,
   Shield,
-  Heart
+  Heart,
 } from "lucide-react";
 import { getSingleTour } from "@/services/tour/tour.service";
 import TourGallery from "@/components/module/Tour/TourGallery";
 import TourItinerary from "@/components/module/Tour/TourItinerary";
 import TourHostInfo from "@/components/module/Tour/TourHostInfo";
 import { formatDate } from "@/lib/date-utils";
+import { UserInfo } from "@/types/user.interface";
+import { getUserInfo } from "@/services/auth/auth.services";
 
 interface TourDetailsPageProps {
   params: {
@@ -31,24 +33,24 @@ interface TourDetailsPageProps {
 }
 
 async function TourDetailsContent({ tourId }: { tourId: string }) {
-console.log(tourId);
+  console.log(tourId);
+  const userInfo = (await getUserInfo()) as UserInfo;
+  const isTourist = userInfo?.role === "TOURIST";
+  console.log(isTourist);
 
-  
   const tourResponse = await getSingleTour(tourId);
-      console.log("Tour Response:", tourResponse);
+  console.log("Tour Response:", tourResponse);
 
-  
   if (!tourResponse.success || !tourResponse.data) {
     notFound();
   }
 
   const tour = tourResponse.data;
 
-
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(amount);
   };
 
@@ -64,9 +66,7 @@ console.log(tourId);
       {/* Back to Tours */}
       <div className="mb-6">
         <Button variant="ghost" asChild>
-          <Link href="/host/dashboard/tours">
-            ← Back to Tours
-          </Link>
+          <Link href="/host/dashboard/tours">← Back to Tours</Link>
         </Button>
       </div>
 
@@ -76,36 +76,54 @@ console.log(tourId);
           {/* Tour Header */}
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              <Badge className="capitalize">{tour.category.toLowerCase()}</Badge>
+              <Badge className="capitalize">
+                {tour.category.toLowerCase()}
+              </Badge>
               {tour.isFeatured && (
                 <Badge className="bg-amber-500 hover:bg-amber-600">
                   <Star className="h-3 w-3 mr-1 fill-white" />
                   Featured
                 </Badge>
               )}
-              <Badge 
-                variant={isAvailable ? "default" : "destructive"}
-              >
-                {isAvailable ? `${availableSpots} spots left` : 'Fully Booked'}
+              <Badge variant={isAvailable ? "default" : "destructive"}>
+                {isAvailable ? `${availableSpots} spots left` : "Fully Booked"}
               </Badge>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className={`
-                  ${tour.difficulty === 'EASY' ? 'border-green-200 text-green-700' : ''}
-                  ${tour.difficulty === 'MODERATE' ? 'border-amber-200 text-amber-700' : ''}
-                  ${tour.difficulty === 'DIFFICULT' ? 'border-orange-200 text-orange-700' : ''}
-                  ${tour.difficulty === 'EXTREME' ? 'border-red-200 text-red-700' : ''}
+                  ${
+                    tour.difficulty === "EASY"
+                      ? "border-green-200 text-green-700"
+                      : ""
+                  }
+                  ${
+                    tour.difficulty === "MODERATE"
+                      ? "border-amber-200 text-amber-700"
+                      : ""
+                  }
+                  ${
+                    tour.difficulty === "DIFFICULT"
+                      ? "border-orange-200 text-orange-700"
+                      : ""
+                  }
+                  ${
+                    tour.difficulty === "EXTREME"
+                      ? "border-red-200 text-red-700"
+                      : ""
+                  }
                 `}
               >
                 {tour.difficulty}
               </Badge>
             </div>
-            
+
             <h1 className="text-4xl font-bold tracking-tight">{tour.title}</h1>
-            
+
             <div className="flex items-center gap-2 text-muted-foreground mt-2">
               <MapPin className="h-4 w-4" />
-              <span>{tour.destination}, {tour.city}, {tour.country}</span>
+              <span>
+                {tour.destination}, {tour.city}, {tour.country}
+              </span>
             </div>
           </div>
 
@@ -119,7 +137,9 @@ console.log(tourId);
             <CardContent className="pt-6">
               <h2 className="text-2xl font-semibold mb-4">About This Tour</h2>
               <div className="prose max-w-none">
-                <p className="whitespace-pre-wrap text-gray-700">{tour.description}</p>
+                <p className="whitespace-pre-wrap text-gray-700">
+                  {tour.description}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -140,7 +160,9 @@ console.log(tourId);
                         </li>
                       ))
                     ) : (
-                      <li className="text-muted-foreground">No inclusions specified</li>
+                      <li className="text-muted-foreground">
+                        No inclusions specified
+                      </li>
                     )}
                   </ul>
                 </div>
@@ -155,7 +177,9 @@ console.log(tourId);
                         </li>
                       ))
                     ) : (
-                      <li className="text-muted-foreground">No exclusions specified</li>
+                      <li className="text-muted-foreground">
+                        No exclusions specified
+                      </li>
                     )}
                   </ul>
                 </div>
@@ -164,9 +188,7 @@ console.log(tourId);
           </Card>
 
           {/* Itinerary */}
-          {tour.itinerary && (
-            <TourItinerary itinerary={tour.itinerary} />
-          )}
+          {tour.itinerary && <TourItinerary itinerary={tour.itinerary} />}
 
           {/* Meeting Point */}
           {tour.meetingPoint && (
@@ -179,9 +201,7 @@ console.log(tourId);
           )}
 
           {/* Host Information */}
-          {tour.host && (
-            <TourHostInfo host={tour.host} />
-          )}
+          {tour.host && <TourHostInfo host={tour.host} />}
         </div>
 
         {/* Right Column - Booking Card */}
@@ -223,7 +243,9 @@ console.log(tourId);
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Available Spots</span>
+                    <span className="text-muted-foreground">
+                      Available Spots
+                    </span>
                     <span className="font-medium">
                       {availableSpots} of {tour.maxGroupSize}
                     </span>
@@ -236,24 +258,26 @@ console.log(tourId);
                 {!isAvailable && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                     <p className="text-red-700 text-sm font-medium text-center">
-                      {availableSpots <= 0 ? 'Fully Booked' : 'Not Available'}
+                      {availableSpots <= 0 ? "Fully Booked" : "Not Available"}
                     </p>
                   </div>
                 )}
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     size="lg"
-                    disabled={!isAvailable}
-                    asChild
+                    disabled={!isAvailable || !isTourist}
+                    asChild={isTourist}
                   >
-                    <Link href={`/tours/${tour.id}/book`}>
-                      Book Now
-                    </Link>
+                    {isTourist ? (
+                      <Link href={`/tours/${tour.id}/book`}>Book Now</Link>
+                    ) : (
+                      <span>Book Now</span>
+                    )}
                   </Button>
-                  
+
                   {/* <Button 
                     variant="outline" 
                     className="w-full"
@@ -292,14 +316,10 @@ console.log(tourId);
               <h3 className="font-semibold mb-3">Need Help?</h3>
               <div className="space-y-2">
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/contact">
-                    Contact Support
-                  </Link>
+                  <Link href="/contact">Contact Support</Link>
                 </Button>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/faq">
-                    Read FAQs
-                  </Link>
+                  <Link href="/faq">Read FAQs</Link>
                 </Button>
               </div>
             </CardContent>
@@ -310,7 +330,11 @@ console.log(tourId);
   );
 }
 
-export default async function TourDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TourDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   return (
@@ -321,7 +345,6 @@ export default async function TourDetailsPage({ params }: { params: Promise<{ id
     </div>
   );
 }
-
 
 function TourDetailsSkeleton() {
   return (

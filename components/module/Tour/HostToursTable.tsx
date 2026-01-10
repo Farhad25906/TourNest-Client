@@ -306,14 +306,14 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                         Featured
                       </Badge>
                     )}
-                    {canCompleteTour(tour) && (
+                    {/* {canCompleteTour(tour) && (
                       <Badge
                         variant="outline"
                         className="w-fit bg-amber-50 text-amber-700 border-amber-200"
                       >
                         Ready to Complete
                       </Badge>
-                    )}
+                    )} */}
                     {isTourActiveAndNotEnded(tour) && (
                       <Badge
                         variant="outline"
