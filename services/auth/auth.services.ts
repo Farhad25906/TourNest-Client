@@ -995,12 +995,9 @@ export const refreshToken = async (): Promise<AuthResponse> => {
       };
     }
 
-    // Pass useRefreshToken flag
-    const res = await serverFetch.post("/auth/refresh-token", {
-      useRefreshToken: true,
-    });
+    const res = await serverFetch.post("/auth/refresh-token");
+    console.log("Token Refreshingh");
     
-    console.log("Token Refreshing");
 
     // Check if response is ok
     if (!res.ok) {
@@ -1014,26 +1011,6 @@ export const refreshToken = async (): Promise<AuthResponse> => {
     const result = await res.json();
 
     if (result.success) {
-      // Set the new access token cookie with options
-      if (result.data?.accessToken) {
-        await setCookie("accessToken", result.data.accessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 15, // 15 minutes (adjust based on your token expiry)
-        });
-      }
-      
-      // Optionally update refresh token if backend returns a new one
-      if (result.data?.refreshToken) {
-        await setCookie("refreshToken", result.data.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 7, // 7 days (adjust based on your token expiry)
-        });
-      }
-      
       return {
         success: true,
         message: "Token refreshed successfully",
