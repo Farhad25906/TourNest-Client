@@ -65,7 +65,7 @@ export default function CreateTourForm() {
   const [excludedItems, setExcludedItems] = useState<string[]>([""]);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const router = useRouter();
+  const router = useRouter();
 
   // Improved itinerary state
   const [itinerary, setItinerary] = useState<
@@ -97,7 +97,6 @@ export default function CreateTourForm() {
       toast.error(state.message);
     } else if (state.success) {
       toast.success(state.message);
-      
 
       // Use requestAnimationFrame to batch updates
       requestAnimationFrame(() => {
@@ -117,7 +116,7 @@ export default function CreateTourForm() {
           },
         ]);
       });
-       setTimeout(() => {
+      setTimeout(() => {
         router.push("/host/dashboard/tours");
       }, 1000);
     }
@@ -812,13 +811,18 @@ export default function CreateTourForm() {
         {/* Checkboxes */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
+            <input type="hidden" name="isActive" value="true" />
             <Checkbox
               id="isActive"
               name="isActive"
-              defaultChecked
-              value="true"
+              checked
+              disabled
+              className="opacity-50 cursor-not-allowed"
+              tabIndex={-1}
             />
-            <Label htmlFor="isActive">Active Tour</Label>
+            <Label htmlFor="isActive" className="text-gray-500">
+              Active Tour
+            </Label>
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="isFeatured" name="isFeatured" value="true" />
