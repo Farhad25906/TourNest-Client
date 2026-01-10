@@ -31,7 +31,7 @@ export default function CompleteBookingPage() {
         toast.success("Booking marked as completed!", {
           description: "The booking has been successfully completed.",
         });
-        router.push(`/host/dashboard/bookings/${bookingId}`);
+        router.push(`/host/dashboard/bookings`);
         router.refresh();
       } else {
         toast.error("Failed to complete booking", {

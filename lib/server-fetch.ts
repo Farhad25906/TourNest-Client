@@ -1,44 +1,58 @@
+// server-fetch.ts
 import { getCookie } from "@/services/auth/tokenHandlers";
 
+const BACKEND_API_URL =
+  process.env.NEXT_PUBLIC_BASE_API_URL || "https://tournest-server.onrender.com/api/v1";
 
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL || "https://tournest-server.onrender.com/api/v1";
-
-// const BACKEND_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:5000/api/v1";
-
-
-// /auth/login
-const serverFetchHelper = async (endpoint: string, options: RequestInit): Promise<Response> => {
-    const { headers, ...restOptions } = options;
-    const accessToken = await getCookie("accessToken");
-
-    const response = await fetch(`${BACKEND_API_URL}${endpoint}`, {
-        headers: {
-            ...headers,
-            // ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {}),
-            // ...(accessToken ? { "Authorization": accessToken } : {}),
-            Cookie: accessToken ? `accessToken=${accessToken}` : "",
-        },
-        ...restOptions,
-    })
-
-    return response;
+// Define custom type
+interface ServerFetchOptions extends RequestInit {
+  useRefreshToken?: boolean;
 }
+
+const serverFetchHelper = async (
+  endpoint: string,
+  options: ServerFetchOptions = {}
+): Promise<Response> => {
+  const { headers, useRefreshToken, ...restOptions } = options;
+  
+  // Get appropriate token based on endpoint
+  const tokenName = useRefreshToken ? "refreshToken" : "accessToken";
+  const token = await getCookie(tokenName);
+
+  const response = await fetch(`${BACKEND_API_URL}${endpoint}`, {
+    headers: {
+      ...headers,
+      ...(token ? { Cookie: `${tokenName}=${token}` } : {}),
+    },
+    credentials: 'include', // Important for sending cookies
+    ...restOptions,
+  });
+
+  return response;
+};
 
 export const serverFetch = {
-    get: async (endpoint: string, options: RequestInit = {}): Promise<Response> => serverFetchHelper(endpoint, { ...options, method: "GET" }),
+  get: async (endpoint: string, options: ServerFetchOptions = {}): Promise<Response> =>
+    serverFetchHelper(endpoint, { ...options, method: "GET" }),
 
-    post: async (endpoint: string, options: RequestInit = {}): Promise<Response> => serverFetchHelper(endpoint, { ...options, method: "POST" }),
+  post: async (
+    endpoint: string,
+    options: ServerFetchOptions = {}
+  ): Promise<Response> =>
+    serverFetchHelper(endpoint, { ...options, method: "POST" }),
 
-    put: async (endpoint: string, options: RequestInit = {}): Promise<Response> => serverFetchHelper(endpoint, { ...options, method: "PUT" }),
+  put: async (endpoint: string, options: ServerFetchOptions = {}): Promise<Response> =>
+    serverFetchHelper(endpoint, { ...options, method: "PUT" }),
 
-    patch: async (endpoint: string, options: RequestInit = {}): Promise<Response> => serverFetchHelper(endpoint, { ...options, method: "PATCH" }),
+  patch: async (
+    endpoint: string,
+    options: ServerFetchOptions = {}
+  ): Promise<Response> =>
+    serverFetchHelper(endpoint, { ...options, method: "PATCH" }),
 
-    delete: async (endpoint: string, options: RequestInit = {}): Promise<Response> => serverFetchHelper(endpoint, { ...options, method: "DELETE" }),
-
-}
-
-/**
- * 
- * serverFetch.get("/auth/me")
- * serverFetch.post("/auth/login", { body: JSON.stringify({}) })
- */
+  delete: async (
+    endpoint: string,
+    options: ServerFetchOptions = {}
+  ): Promise<Response> =>
+    serverFetchHelper(endpoint, { ...options, method: "DELETE" }),
+};

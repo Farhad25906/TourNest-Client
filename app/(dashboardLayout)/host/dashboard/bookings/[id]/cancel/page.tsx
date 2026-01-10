@@ -31,7 +31,7 @@ export default function CancelBookingPage() {
         toast.success("Booking cancelled successfully!", {
           description: "The booking has been cancelled.",
         });
-        router.push(`/host/dashboard/bookings/${bookingId}`);
+        router.push(`/host/dashboard/bookings`);
         router.refresh();
       } else {
         toast.error("Failed to cancel booking", {

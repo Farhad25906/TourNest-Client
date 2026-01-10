@@ -851,37 +851,46 @@ export const logoutUser = async (): Promise<AuthResponse> => {
   try {
     // Validate if user is logged in before logging out
     const accessToken = await getCookie("accessToken");
-    if (!accessToken) {
-      return {
-        success: false,
-        message: "No active session found",
-        errors: [{ field: "general", message: "No active session found" }],
-      };
-    }
-
+    
+    // Clear all auth-related cookies
     await deleteCookie("accessToken");
     await deleteCookie("refreshToken");
+    await deleteCookie("user");
+    await deleteCookie("token");
+
+    // Also clear localStorage and sessionStorage (if used)
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      sessionStorage.clear();
+    }
 
     return {
       success: true,
       message: "Logged out successfully",
       redirectToLogin: true,
     };
-
-    // Note: redirect will happen in the component that calls this function
   } catch (error: any) {
     console.error("Logout error:", error);
 
-    // Try to clear cookies anyway
+    // Force clear all cookies on error
     try {
       await deleteCookie("accessToken");
       await deleteCookie("refreshToken");
+      await deleteCookie("user");
+      await deleteCookie("token");
+      
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
     } catch {}
 
     return {
-      success: false,
-      message: "Logout failed. Please try again.",
-      errors: [{ field: "general", message: "Logout failed" }],
+      success: true, // Still return success to force redirect
+      message: "Logged out successfully",
+      redirectToLogin: true,
     };
   }
 };
@@ -986,7 +995,12 @@ export const refreshToken = async (): Promise<AuthResponse> => {
       };
     }
 
-    const res = await serverFetch.post("/auth/refresh-token");
+    // Pass useRefreshToken flag
+    const res = await serverFetch.post("/auth/refresh-token", {
+      useRefreshToken: true,
+    });
+    
+    console.log("Token Refreshing");
 
     // Check if response is ok
     if (!res.ok) {
@@ -1000,6 +1014,26 @@ export const refreshToken = async (): Promise<AuthResponse> => {
     const result = await res.json();
 
     if (result.success) {
+      // Set the new access token cookie with options
+      if (result.data?.accessToken) {
+        await setCookie("accessToken", result.data.accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 15, // 15 minutes (adjust based on your token expiry)
+        });
+      }
+      
+      // Optionally update refresh token if backend returns a new one
+      if (result.data?.refreshToken) {
+        await setCookie("refreshToken", result.data.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7, // 7 days (adjust based on your token expiry)
+        });
+      }
+      
       return {
         success: true,
         message: "Token refreshed successfully",

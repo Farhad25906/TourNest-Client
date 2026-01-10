@@ -31,14 +31,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -65,7 +57,6 @@ import {
 } from "lucide-react";
 import {
   IBooking,
-  IBookingFilters,
   IBookingStats,
 } from "@/types/booking.interface";
 import {
@@ -90,31 +81,15 @@ export default function AdminBookingManagement({
   const [selectedBooking, setSelectedBooking] = useState<IBooking | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [filters, setFilters] = useState<IBookingFilters>({
-    page: 1,
-    limit: 20,
-    sortBy: "createdAt",
-    sortOrder: "desc",
-  });
-  const [meta, setMeta] = useState<any>(null);
 
   // Fetch bookings
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      // Simple filters without any search or filter options
-      const processedFilters: IBookingFilters = {
-        page: Number(filters.page) || 1,
-        limit: Number(filters.limit) || 20,
-        sortBy: filters.sortBy || "createdAt",
-        sortOrder: filters.sortOrder || "desc",
-      };
-
-      const result = await getAllBookings(processedFilters);
+      const result = await getAllBookings();
 
       if (result.success) {
         setBookings(result.data || []);
-        setMeta(result.meta);
       } else {
         toast.error(result.message || "Failed to fetch bookings");
       }
@@ -128,7 +103,7 @@ export default function AdminBookingManagement({
 
   useEffect(() => {
     fetchBookings();
-  }, [filters.page, filters.limit, filters.sortBy, filters.sortOrder]);
+  }, []);
 
   // Handle status update
   const handleStatusUpdate = async (bookingId: string, status: string) => {
@@ -244,11 +219,6 @@ export default function AdminBookingManagement({
     }).format(amount);
   };
 
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
-  };
-
   // Export data (placeholder)
   const handleExportData = () => {
     toast.info("Export functionality coming soon!");
@@ -344,8 +314,7 @@ export default function AdminBookingManagement({
         <CardHeader>
           <CardTitle>All Bookings</CardTitle>
           <CardDescription>
-            {meta?.total || 0} total bookings • Page {meta?.page || 1} of{" "}
-            {meta?.totalPages || 1}
+            {bookings.length} total bookings
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -488,32 +457,9 @@ export default function AdminBookingManagement({
                 </Table>
               </div>
 
-              {/* Simple Pagination */}
-              {meta && meta.totalPages > 1 && (
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {((meta.page - 1) * meta.limit) + 1} to{" "}
-                    {Math.min(meta.page * meta.limit, meta.total)} of{" "}
-                    {meta.total} bookings
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(meta.page - 1)}
-                      disabled={meta.page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(meta.page + 1)}
-                      disabled={meta.page >= meta.totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
+              {bookings.length === 0 && !loading && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">No bookings found</p>
                 </div>
               )}
             </div>

@@ -4,18 +4,18 @@
 // import React, { useState, useEffect } from 'react';
 // import { toast } from 'sonner';
 // import { Pencil, Trash2, Plus, X, DollarSign, Calendar, Package, CheckCircle, XCircle } from 'lucide-react';
-// import { 
-//   getAllSubscriptions, 
+// import {
+//   getAllSubscriptions,
 //   getSubscriptionDetails,
 //   updateSubscription,
 //   deleteSubscription,
 //   updateSubscriptionPlan,
 //   deleteSubscriptionPlan
 // } from '@/services/subscription.service';
-// import type { 
-//   ISubscription, 
+// import type {
+//   ISubscription,
 //   ISubscriptionAnalytics,
-//   ISubscriptionPlan 
+//   ISubscriptionPlan
 // } from '@/types/subscription.interface';
 
 // interface SubscriptionPlan {
@@ -57,7 +57,7 @@
 //       setLoading(true);
 //       const subsResult = await getAllSubscriptions();
 //       console.log("Subscriptions data:", subsResult.data);
-      
+
 //       if (subsResult.data && Array.isArray(subsResult.data)) {
 //         setPlans(subsResult.data);
 //       }
@@ -106,7 +106,7 @@
 
 //   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 //     const { name, value, type } = e.target;
-    
+
 //     if (type === 'number') {
 //       const numValue = value === '' ? 0 : parseFloat(value);
 //       setFormData(prev => ({ ...prev, [name]: numValue }));
@@ -178,12 +178,11 @@
 //   return (
 //     <div className="p-6 bg-gray-50 min-h-screen">
 //       <div className="max-w-7xl mx-auto">
-       
 
 //         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 //           {plans.map((plan) => (
-//             <div 
-//               key={plan.id} 
+//             <div
+//               key={plan.id}
 //               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
 //             >
 //               <div className={`p-6 ${plan.name === 'Premium' ? 'bg-gradient-to-r from-purple-600 to-blue-600' : plan.name === 'Standard' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-gradient-to-r from-gray-500 to-gray-600'} text-white`}>
@@ -441,12 +440,118 @@
 //     </div>
 //   );
 // }
-import React from 'react';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertCircle,
+  Calendar,
+  Clock,
+  Download,
+  Eye,
+  RefreshCw,
+  TrendingUp,
+} from "lucide-react";
 
 const SubscriptionManagement = () => {
   return (
-    <div>
-      Hello
+    <div className="space-y-6">
+      {/* Header */}
+     
+
+      {/* Coming Soon Box */}
+      <Card className="border-dashed border-2">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Calendar className="h-8 w-8 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">Coming Soon</CardTitle>
+          <CardDescription>
+            This feature is currently under development
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm">
+            <AlertCircle className="h-4 w-4" />
+            <span>Feature in development</span>
+          </div>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            We're working hard to bring you subscription management
+            capabilities. This will include billing, plan management, and
+            subscription analytics.
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 max-w-lg mx-auto">
+            <div className="text-center p-3 rounded-lg border bg-card">
+              <TrendingUp className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium">Analytics</p>
+            </div>
+            <div className="text-center p-3 rounded-lg border bg-card">
+              <Eye className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium">Overview</p>
+            </div>
+            <div className="text-center p-3 rounded-lg border bg-card">
+              <Download className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium">Reports</p>
+            </div>
+            <div className="text-center p-3 rounded-lg border bg-card">
+              <RefreshCw className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium">Automation</p>
+            </div>
+          </div>
+
+          <div className="pt-4 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4 inline mr-1" />
+            <span>Expected launch: Q2 2024</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Placeholder content */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="opacity-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Active Subscriptions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">
+              Currently unavailable
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="opacity-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Monthly Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$--.--</div>
+            <p className="text-xs text-muted-foreground">
+              Currently unavailable
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="opacity-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Renewals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">--</div>
+            <p className="text-xs text-muted-foreground">
+              Currently unavailable
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
