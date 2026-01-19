@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const CATEGORIES = [
   { value: 'ALL', label: 'All Categories' },
@@ -54,19 +55,50 @@ export function ToursFilters() {
   const [difficulty, setDifficulty] = useState(searchParams.get('difficulty') || 'ALL');
   const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt_desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleFilter = () => {
-    const params = new URLSearchParams();
+  // Sync state with URL params on mount
+  useEffect(() => {
+    const searchTermParam = searchParams.get('searchTerm');
+    const categoryParam = searchParams.get('category');
+    const difficultyParam = searchParams.get('difficulty');
+    const sortByParam = searchParams.get('sortBy') || 'createdAt_desc';
+
+    if (searchTermParam !== null) setSearchTerm(searchTermParam);
+    if (categoryParam !== null) setCategory(categoryParam);
+    if (difficultyParam !== null) setDifficulty(difficultyParam);
+    if (sortByParam !== null) setSortBy(sortByParam);
+  }, [searchParams]);
+
+  const handleFilter = async () => {
+    setIsLoading(true);
     
-    if (searchTerm) params.set('searchTerm', searchTerm);
-    if (category !== 'ALL') params.set('category', category);
-    if (difficulty !== 'ALL') params.set('difficulty', difficulty);
-    
-    const [sortField, sortOrder] = sortBy.split('_');
-    params.set('sortBy', sortField);
-    params.set('sortOrder', sortOrder);
-    
-    router.push(`/tours?${params.toString()}`);
+    try {
+      const params = new URLSearchParams();
+      
+      if (searchTerm) params.set('searchTerm', searchTerm);
+      if (category !== 'ALL') params.set('category', category);
+      if (difficulty !== 'ALL') params.set('difficulty', difficulty);
+      
+      const [sortField, sortOrder] = sortBy.split('_');
+      params.set('sortBy', sortField);
+      params.set('sortOrder', sortOrder);
+      
+      router.push(`/tours?${params.toString()}`);
+      
+      // Show success toast for applied filters
+      if (hasFilters) {
+        toast.success('Filters applied successfully', {
+          description: 'Tour list updated with your selected filters',
+        });
+      }
+    } catch (error) {
+      toast.error('Failed to apply filters', {
+        description: 'Please try again',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -75,9 +107,31 @@ export function ToursFilters() {
     setDifficulty('ALL');
     setSortBy('createdAt_desc');
     router.push('/tours');
+    
+    toast.info('Filters reset', {
+      description: 'All filters have been cleared',
+    });
   };
 
   const hasFilters = searchTerm || category !== 'ALL' || difficulty !== 'ALL' || sortBy !== 'createdAt_desc';
+
+  const handleRemoveFilter = (type: 'search' | 'category' | 'difficulty') => {
+    switch (type) {
+      case 'search':
+        setSearchTerm('');
+        break;
+      case 'category':
+        setCategory('ALL');
+        break;
+      case 'difficulty':
+        setDifficulty('ALL');
+        break;
+    }
+    
+    toast.info('Filter removed', {
+      description: `${type} filter has been cleared`,
+    });
+  };
 
   return (
     <Card>
@@ -93,12 +147,14 @@ export function ToursFilters() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
+                disabled={isLoading}
               />
             </div>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setShowFilters(!showFilters)}
+              disabled={isLoading}
             >
               <Filter className="h-4 w-4" />
             </Button>
@@ -107,6 +163,7 @@ export function ToursFilters() {
                 variant="outline"
                 size="icon"
                 onClick={handleReset}
+                disabled={isLoading}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -120,7 +177,7 @@ export function ToursFilters() {
                 {/* Category Filter */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category</label>
-                  <Select value={category} onValueChange={setCategory}>
+                  <Select value={category} onValueChange={setCategory} disabled={isLoading}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -137,7 +194,7 @@ export function ToursFilters() {
                 {/* Difficulty Filter */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Difficulty</label>
-                  <Select value={difficulty} onValueChange={setDifficulty}>
+                  <Select value={difficulty} onValueChange={setDifficulty} disabled={isLoading}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -154,7 +211,7 @@ export function ToursFilters() {
                 {/* Sort Filter */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Sort By</label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
+                  <Select value={sortBy} onValueChange={setSortBy} disabled={isLoading}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -171,11 +228,18 @@ export function ToursFilters() {
 
               {/* Filter Actions */}
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={handleReset}>
-                  Reset
+                <Button 
+                  variant="outline" 
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : "Reset"}
                 </Button>
-                <Button onClick={handleFilter}>
-                  Apply Filters
+                <Button 
+                  onClick={handleFilter}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Applying..." : "Apply Filters"}
                 </Button>
               </div>
             </div>
@@ -188,8 +252,9 @@ export function ToursFilters() {
                 <Badge variant="secondary" className="gap-1">
                   Search: {searchTerm}
                   <button
-                    onClick={() => setSearchTerm('')}
-                    className="ml-1 hover:text-destructive"
+                    onClick={() => handleRemoveFilter('search')}
+                    className="ml-1 hover:text-destructive disabled:opacity-50"
+                    disabled={isLoading}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -199,8 +264,9 @@ export function ToursFilters() {
                 <Badge variant="secondary" className="gap-1">
                   Category: {CATEGORIES.find(c => c.value === category)?.label}
                   <button
-                    onClick={() => setCategory('ALL')}
-                    className="ml-1 hover:text-destructive"
+                    onClick={() => handleRemoveFilter('category')}
+                    className="ml-1 hover:text-destructive disabled:opacity-50"
+                    disabled={isLoading}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -210,8 +276,9 @@ export function ToursFilters() {
                 <Badge variant="secondary" className="gap-1">
                   Difficulty: {DIFFICULTIES.find(d => d.value === difficulty)?.label}
                   <button
-                    onClick={() => setDifficulty('ALL')}
-                    className="ml-1 hover:text-destructive"
+                    onClick={() => handleRemoveFilter('difficulty')}
+                    className="ml-1 hover:text-destructive disabled:opacity-50"
+                    disabled={isLoading}
                   >
                     <X className="h-3 w-3" />
                   </button>

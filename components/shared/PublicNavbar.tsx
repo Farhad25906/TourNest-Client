@@ -6,6 +6,11 @@ import {
   User,
   MapPin,
   Shield,
+  BookOpen,
+  Info,
+  CreditCard,
+  HelpCircle,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
@@ -28,7 +33,11 @@ import { UserRole } from "@/lib/auth-utils";
 const PublicNavbar = async () => {
   const navItems = [
     { href: "/tours", label: "Tours", icon: MapPin },
-    { href: "/blogs", label: "Blogs", icon: null },
+    { href: "/blogs", label: "Blogs", icon: BookOpen },
+    // { href: "/about", label: "About", icon: Info },
+    { href: "/pricing", label: "Pricing", icon: CreditCard },
+    { href: "/faq", label: "FAQ", icon: HelpCircle },
+    // { href: "/contact", label: "Contact", icon: Mail },
   ];
 
   const userInfo = (await getUserInfo()) as unknown as UserInfo;

@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
         revalidate: 0,
         expire: 60,
       },
-      
+
       "all-tours-admin": {
         stale: 0,
         revalidate: 0,
@@ -139,6 +139,46 @@ const nextConfig: NextConfig = {
         expire: 60,
       },
       "review-stats-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "subscription-*": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "host-subscription": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "my-subscription": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "subscription-plans": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "admin-subscriptions": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "public-subscriptions": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "all-subscriptions": {
+        stale: 0,
+        revalidate: 0,
+        expire: 60,
+      },
+      "subscription-analytics": {
         stale: 0,
         revalidate: 0,
         expire: 60,

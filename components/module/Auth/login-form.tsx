@@ -4,7 +4,12 @@ import { loginUser } from "@/services/auth/auth.services";
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "../../ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "../../ui/field";
 import { Input } from "../../ui/input";
 
 const LoginForm = ({ redirect }: { redirect?: string }) => {
@@ -22,6 +27,21 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
 
   // Get server-side validation errors if they exist
   const serverErrors = state?.errors || {};
+
+  // Function to auto-fill credentials
+  const autoFillCredentials = (email: string, password: string) => {
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    const passwordInput = document.getElementById(
+      "password",
+    ) as HTMLInputElement;
+
+    if (emailInput) emailInput.value = email;
+    if (passwordInput) passwordInput.value = password;
+
+    // Dispatch input events to trigger React state updates if needed
+    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+    passwordInput.dispatchEvent(new Event("input", { bubbles: true }));
+  };
 
   return (
     <form action={formAction} noValidate>
@@ -56,7 +76,9 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
               type="password"
               placeholder="Enter your password"
               aria-invalid={!!serverErrors.password}
-              aria-describedby={serverErrors.password ? "password-error" : undefined}
+              aria-describedby={
+                serverErrors.password ? "password-error" : undefined
+              }
               required
             />
             {serverErrors.password && (
@@ -65,15 +87,49 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
               </p>
             )}
           </Field>
+
+          {/* Auto-fill buttons */}
+          <div>
+            <h1>Autofill Credentials</h1>
+            <div className="flex flex-col sm:flex-row gap-2 mt-2 mb-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => autoFillCredentials("farhad@ph.com", "123456")}
+                className="flex-1"
+              >
+                Admin
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  autoFillCredentials("farhadhossen2590@gmail.com", "123456")
+                }
+                className="flex-1"
+              >
+                Host
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  autoFillCredentials("farhadhossen9036@gmail.com", "123456")
+                }
+                className="flex-1"
+              >
+                Tourist
+              </Button>
+            </div>
+          </div>
         </div>
 
         <FieldGroup className="mt-4">
           <Field>
-            <Button 
-              type="submit" 
-              disabled={isPending}
-              className="w-full"
-            >
+            <Button type="submit" disabled={isPending} className="w-full">
               {isPending ? "Logging in..." : "Login"}
             </Button>
 
@@ -83,7 +139,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
                 Sign up
               </a>
             </FieldDescription>
-            
+
             <FieldDescription className="px-6 text-center mt-2">
               <a
                 href="/forget-password"

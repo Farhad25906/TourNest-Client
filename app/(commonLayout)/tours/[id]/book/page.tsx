@@ -1,5 +1,5 @@
 // app/(commonLayout)/tours/[id]/book/page.tsx
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { Suspense } from "react";
@@ -21,7 +21,7 @@ interface BookingPageProps {
 async function BookingContent({ tourId }: { tourId: string }) {
   // Get tour details
   const tourResponse = await getSingleTour(tourId);
-  
+
   if (!tourResponse.success || !tourResponse.data) {
     notFound();
   }
@@ -31,14 +31,14 @@ async function BookingContent({ tourId }: { tourId: string }) {
   // Check if tour is available for booking
   const currentDate = new Date();
   const tourStartDate = new Date(tour.startDate);
-  
+
   if (!tour.isActive || tourStartDate < currentDate) {
     redirect(`/tours/${tourId}?error=tour_not_available`);
   }
 
   // Get user info to check if they can book
   const userResponse = await getUserInfo();
-  
+
   // Uncomment this for production
   // if (!userResponse.success || userResponse.role !== "TOURIST") {
   //   redirect(`/login?redirect=/tours/${tourId}/book&message=Please login as a tourist to book tours`);
@@ -50,40 +50,45 @@ async function BookingContent({ tourId }: { tourId: string }) {
         <CardHeader>
           <CardTitle className="text-2xl">Book Your Tour</CardTitle>
           <p className="text-muted-foreground">
-            Complete your booking for: <span className="font-semibold">{tour.title}</span>
+            Complete your booking for:{" "}
+            <span className="font-semibold">{tour.title}</span>
           </p>
         </CardHeader>
         <CardContent>
           {/* Make sure tour object has all required properties */}
-          <CreateBookingForm tour={{
-            ...tour,
-            // Ensure these properties exist with fallbacks
-            maxGroupSize: tour.maxGroupSize || 1,
-            currentGroupSize: tour.currentGroupSize || 0,
-            isActive: tour.isActive || false,
-            price: tour.price || 0,
-            startDate: tour.startDate,
-            endDate: tour.endDate || tour.startDate,
-            duration: tour.duration || 1,
-            destination: tour.destination || "",
-            city: tour.city || "",
-            title: tour.title || "",
-          }} />
+          <CreateBookingForm
+            tour={{
+              ...tour,
+              // Ensure these properties exist with fallbacks
+              maxGroupSize: tour.maxGroupSize || 1,
+              currentGroupSize: tour.currentGroupSize || 0,
+              isActive: tour.isActive || false,
+              price: tour.price || 0,
+              startDate: tour.startDate,
+              endDate: tour.endDate || tour.startDate,
+              duration: tour.duration || 1,
+              destination: tour.destination || "",
+              city: tour.city || "",
+              title: tour.title || "",
+            }}
+          />
         </CardContent>
       </Card>
     </div>
   );
 }
 
-export default async function BookingPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BookingPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   return (
     <div className="container mx-auto py-8">
       <Suspense fallback={<BookingSkeleton />}>
-        <ErrorBoundary fallback={<BookingError tourId={id} error={new Error("Failed to load booking page")} />}>
-          <BookingContent tourId={id} />
-        </ErrorBoundary>
+        <BookingContent tourId={id} />
       </Suspense>
     </div>
   );

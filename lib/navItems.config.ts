@@ -134,6 +134,29 @@ export const getHostNavItems = async (): Promise<NavSection[]> => {
                 },
             ],
         },
+        {
+            title: "Subscription",
+            items: [
+                {
+                    title: "Buy Subscription",
+                    href: "/host/dashboard/buy-subscription",
+                    icon: "DollarSign",
+                    roles: ["HOST"],
+                },
+                // {
+                //     title: "Reviews",
+                //     href: "/host/dashboard/reviews",
+                //     icon: "Star",
+                //     roles: ["HOST"],
+                // },
+                // {
+                //     title: "Tour Blogs",
+                //     href: "/host/dashboard/blogs",
+                //     icon: "TrendingUp",
+                //     roles: ["HOST"],
+                // },
+            ],
+        },
     ]
 }
 
