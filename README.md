@@ -16,7 +16,7 @@ A modern, high-performance travel and tour booking platform built with Next.js a
 
 ## 🔐 Credentials
 
-Admin: [farhad@ph.com](mailto:farhad@ph.com) / 123456
+Admin: [farhad@ph.com](mailto:farhad@tournest.com) / 123456
 
 Host: [farhadhossen2590@gmail.com](mailto:farhadhossen2590@gmail.com) / 123456
 

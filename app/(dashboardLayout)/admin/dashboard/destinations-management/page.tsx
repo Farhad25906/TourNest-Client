@@ -329,9 +329,9 @@ export default function DestinationsManagementPage() {
 
             {/* Upsert Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="max-w-md rounded-[40px] border-none p-0 overflow-hidden shadow-2xl">
-                    <form onSubmit={handleSubmit}>
-                        <div className="p-8 space-y-6">
+                <DialogContent className="max-w-md rounded-[40px] border-none p-0 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+                    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                        <div className="p-8 space-y-6 overflow-y-auto flex-1">
                             <DialogHeader>
                                 <DialogTitle className="text-2xl font-black tracking-tight text-gray-900 uppercase italic">
                                     {selectedDestination ? "Optimize Sector" : "Initialize Mapping"}
