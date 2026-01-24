@@ -48,7 +48,7 @@ Tourist: [farhadhossen9036@gmail.com](mailto:farhadhossen9036@gmail.com) / 12345
 - **Responsive Dashboard**: Dedicated interfaces for both Tourists and Guides.
 - **Payment Integration**: Seamless checkout experience using Stripe.
 
-## Role Based Features  
+## 👥 Role Based Features  
 
 ### For Users
 
