@@ -15,7 +15,7 @@ export default async function HostBookingsPage({
 
   return (
     <div className="container mx-auto py-6">
-      <Suspense fallback={<TableSkeleton columns={7} rows={10} />}>
+      <Suspense fallback={<TableSkeleton columnCount={7} rowCount={10} />}>
         <HostBookingsClient searchParams={params} />
       </Suspense>
     </div>

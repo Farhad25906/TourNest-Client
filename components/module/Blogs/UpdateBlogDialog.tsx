@@ -39,12 +39,14 @@ interface UpdateBlogDialogProps {
   blog: IBlog;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function UpdateBlogDialog({
   blog,
   open,
   onOpenChange,
+  onSuccess,
 }: UpdateBlogDialogProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -75,6 +77,7 @@ export function UpdateBlogDialog({
       if (result.success) {
         toast.success("Success!Blog created successfully.");
         onOpenChange(false);
+        if (onSuccess) onSuccess();
         router.refresh();
 
         // Reset file selection

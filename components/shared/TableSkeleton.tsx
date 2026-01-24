@@ -1,3 +1,5 @@
+"use client";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -8,52 +10,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface TableSkeletonProps {
-  columns: number;
-  rows?: number;
-  showActions?: boolean;
-}
-
-export function TableSkeleton({
-  columns = 6,
-  rows = 10,
-  showActions = true,
-}: TableSkeletonProps) {
+export function TableSkeleton({ rowCount = 5, columnCount = 5 }: { rowCount?: number; columnCount?: number }) {
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-md border border-blue-50 bg-white">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-blue-50/50">
           <TableRow>
-            {[...Array(columns)].map((_, i) => (
+            {Array.from({ length: columnCount }).map((_, i) => (
               <TableHead key={i}>
-                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-24" />
               </TableHead>
             ))}
-            {showActions && (
-              <TableHead className="w-[70px]">
-                <Skeleton className="h-4 w-full" />
-              </TableHead>
-            )}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {[...Array(rows)].map((_, rowIndex) => (
+          {Array.from({ length: rowCount }).map((_, rowIndex) => (
             <TableRow key={rowIndex}>
-              {[...Array(columns)].map((_, colIndex) => (
+              {Array.from({ length: columnCount }).map((_, colIndex) => (
                 <TableCell key={colIndex}>
-                  <div className="flex items-center gap-2">
-                    {colIndex === 0 && (
-                      <Skeleton className="h-10 w-10 rounded-full" />
-                    )}
-                    <Skeleton className="h-4 w-full" />
-                  </div>
+                  <Skeleton className="h-4 w-full" />
                 </TableCell>
               ))}
-              {showActions && (
-                <TableCell>
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                </TableCell>
-              )}
             </TableRow>
           ))}
         </TableBody>

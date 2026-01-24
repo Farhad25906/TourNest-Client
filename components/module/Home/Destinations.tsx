@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { UsersIcon, TrendingUpIcon } from 'lucide-react'
 import Image from 'next/image'
+import { SectionHeading } from '@/components/ui/SectionHeading'
 
 const destinations = [
   {
@@ -60,22 +61,11 @@ export function Destinations() {
   return (
     <section ref={ref} className="py-24 bg-blue-50">
       <div className="max-w-7xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block px-4 py-2 rounded-full bg-white text-blue-600 text-sm font-medium mb-4 shadow-sm">
-            Popular Destinations
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Explore Amazing Places
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover trending destinations with expert-hosted tours from around the world
-          </p>
-        </motion.div>
+        <SectionHeading
+          badge="Popular Destinations"
+          title="Explore Amazing Places"
+          subtitle="Discover trending destinations with expert-hosted tours from around the world"
+        />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {destinations.map((destination, index) => (
@@ -97,7 +87,7 @@ export function Destinations() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
                 {destination.trending && (
-                  <div className="absolute top-4 left-4 flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-medium shadow-lg">
+                  <div className="absolute top-4 left-4 flex items-center gap-1 px-3 py-1 rounded-full bg-[#138bc9] text-white text-xs font-medium shadow-lg">
                     <TrendingUpIcon className="w-3 h-3" />
                     Trending
                   </div>
@@ -125,7 +115,7 @@ export function Destinations() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="text-center mt-12"
         >
-          <button className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors duration-300 shadow-lg hover:shadow-xl">
+          <button className="px-8 py-4 bg-[#138bc9] text-white font-semibold rounded-full hover:bg-[#138bc9]/90 transition-colors duration-300 shadow-lg hover:shadow-xl">
             Explore All Destinations
           </button>
         </motion.div>

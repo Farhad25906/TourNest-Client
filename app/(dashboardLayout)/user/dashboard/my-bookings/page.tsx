@@ -27,7 +27,7 @@ async function BookingsContent() {
       </div>
 
       {stats && <BookingStats stats={stats} />}
-      
+
       <Card>
         <CardHeader>
           <CardTitle>All Bookings</CardTitle>
@@ -47,7 +47,7 @@ async function BookingsContent() {
 export default function MyBookingsPage() {
   return (
     <div className="container mx-auto py-6">
-      <Suspense fallback={<TableSkeleton columns={7} rows={10} />}>
+      <Suspense fallback={<TableSkeleton columnCount={7} rowCount={10} />}>
         <BookingsContent />
       </Suspense>
     </div>

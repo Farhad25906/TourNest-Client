@@ -1,4 +1,3 @@
-// components/module/Booking/MyBookingsTable.tsx
 "use client";
 
 import { useState } from "react";
@@ -27,21 +26,20 @@ import {
   MoreHorizontal,
   Eye,
   Edit,
-  Trash2,
-  Calendar,
   MapPin,
+  Calendar,
   Users,
-  DollarSign,
-  Clock,
-  CheckCircle,
-  XCircle,
-  FileText,
   CreditCard,
   Star,
+  XCircle,
+  Clock,
+  CheckCircle,
+  FileText
 } from "lucide-react";
 import Image from "next/image";
 import { IBooking } from "@/types/booking.interface";
 import { cancelBooking } from "@/services/booking.service";
+import { cn } from "@/lib/utils";
 import PaymentDialog from "./PaymentDialog";
 import UpdateBookingDialog from "./UpdateBookingDialog";
 import CancelBookingDialog from "./CancelBookingDialog";
@@ -58,146 +56,59 @@ export function MyBookingsTable({ bookings = [] }: MyBookingsTableProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const handleViewTour = (booking: IBooking) => {
-    if (booking.tour?.id) {
-      router.push(`/tour/${booking.tour.id}`);
-    }
-  };
-
-  const handleViewDetails = (booking: IBooking) => {
-    router.push(`/user/dashboard/bookings/${booking.id}`);
-  };
-
-  const handleCancel = (booking: IBooking) => {
-    setCancellingBooking(booking);
-  };
-
-  const handleUpdate = (booking: IBooking) => {
-    setUpdatingBooking(booking);
-  };
-
-  const handleMakePayment = (booking: IBooking) => {
-    setPayingBooking(booking);
-  };
-
-  const handleLeaveReview = (booking: IBooking) => {
-    if (booking.status === 'COMPLETED' && !booking.isReviewed) {
-      router.push(`/reviews/create?bookingId=${booking.id}&tourId=${booking.tourId}`);
-    }
+    if (booking.tour?.id) router.push(`/tour/${booking.tour.id}`);
   };
 
   const handleConfirmCancel = async () => {
     if (!cancellingBooking) return;
-
     setIsLoading(cancellingBooking.id);
     try {
       const result = await cancelBooking(cancellingBooking.id);
-      
       if (result.success) {
-        toast.success("Booking cancelled successfully!");
+        toast.success("Expedition withdrawal successful");
         setCancellingBooking(null);
         router.refresh();
       } else {
-        toast.error(result.message || "Failed to cancel booking");
+        toast.error(result.message || "Withdrawal protocol failed");
       }
     } catch (error) {
-      console.error("Cancel booking error:", error);
-      toast.error("Failed to cancel booking");
+      toast.error("Critial system error during cancellation");
     } finally {
       setIsLoading(null);
     }
   };
 
-  // Check if booking can be paid
-  const canMakePayment = (booking: IBooking) => {
-    return booking.paymentStatus === 'PENDING' && 
-           (booking.status === 'PENDING' || booking.status === 'CONFIRMED');
-  };
-
-  const getStatusBadge = (status: IBooking['status']) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Confirmed</Badge>;
-      case 'PENDING':
-        return <Badge variant="outline" className="text-amber-600 border-amber-300">Pending</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Cancelled</Badge>;
-      case 'COMPLETED':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Completed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const getPaymentStatusBadge = (status: IBooking['paymentStatus']) => {
-    switch (status) {
-      case 'PAID':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>;
-      case 'PENDING':
-        return <Badge variant="outline" className="text-amber-600 border-amber-300">Pending</Badge>;
-      case 'FAILED':
-        return <Badge variant="destructive">Failed</Badge>;
-      case 'REFUNDED':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Refunded</Badge>;
-      case 'CANCELLED':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-800">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const canCancel = (booking: IBooking) => {
-    if (booking.status !== 'CONFIRMED' && booking.status !== 'PENDING') {
-      return false;
-    }
-    
-    if (booking.paymentStatus === 'PAID') {
-      const tourStartDate = booking.tour?.startDate ? new Date(booking.tour.startDate) : null;
-      if (!tourStartDate) return false;
-      
-      const now = new Date();
-      const daysUntilTour = Math.ceil((tourStartDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      return daysUntilTour >= 7;
-    }
-    
-    return true;
-  };
-
-  const canUpdate = (booking: IBooking) => {
-    return booking.status === 'PENDING' || booking.status === 'CONFIRMED';
-  };
-
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return "N/A";
+    }
   };
 
   if (bookings.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-10">
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-              <Calendar className="h-12 w-12 text-muted-foreground" />
+      <Card className="border-none shadow-sm bg-gray-50/50">
+        <CardContent className="py-20">
+          <div className="text-center space-y-6">
+            <div className="mx-auto w-24 h-24 rounded-[30px] bg-white shadow-sm flex items-center justify-center border border-gray-100">
+              <Calendar className="h-10 w-10 text-gray-300" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">No bookings yet</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Start by booking your first tour to begin your adventure
+            <div className="max-w-xs mx-auto">
+              <h3 className="text-xl font-black text-gray-900">No active passports</h3>
+              <p className="text-sm font-medium text-gray-500 mt-2 uppercase tracking-tight">
+                Your journey hasn't started yet. Initialize your first expedition to see it here.
               </p>
             </div>
-            <Button onClick={() => router.push("/tours")}>
-              Browse Tours
+            <Button
+              onClick={() => router.push("/tours")}
+              className="bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-bold rounded-2xl px-10 h-12 shadow-lg shadow-[#138bc9]/20 transition-all duration-300 hover:scale-105"
+            >
+              Explore Horizon
             </Button>
           </div>
         </CardContent>
@@ -207,144 +118,139 @@ export function MyBookingsTable({ bookings = [] }: MyBookingsTableProps) {
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-[30px] border border-gray-100 overflow-hidden bg-white shadow-sm">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">Tour Details</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>People</TableHead>
-              <TableHead>Booking Date</TableHead>
-              <TableHead>Tour Dates</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          <TableHeader className="bg-gray-50/50">
+            <TableRow className="hover:bg-transparent border-gray-50">
+              <TableHead className="font-black text-[10px] text-gray-400 uppercase tracking-widest py-5 pl-8">Expedition</TableHead>
+              <TableHead className="font-black text-[10px] text-gray-400 uppercase tracking-widest py-5">Status</TableHead>
+              <TableHead className="font-black text-[10px] text-gray-400 uppercase tracking-widest py-5">Settlement</TableHead>
+              <th className="font-black text-[10px] text-gray-400 uppercase tracking-widest py-5 text-left">Passengers</th>
+              <TableHead className="font-black text-[10px] text-gray-400 uppercase tracking-widest py-5">Launch Date</TableHead>
+              <TableHead className="font-black text-[10px] text-gray-400 uppercase tracking-widest py-5 text-right pr-8">Management</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {bookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-16 w-24 rounded-md overflow-hidden">
-                      {booking.tour?.images && booking.tour.images.length > 0 ? (
+              <TableRow key={booking.id} className="hover:bg-gray-50/30 transition-all duration-300 group border-gray-50">
+                <TableCell className="py-5 pl-8">
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-14 w-20 rounded-2xl overflow-hidden shadow-sm shrink-0 group-hover:scale-105 transition-transform duration-300">
+                      {booking.tour?.images?.length ? (
                         <Image
                           src={booking.tour.images[0]}
                           alt={booking.tour.title}
                           fill
                           className="object-cover"
-                          sizes="(max-width: 96px) 100vw, 96px"
                         />
                       ) : (
-                        <div className="h-full w-full bg-muted flex items-center justify-center">
-                          <MapPin className="h-6 w-6 text-muted-foreground" />
+                        <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-300">
+                          <MapPin className="h-5 w-5" />
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium line-clamp-1">
-                        {booking.tour?.title || "Tour not found"}
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-gray-900 text-sm line-clamp-1 group-hover:text-[#138bc9] transition-colors">
+                        {booking.tour?.title || "Unknown Expedition"}
                       </h4>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
-                        <span className="line-clamp-1">
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <MapPin className="h-3 w-3 text-[#138bc9]" />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase truncate">
                           {booking.tour?.destination}, {booking.tour?.city}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Host: {booking.tour?.host?.name || "Unknown"}
-                      </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  {getStatusBadge(booking.status)}
+                  <Badge className={cn(
+                    "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
+                    booking.status === 'CONFIRMED' ? "bg-emerald-50 text-emerald-600" :
+                      booking.status === 'PENDING' ? "bg-amber-50 text-amber-600" :
+                        booking.status === 'COMPLETED' ? "bg-blue-50 text-blue-600" :
+                          "bg-gray-100 text-gray-500"
+                  )}>
+                    {booking.status}
+                  </Badge>
                 </TableCell>
                 <TableCell>
-                  {getPaymentStatusBadge(booking.paymentStatus)}
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    {formatCurrency(booking.totalAmount)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{booking.numberOfPeople}</span>
-                  </div>
-                  {booking.specialRequests && (
-                    <div className="text-xs text-muted-foreground mt-1 truncate" title={booking.specialRequests}>
-                      <FileText className="h-3 w-3 inline mr-1" />
-                      Has notes
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    {formatDate(booking.bookingDate)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {booking.tour?.startDate
-                        ? formatDate(booking.tour.startDate)
-                        : "N/A"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      to {booking.tour?.endDate
-                        ? formatDate(booking.tour.endDate)
-                        : "N/A"}
+                  <div className="space-y-1.5">
+                    <Badge variant="outline" className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[8px] font-black uppercase tracking-tighter border-none",
+                      booking.paymentStatus === 'PAID' ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-400"
+                    )}>
+                      {booking.paymentStatus}
+                    </Badge>
+                    <div className="font-black text-gray-900 text-sm ml-1">
+                      ${booking.totalAmount}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <span className="font-black text-gray-900 text-sm">{booking.numberOfPeople}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 uppercase tracking-tighter">
+                      <Calendar className="h-3 w-3 text-[#138bc9]" />
+                      {formatDate(booking.tour?.startDate || "")}
+                    </div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Departure</p>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right pr-8">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" className="h-9 w-9 p-0 rounded-xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-all duration-300">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleViewTour(booking)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Tour
+                    <DropdownMenuContent align="end" className="w-56 rounded-2xl border-gray-100 shadow-xl p-2 font-bold">
+                      <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 py-2">Management</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-gray-50" />
+                      <DropdownMenuItem onClick={() => handleViewTour(booking)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                        <Eye className="h-4 w-4 mr-3" />
+                        <span className="text-sm">Public View</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleViewDetails(booking)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Details
+                      <DropdownMenuItem onClick={() => router.push(`/user/dashboard/bookings/${booking.id}`)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                        <FileText className="h-4 w-4 mr-3" />
+                        <span className="text-sm">Reservation Details</span>
                       </DropdownMenuItem>
-                      {canUpdate(booking) && (
-                        <DropdownMenuItem onClick={() => handleUpdate(booking)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Update Booking
+
+                      {booking.status === 'PENDING' && (
+                        <DropdownMenuItem onClick={() => setUpdatingBooking(booking)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                          <Edit className="h-4 w-4 mr-3" />
+                          <span className="text-sm">Modify Request</span>
                         </DropdownMenuItem>
                       )}
-                      {canMakePayment(booking) && (
-                        <DropdownMenuItem onClick={() => handleMakePayment(booking)}>
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Make Payment
+
+                      {booking.paymentStatus === 'PENDING' && (
+                        <DropdownMenuItem onClick={() => setPayingBooking(booking)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9] text-[#138bc9]">
+                          <CreditCard className="h-4 w-4 mr-3" />
+                          <span className="text-sm">Finalize Settlement</span>
                         </DropdownMenuItem>
                       )}
+
                       {booking.status === 'COMPLETED' && !booking.isReviewed && (
-                        <DropdownMenuItem onClick={() => handleLeaveReview(booking)}>
-                          <Star className="h-4 w-4 mr-2" />
-                          Leave Review
+                        <DropdownMenuItem onClick={() => router.push(`/reviews/create?bookingId=${booking.id}&tourId=${booking.tourId}`)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-amber-50 focus:text-amber-500">
+                          <Star className="h-4 w-4 mr-3" />
+                          <span className="text-sm">Post Feedback</span>
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuSeparator />
-                      {canCancel(booking) && (
-                        <DropdownMenuItem 
-                          onClick={() => handleCancel(booking)}
-                          className="text-amber-600 focus:text-amber-600"
+
+                      <DropdownMenuSeparator className="bg-gray-50" />
+                      {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                        <DropdownMenuItem
+                          onClick={() => setCancellingBooking(booking)}
+                          className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-red-50 focus:text-red-600 text-red-500"
                         >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Cancel Booking
+                          <XCircle className="h-4 w-4 mr-3" />
+                          <span className="text-sm">Cancel Invitation</span>
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
@@ -356,7 +262,6 @@ export function MyBookingsTable({ bookings = [] }: MyBookingsTableProps) {
         </Table>
       </div>
 
-      {/* Cancel Booking Dialog */}
       {cancellingBooking && (
         <CancelBookingDialog
           booking={cancellingBooking}
@@ -367,7 +272,6 @@ export function MyBookingsTable({ bookings = [] }: MyBookingsTableProps) {
         />
       )}
 
-      {/* Update Booking Dialog */}
       {updatingBooking && (
         <UpdateBookingDialog
           booking={updatingBooking}
@@ -376,7 +280,6 @@ export function MyBookingsTable({ bookings = [] }: MyBookingsTableProps) {
         />
       )}
 
-      {/* Payment Dialog */}
       {payingBooking && (
         <PaymentDialog
           booking={payingBooking}

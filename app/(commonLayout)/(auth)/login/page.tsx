@@ -1,6 +1,8 @@
 "use client";
 
 import LoginForm from "@/components/module/Auth/login-form";
+import { Compass } from "lucide-react";
+import Link from "next/link";
 
 const LoginPage = async ({
   searchParams,
@@ -9,15 +11,29 @@ const LoginPage = async ({
 }) => {
   const params = (await searchParams) || {};
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-6 rounded-lg border p-8 shadow-lg">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Welcome Back</h1>
-          <p className="text-gray-500">
-            Enter your credentials to access your account
-          </p>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-[#138bc9]/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-blue-50 rounded-full blur-3xl" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <Link href="/" className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-[#138bc9] rounded-2xl flex items-center justify-center shadow-lg shadow-[#138bc9]/20 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+            <Compass className="w-10 h-10 text-white" />
+          </div>
+        </Link>
+        <h2 className="text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+          Welcome back
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Sign in to your account to continue your journey
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 sm:rounded-3xl sm:px-10 border border-gray-100">
+          <LoginForm redirect={params.redirect} />
         </div>
-        <LoginForm redirect={params.redirect} />
       </div>
     </div>
   );

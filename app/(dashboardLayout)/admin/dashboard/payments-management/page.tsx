@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  getAllPayments,
-} from "@/services/payment.service";
+import { getAllPayments } from "@/services/payment.service";
 import {
   Search,
   Filter,
@@ -13,519 +10,212 @@ import {
   Eye,
   DollarSign,
   TrendingUp,
-  BarChart3,
+  Activity,
   CreditCard,
+  Briefcase,
+  ShieldCheck,
+  UserCircle,
+  Clock,
+  ChevronRight,
+  ArrowUpRight,
+  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/date-utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { cn } from "@/lib/utils";
 
-interface Payment {
-  id: string;
-  amount: number;
-  currency: string;
-  paymentMethod: string;
-  status: string;
-  transactionId?: string;
-  description?: string;
-  paidAt?: Date;
-  createdAt: Date;
-  user?: {
-    id: string;
-    email: string;
-    tourist?: {
-      name: string;
-      profilePhoto?: string;
-    };
-  };
-  booking?: {
-    id: string;
-    tour?: {
-      title: string;
-      destination: string;
-      host?: {
-        name: string;
-      };
-    };
-  };
-}
 const PAYMENT_STATUS_OPTIONS = [
-  { value: "PENDING", label: "Pending", color: "yellow" },
-  { value: "PROCESSING", label: "Processing", color: "blue" },
-  { value: "COMPLETED", label: "Completed", color: "green" },
-  { value: "FAILED", label: "Failed", color: "red" },
-  { value: "CANCELLED", label: "Cancelled", color: "gray" },
-  { value: "REFUNDED", label: "Refunded", color: "orange" },
+  { value: "COMPLETED", label: "Settled", color: "bg-emerald-50 text-emerald-600" },
+  { value: "PENDING", label: "In Pipeline", color: "bg-amber-50 text-amber-600" },
+  { value: "FAILED", label: "Rejected", color: "bg-rose-50 text-rose-600" },
+  { value: "REFUNDED", label: "Returned", color: "bg-purple-50 text-purple-600" },
 ];
 
-const PAYMENT_METHOD_OPTIONS = [
-  { value: "card", label: "Card" },
-  { value: "cash", label: "Cash" },
-  { value: "bkash", label: "Bkash" },
-];
 export default function AdminPaymentsManagement() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalAmount: 0,
-    totalTransactions: 0,
-    statusCounts: {} as Record<string, number>,
-  });
-  const [filters, setFilters] = useState({
-    page: 1,
-    limit: 10,
-    searchTerm: "",
-    status: "",
-    paymentMethod: "",
-    sortBy: "createdAt",
-    sortOrder: "desc" as "asc" | "desc",
-  });
-  const [meta, setMeta] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
+  const [stats, setStats] = useState({ totalAmount: 0, totalTransactions: 0, statusCounts: {} as any });
+  const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    fetchPayments();
-  }, [filters]);
-  function formatCurrency(amount: number, currency: string = "USD"): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
-  }
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await getAllPayments();
-
-      if (response.success) {
-        setPayments(response.data?.payments || []);
-        setStats(
-          response.data?.stats || {
-            totalAmount: 0,
-            totalTransactions: 0,
-            statusCounts: {},
-          }
-        );
-        // setMeta(
-        //   response.meta || { page: 1, limit: 10, total: 0, totalPages: 0 }
-        // );
-      } else {
-        toast.error(response.message || "Failed to fetch payments");
+      const res = await getAllPayments();
+      if (res.success) {
+        setPayments(res.data?.payments || []);
+        setStats(res.data?.stats || { totalAmount: 0, totalTransactions: 0, statusCounts: {} });
       }
-    } catch (error) {
-      toast.error("Failed to load payments");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  const handleFilterChange = (key: string, value: any) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
-  };
+  useEffect(() => { fetchPayments(); }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchPayments();
-  };
+  const formatCurrency = (amt: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amt);
 
-  const handleRefresh = () => {
-    fetchPayments();
-  };
+  const filteredPayments = payments.filter(p =>
+    p.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.booking?.tour?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const exportToCSV = () => {
-    // Implement CSV export logic
-    toast.info("Export feature coming soon");
-  };
-
-  const getStatusColor = (status: string) => {
-    const statusOption = PAYMENT_STATUS_OPTIONS.find((s) => s.value === status);
-    switch (statusOption?.color) {
-      case "green":
-        return "bg-green-100 text-green-800";
-      case "red":
-        return "bg-red-100 text-red-800";
-      case "yellow":
-        return "bg-yellow-100 text-yellow-800";
-      case "blue":
-        return "bg-blue-100 text-blue-800";
-      case "orange":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  if (loading && payments.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-gray-50 animate-pulse rounded-[30px]" />)}
+        </div>
+        <TableSkeleton columnCount={8} rowCount={10} />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Payments Management
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Manage and monitor all payment transactions
+    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900">Financial Terminal</h1>
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
+            Global settlement oversight and revenue analytics
           </p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Download size={18} />
-            Export CSV
-          </button>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <RefreshCw size={18} />
-            Refresh
-          </button>
+        <div className="flex gap-2">
+          <Button onClick={fetchPayments} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-gray-50">
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            Sync Pipeline
+          </Button>
+          <Button variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-gray-50">
+            <Download className="h-4 w-4" />
+            Export Ledger
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Revenue</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {formatCurrency(stats.totalAmount)}
-              </h3>
-            </div>
-            <DollarSign className="text-green-500" size={32} />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Transactions</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {stats.totalTransactions}
-              </h3>
-            </div>
-            <CreditCard className="text-blue-500" size={32} />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Success Rate</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {stats.totalTransactions > 0
-                  ? `${Math.round(
-                      ((stats.statusCounts?.COMPLETED || 0) /
-                        stats.totalTransactions) *
-                        100
-                    )}%`
-                  : "0%"}
-              </h3>
-            </div>
-            <TrendingUp className="text-green-500" size={32} />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Avg. Transaction</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {stats.totalTransactions > 0
-                  ? formatCurrency(stats.totalAmount / stats.totalTransactions)
-                  : "$0.00"}
-              </h3>
-            </div>
-            <BarChart3 className="text-purple-500" size={32} />
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <form onSubmit={handleSearch} className="flex-1">
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-              <input
-                type="text"
-                placeholder="Search payments by transaction ID, user email, or tour..."
-                value={filters.searchTerm}
-                onChange={(e) =>
-                  handleFilterChange("searchTerm", e.target.value)
-                }
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </form>
-
-          <div className="flex gap-4">
-            <div className="min-w-[150px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">All Status</option>
-                {PAYMENT_STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="min-w-[150px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Method
-              </label>
-              <select
-                value={filters.paymentMethod}
-                onChange={(e) =>
-                  handleFilterChange("paymentMethod", e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">All Methods</option>
-                {PAYMENT_METHOD_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="min-w-[150px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
-              </label>
-              <select
-                value={filters.sortBy}
-                onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="createdAt">Date Created</option>
-                <option value="paidAt">Date Paid</option>
-                <option value="amount">Amount</option>
-              </select>
-            </div>
-
-            <div className="min-w-[100px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Order
-              </label>
-              <select
-                value={filters.sortOrder}
-                onChange={(e) =>
-                  handleFilterChange("sortOrder", e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              onClick={handleSearch}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <Filter size={18} />
-              Apply
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Payments Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : payments.length === 0 ? (
-          <div className="text-center py-12">
-            <CreditCard className="mx-auto text-gray-400" size={48} />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              No payments found
-            </h3>
-            <p className="mt-2 text-gray-500">
-              Try adjusting your filters or check back later.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Transaction
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tour & Host
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Method
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {payment.transactionId || "N/A"}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {payment.id}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {payment.user?.tourist?.name || "Unknown User"}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {payment.user?.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {payment.booking?.tour?.title || "N/A"}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Host:{" "}
-                            {payment.booking?.tour?.host?.name || "Unknown"}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900">
-                          {formatCurrency(payment.amount, payment.currency)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                          {PAYMENT_METHOD_OPTIONS.find(
-                            (m) => m.value === payment.paymentMethod
-                          )?.label || payment.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                            payment.status
-                          )}`}
-                        >
-                          {PAYMENT_STATUS_OPTIONS.find(
-                            (s) => s.value === payment.status
-                          )?.label || payment.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {payment.paidAt ? (
-                          <div>
-                            <div>Paid: {formatDate(payment.paidAt)}</div>
-                            <div>Created: {formatDate(payment.createdAt)}</div>
-                          </div>
-                        ) : (
-                          formatDate(payment.createdAt)
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() =>
-                            toast.info("View details feature coming soon")
-                          }
-                          className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
-                        >
-                          <Eye size={16} />
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {meta.totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    Showing{" "}
-                    <span className="font-medium">
-                      {(meta.page - 1) * meta.limit + 1}
-                    </span>{" "}
-                    to{" "}
-                    <span className="font-medium">
-                      {Math.min(meta.page * meta.limit, meta.total)}
-                    </span>{" "}
-                    of <span className="font-medium">{meta.total}</span> results
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleFilterChange("page", meta.page - 1)}
-                      disabled={meta.page === 1}
-                      className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      Previous
-                    </button>
-                    <div className="flex items-center">
-                      <span className="px-3 py-1">
-                        Page {meta.page} of {meta.totalPages}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleFilterChange("page", meta.page + 1)}
-                      disabled={meta.page === meta.totalPages}
-                      className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      Next
-                    </button>
-                  </div>
+      {/* Finance Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {[
+          { label: "Gross Settlement", value: formatCurrency(stats.totalAmount), sub: "Total network revenue", icon: DollarSign, color: "text-white", bg: "bg-[#138bc9]", primary: true },
+          { label: "Clearing volume", value: stats.totalTransactions, sub: "Processed transactions", icon: Activity, iconRef: Activity, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Protocol Integrity", value: `${Math.round(((stats.statusCounts?.COMPLETED || 0) / (stats.totalTransactions || 1)) * 100)}%`, sub: "Success velocity", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Median Payload", value: formatCurrency(stats.totalTransactions > 0 ? stats.totalAmount / stats.totalTransactions : 0), sub: "Avg. ticket value", icon: Sparkles, color: "text-purple-600", bg: "bg-purple-50" }
+        ].map((item, i) => (
+          <Card key={i} className={cn("border-none shadow-sm overflow-hidden group transition-all duration-300 hover:shadow-md", item.primary ? item.bg : "bg-white")}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn("text-[10px] font-black uppercase tracking-widest mb-1", item.primary ? "text-white/70" : "text-gray-400")}>{item.label}</p>
+                  <h3 className={cn("text-2xl font-black leading-none", item.primary ? "text-white" : "text-gray-900")}>{item.value}</h3>
+                  <p className={cn("text-[9px] font-bold uppercase tracking-tighter mt-2", item.primary ? "text-white/60" : "text-gray-400")}>{item.sub}</p>
+                </div>
+                <div className={cn("p-3 rounded-xl transition-all duration-300 group-hover:scale-110", item.primary ? "bg-white/20 text-white" : cn(item.bg, item.color))}>
+                  {(item.iconRef ? <item.iconRef className="h-5 w-5" /> : <item.icon className="h-5 w-5" />)}
                 </div>
               </div>
-            )}
-          </>
-        )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-[30px] border border-gray-100 p-2 shadow-sm">
+        <div className="p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Audit by transaction HASH, email or tour..."
+              className="pl-12 rounded-2xl border-none bg-gray-50/50 h-14 font-medium focus-visible:ring-[#138bc9]/20"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="h-10 px-4 rounded-xl border-gray-100 font-bold text-gray-400 uppercase text-[10px] tracking-widest">
+              {filteredPayments.length} Transactions Registry
+            </Badge>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50/50 border-y border-gray-50 text-gray-400">
+              <tr>
+                <th className="px-8 py-5 text-left font-black text-[10px] uppercase tracking-widest pl-10">Settlement Identifier</th>
+                <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Global Scout</th>
+                <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Expedition Journey</th>
+                <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Payload</th>
+                <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Gateway</th>
+                <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Status</th>
+                <th className="px-8 py-5 text-right font-black text-[10px] uppercase tracking-widest pr-10">Ops</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredPayments.length > 0 ? (
+                filteredPayments.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50/30 transition-all group">
+                    <td className="px-8 py-5 pl-10">
+                      <p className="text-[11px] font-mono font-black text-gray-400 uppercase">{p.transactionId || "INTERNAL"}</p>
+                      <p className="text-[8px] font-bold text-gray-300 uppercase tracking-tighter mt-0.5">UID_{p.id.slice(0, 8)}</p>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                          <UserCircle className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-gray-800 uppercase tracking-tighter truncate max-w-[120px]">{p.user?.tourist?.name || "Member"}</p>
+                          <p className="text-[8px] font-bold text-gray-400 lowercase">{p.user?.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="min-w-0">
+                        <p className="text-xs font-black text-gray-900 line-clamp-1 group-hover:text-[#138bc9] transition-colors">{p.booking?.tour?.title || "Registry Sync"}</p>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest italic">Host: {p.booking?.tour?.host?.name || "System"}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <p className="text-sm font-black text-gray-900">{formatCurrency(p.amount)}</p>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase">Settled</p>
+                    </td>
+                    <td className="px-6 py-5">
+                      <Badge variant="outline" className="px-2 py-0 rounded-md text-[8px] font-black uppercase bg-blue-50 border-blue-100 text-[#138bc9]">
+                        {p.paymentMethod}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-5">
+                      <Badge className={cn(
+                        "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none shadow-none",
+                        PAYMENT_STATUS_OPTIONS.find(s => s.value === p.status)?.color || "bg-gray-100 text-gray-500"
+                      )}>
+                        {p.status}
+                      </Badge>
+                    </td>
+                    <td className="px-8 py-5 text-right pr-10">
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-[#138bc9]/10 transition-all text-gray-400 hover:text-[#138bc9]">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="h-16 w-16 rounded-[25px] bg-gray-50 flex items-center justify-center text-gray-200">
+                        <DollarSign className="h-8 w-8" />
+                      </div>
+                      <p className="text-sm font-black text-gray-400 uppercase tracking-widest">No matching payloads identified</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-// app/(dashboardLayout)/admin/dashboard/users-management/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +11,37 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { UserInfo } from "@/types/user.interface";
 import Image from "next/image";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import {
+  Users,
+  Search,
+  UserPlus,
+  Filter,
+  MoreHorizontal,
+  ShieldCheck,
+  ShieldAlert,
+  Trash2,
+  Eye,
+  RefreshCw,
+  UserCircle,
+  Mail,
+  Calendar,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function UsersManagementPage() {
   const router = useRouter();
@@ -23,7 +53,6 @@ export default function UsersManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch users
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -39,591 +68,249 @@ export default function UsersManagementPage() {
 
       if (response.success && response.data) {
         setUsers(response.data);
-        // Note: You might need to adjust this based on your API response structure
-        if (response.data.meta) {
-          setTotalPages(
-            Math.ceil(response.data.meta.total / response.data.meta.limit)
-          );
-        }
-      } else {
-        toast.error(response.message || "Failed to fetch users");
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
+      toast.error("Failed to sync identity registry");
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial fetch
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, statusFilter, roleFilter]);
+  useEffect(() => { fetchUsers(); }, [currentPage, statusFilter, roleFilter]);
 
-  // Handle search
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchUsers();
-      } else {
-        setCurrentPage(1);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
+    const timer = setTimeout(() => { if (currentPage === 1) fetchUsers(); else setCurrentPage(1); }, 500);
+    return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Handle delete user
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${userName}? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
+  const handleDeleteUser = async (user: UserInfo) => {
+    if (!confirm(`Redact user identity: ${user.name}? This protocol is irreversible.`)) return;
     try {
-      const response = await deleteUser(userId);
-
-      if (response.success) {
-        toast.success(response.message || "User deleted successfully!");
-        fetchUsers(); // Refresh the list
-      } else {
-        toast.error(response.message || "Failed to delete user");
-      }
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Failed to delete user");
-    }
+      const res = await deleteUser(user.id);
+      if (res.success) { toast.success("Identity purged"); fetchUsers(); }
+    } catch (error) { toast.error("Purge failure"); }
   };
 
-  // Handle status change
-  const handleStatusChange = async (
-    userId: string,
-    newStatus: string,
-    userName: string
-  ) => {
+  const handleStatusChange = async (user: UserInfo, newStatus: string) => {
     try {
-      const response = await updateUserStatus(userId, newStatus);
-
-      if (response.success) {
-        toast.success(`${userName}'s status updated to ${newStatus}`);
-        fetchUsers(); // Refresh the list
-      } else {
-        toast.error(response.message || "Failed to update status");
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
-    }
+      const res = await updateUserStatus(user.id, newStatus);
+      if (res.success) { toast.success(`Protocol updated to ${newStatus}`); fetchUsers(); }
+    } catch (error) { toast.error("Status update failure"); }
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const formatDate = (d: any) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "N/A";
 
-  // Get status badge color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800";
-      case "SUSPENDED":
-        return "bg-yellow-100 text-yellow-800";
-      case "INACTIVE":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  // Get role badge color
-  const getRoleColor = (role: string) => {
+  const getRoleBadge = (role: string) => {
     switch (role) {
-      case "ADMIN":
-        return "bg-purple-100 text-purple-800";
-      case "HOST":
-        return "bg-blue-100 text-blue-800";
-      case "TOURIST":
-        return "bg-indigo-100 text-indigo-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case 'ADMIN': return <Badge className="bg-purple-50 text-purple-600 border-none px-2 rounded-lg font-black text-[9px] uppercase tracking-tighter">System Admin</Badge>;
+      case 'HOST': return <Badge className="bg-blue-50 text-[#138bc9] border-none px-2 rounded-lg font-black text-[9px] uppercase tracking-tighter">Certified Host</Badge>;
+      default: return <Badge className="bg-emerald-50 text-emerald-600 border-none px-2 rounded-lg font-black text-[9px] uppercase tracking-tighter">Tourist</Badge>;
     }
   };
+
+  if (loading && users.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex flex-col gap-2">
+          <div className="h-10 w-64 bg-gray-100 animate-pulse rounded-2xl" />
+          <div className="h-5 w-96 bg-gray-50 animate-pulse rounded-xl" />
+        </div>
+        <TableSkeleton columnCount={6} rowCount={10} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Users Management
-              </h1>
-              <p className="mt-2 text-gray-600">
-                Manage all users, hosts, and administrators in the system.
-              </p>
-            </div>
-            <div className="flex space-x-4">
-              <Link
-                href="/admin/dashboard/hosts-management"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Create Host
-              </Link>
-            </div>
-          </div>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900">Identity Control</h1>
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <Users className="h-4 w-4 text-[#138bc9]" />
+            Manage permissions and access for global explorers
+          </p>
         </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search Users
-              </label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Search by email or name..."
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              >
-                <option value="">All Status</option>
-                <option value="ACTIVE">Active</option>
-                <option value="SUSPENDED">Suspended</option>
-                <option value="INACTIVE">Inactive</option>
-              </select>
-            </div>
-
-            {/* Role Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Role
-              </label>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              >
-                <option value="">All Roles</option>
-                <option value="ADMIN">Admin</option>
-                <option value="HOST">Host</option>
-                <option value="TOURIST">Tourist</option>
-              </select>
-            </div>
-
-            {/* Refresh Button */}
-            <div className="flex items-end">
-              <button
-                onClick={fetchUsers}
-                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
+        <div className="flex gap-2">
+          <Button onClick={fetchUsers} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-gray-50">
+            <RefreshCw className="h-4 w-4" />
+            Sync
+          </Button>
+          <Link href="/admin/dashboard/hosts-management">
+            <Button className="rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 font-black gap-2 shadow-lg shadow-[#138bc9]/20 uppercase tracking-widest text-[10px] h-11 px-6">
+              <UserPlus className="h-4 w-4" />
+              Authorize Host
+            </Button>
+          </Link>
         </div>
+      </div>
 
-        {/* Users Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="mt-2 text-gray-600">Loading users...</p>
-            </div>
-          ) : users.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-600">No users found.</p>
-            </div>
-          ) : (
-            <>
-              {/* Desktop Table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map((user) => {
-                      const profilePhoto =
-                        user.host?.profilePhoto ??
-                        user.admin?.profilePhoto ??
-                        user.tourist?.profilePhoto ??
-                        undefined;
+      {/* Filters Hub */}
+      <div className="bg-white rounded-[30px] border border-gray-100 p-2 shadow-sm flex flex-col md:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Identify by name, email or hash..."
+            className="pl-12 rounded-2xl border-none bg-gray-50/50 h-14 font-medium focus-visible:ring-[#138bc9]/20"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2 p-1">
+          <select
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+            className="bg-gray-50 border-none rounded-2xl px-4 text-xs font-black uppercase tracking-widest text-gray-500 appearance-none focus:ring-2 focus:ring-[#138bc9]/20"
+          >
+            <option value="">All Ranks</option>
+            <option value="ADMIN">Admins</option>
+            <option value="HOST">Hosts</option>
+            <option value="TOURIST">Tourists</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className="bg-gray-50 border-none rounded-2xl px-4 text-xs font-black uppercase tracking-widest text-gray-500 appearance-none focus:ring-2 focus:ring-[#138bc9]/20"
+          >
+            <option value="">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+        </div>
+      </div>
 
-                      const createdAt =
-                        user.host?.createdAt ??
-                        user.admin?.createdAt ??
-                        user.tourist?.createdAt ??
-                        undefined;
-
-                      return (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                  {profilePhoto ? (
-                                    <Image
-                                      src={profilePhoto}
-                                      alt={user.name ?? "User"}
-                                      width={40}
-                                      height={40}
-                                      className="rounded-full object-cover"
-                                    />
-                                  ) : (
-                                    <span className="text-gray-500 font-medium">
-                                      {user.name?.charAt(0).toUpperCase() ||
-                                        "U"}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {user.name || "N/A"}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {user.email}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(
-                                user.role
-                              )}`}
-                            >
-                              {user.role}
-                            </span>
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-2">
-                              <span
-                                className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                                  user.status || "ACTIVE"
-                                )}`}
-                              >
-                                {user.status || "ACTIVE"}
-                              </span>
-
-                              <select
-                                value={user.status || "ACTIVE"}
-                                onChange={(e) =>
-                                  handleStatusChange(
-                                    user.id,
-                                    e.target.value,
-                                    user.name || "User"
-                                  )
-                                }
-                                className="text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                              >
-                                <option value="ACTIVE">Active</option>
-                                <option value="SUSPENDED">Suspended</option>
-                                <option value="INACTIVE">Inactive</option>
-                              </select>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {createdAt ? formatDate(createdAt) : "N/A"}
-                          </td>
-
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/admin/dashboard/users/${user.id}`
-                                  )
-                                }
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                View
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/admin/dashboard/users/${user.id}/edit`
-                                  )
-                                }
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                Edit
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleDeleteUser(user.id, user.name || "User")
-                                }
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Cards */}
-
-              <div className="md:hidden">
-                <div className="divide-y divide-gray-200">
-                  {users.map((user) => {
-                    // ✅ normalize profile photo (no null)
-                    const profilePhoto =
-                      user.host?.profilePhoto ??
-                      user.admin?.profilePhoto ??
-                      user.tourist?.profilePhoto ??
-                      undefined;
-
-                    const createdAt =
-                      user.host?.createdAt ??
-                      user.admin?.createdAt ??
-                      user.tourist?.createdAt ??
-                      undefined;
-
-                    return (
-                      <div key={user.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-12 w-12">
-                              <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                {profilePhoto ? (
-                                  <Image
-                                    src={profilePhoto}
-                                    alt={user.name ?? "User"}
-                                    width={48}
-                                    height={48}
-                                    className="rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="text-gray-500 font-medium text-lg">
-                                    {user.name?.charAt(0).toUpperCase() || "U"}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.name || "N/A"}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {user.email}
-                              </div>
-
-                              <div className="flex space-x-2 mt-1">
-                                <span
-                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(
-                                    user.role
-                                  )}`}
-                                >
-                                  {user.role}
-                                </span>
-
-                                <span
-                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                                    user.status || "ACTIVE"
-                                  )}`}
-                                >
-                                  {user.status || "ACTIVE"}
-                                </span>
-                              </div>
-                            </div>
+      {/* Users Table */}
+      <div className="rounded-[40px] border border-gray-100 overflow-hidden bg-white shadow-xl shadow-gray-200/40">
+        <table className="w-full">
+          <thead className="bg-gray-50/50 border-b border-gray-50">
+            <tr>
+              <th className="px-8 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Global Explorer</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Rank</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Status Protocol</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Registered</th>
+              <th className="px-8 py-5 text-right font-black text-[10px] text-gray-400 uppercase tracking-widest">Management</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {users.length > 0 ? (
+              users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50/30 transition-all group">
+                  <td className="px-8 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-12 w-12 rounded-[18px] bg-gray-100 border border-gray-100 overflow-hidden shrink-0 group-hover:scale-110 transition-transform">
+                        {user.profilePhoto ? (
+                          <Image src={user.profilePhoto} alt={user.name || ""} fill className="object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-400">
+                            <UserCircle className="h-6 w-6" />
                           </div>
-                        </div>
-
-                        <div className="mt-4 flex justify-between text-sm">
-                          <div>
-                            <span className="text-gray-500">Created: </span>
-                            <span>
-                              {createdAt ? formatDate(createdAt) : "N/A"}
-                            </span>
-                          </div>
-
-                          <div className="flex space-x-3">
-                            <button
-                              onClick={() =>
-                                router.push(`/admin/dashboard/users/${user.id}`)
-                              }
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              View
-                            </button>
-
-                            <button
-                              onClick={() =>
-                                handleDeleteUser(user.id, user.name || "User")
-                              }
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <select
-                            value={user.status || "ACTIVE"}
-                            onChange={(e) =>
-                              handleStatusChange(
-                                user.id,
-                                e.target.value,
-                                user.name || "User"
-                              )
-                            }
-                            className="w-full text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="ACTIVE">Active</option>
-                            <option value="SUSPENDED">Suspended</option>
-                            <option value="INACTIVE">Inactive</option>
-                          </select>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-black text-gray-900 text-sm group-hover:text-[#138bc9] transition-colors">{user.name || "UNIDENTIFIED"}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-gray-400">
+                          <Mail className="h-3 w-3" />
+                          <span className="text-[10px] font-bold lowercase truncate max-w-[150px]">{user.email}</span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    {getRoleBadge(user.role)}
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <Badge className={cn(
+                        "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none shadow-none",
+                        user.status === 'ACTIVE' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                      )}>
+                        {user.status || 'ACTIVE'}
+                      </Badge>
+                      <select
+                        value={user.status || 'ACTIVE'}
+                        onChange={e => handleStatusChange(user, e.target.value)}
+                        className="text-[10px] font-black uppercase tracking-widest text-[#138bc9] border-none bg-transparent focus:ring-0 cursor-pointer hover:underline"
+                      >
+                        <option value="ACTIVE text-black">ACTIVATE</option>
+                        <option value="SUSPENDED text-black">SUSPEND</option>
+                        <option value="INACTIVE text-black">DEACTIVATE</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-2 text-xs font-black text-gray-600 uppercase tracking-tighter">
+                      <Calendar className="h-3.5 w-3.5 text-[#138bc9]" />
+                      {formatDate(user.createdAt)}
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-all">
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 rounded-2xl border-gray-100 shadow-2xl p-2 font-bold">
+                        <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-3 py-2">Rank: {user.role}</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-gray-50" />
+                        <DropdownMenuItem onClick={() => router.push(`/admin/dashboard/users/${user.id}`)} className="rounded-xl cursor-pointer py-3 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                          <Eye className="h-4 w-4 mr-3" />
+                          <span>Identity Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/admin/dashboard/users/${user.id}/edit`)} className="rounded-xl cursor-pointer py-3 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                          <ShieldAlert className="h-4 w-4 mr-3" />
+                          <span>Modify Permissions</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-gray-50" />
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteUser(user)}
+                          className="rounded-xl cursor-pointer py-3 transition-colors focus:bg-red-50 focus:text-red-600 text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4 mr-3" />
+                          <span>Purge Identity</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-32 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="h-20 w-20 rounded-[35px] bg-gray-50 flex items-center justify-center text-gray-200">
+                      <Users className="h-10 w-10" />
+                    </div>
+                    <div className="max-w-xs mx-auto">
+                      <p className="text-base font-black text-gray-900 uppercase tracking-widest">No Explorers Identified</p>
+                      <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-tighter">Your current search protocol yields no identity matching these parameters.</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex justify-center">
-            <nav className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`px-3 py-1 rounded ${
-                  currentPage === 1
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Previous
-              </button>
-
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-1 rounded ${
-                      currentPage === pageNum
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                }
-                disabled={currentPage === totalPages}
-                className={`px-3 py-1 rounded ${
-                  currentPage === totalPages
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                Next
-              </button>
-            </nav>
-          </div>
-        )}
-
-        {/* Stats Summary */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="text-sm font-medium text-gray-500">Total Users</div>
-            <div className="mt-2 text-3xl font-bold text-gray-900">
-              {users.length}
+      {/* Stats Board */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: "Total Population", value: users.length, icon: Users, color: "text-blue-500", bg: "bg-blue-50" },
+          { label: "Active Nodes", value: users.filter(u => u.status === 'ACTIVE').length, icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50" },
+          { label: "Certified Guides", value: users.filter(u => u.role === 'HOST').length, icon: UserCircle, color: "text-[#138bc9]", bg: "bg-blue-50/50" },
+          { label: "Admin Core", value: users.filter(u => u.role === 'ADMIN').length, icon: ShieldAlert, color: "text-purple-500", bg: "bg-purple-50" }
+        ].map((item, i) => (
+          <div key={i} className="bg-white p-6 rounded-[30px] border border-gray-100 flex items-center gap-4 hover:shadow-lg transition-shadow">
+            <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shrink-0", item.bg, item.color)}>
+              <item.icon className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
+              <p className="text-xl font-black text-gray-900">{item.value}</p>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="text-sm font-medium text-gray-500">
-              Active Users
-            </div>
-            <div className="mt-2 text-3xl font-bold text-green-600">
-              {users.filter((u) => u.status === "ACTIVE").length}
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="text-sm font-medium text-gray-500">Hosts</div>
-            <div className="mt-2 text-3xl font-bold text-blue-600">
-              {users.filter((u) => u.role === "HOST").length}
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="text-sm font-medium text-gray-500">Admins</div>
-            <div className="mt-2 text-3xl font-bold text-purple-600">
-              {users.filter((u) => u.role === "ADMIN").length}
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

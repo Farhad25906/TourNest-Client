@@ -23,21 +23,23 @@ interface DeleteBlogDialogProps {
   blogTitle: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function DeleteBlogDialog({ blogId, blogTitle, open, onOpenChange }: DeleteBlogDialogProps) {
+export function DeleteBlogDialog({ blogId, blogTitle, open, onOpenChange, onSuccess }: DeleteBlogDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const handleDelete = async () => {
     setLoading(true)
-    
+
     try {
       const result = await deleteBlog(blogId)
-      
+
       if (result.success) {
         toast.success("Success!Blog created successfully.");
         onOpenChange(false)
+        if (onSuccess) onSuccess()
         router.refresh()
       } else {
         toast.error(`Error ${result.message}`);
@@ -59,7 +61,7 @@ export function DeleteBlogDialog({ blogId, blogTitle, open, onOpenChange }: Dele
             Delete Blog
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the blog post &quot;{blogTitle}&quot;? 
+            Are you sure you want to delete the blog post &quot;{blogTitle}&quot;?
             This action cannot be undone. All comments and likes associated with this blog will also be deleted.
           </AlertDialogDescription>
         </AlertDialogHeader>

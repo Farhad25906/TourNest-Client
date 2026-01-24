@@ -1,8 +1,9 @@
 import { Destinations } from "@/components/module/Home/Destinations";
 import { Hero } from "@/components/module/Home/Hero";
 import { HowItWorks } from "@/components/module/Home/HowItWorks";
-import { Pricing } from "@/components/module/Home/Pricing";
 import { Testimonials } from "@/components/module/Home/Testimonials";
+import { FAQ } from "@/components/module/Home/FAQ";
+import { Newsletter } from "@/components/module/Home/Newsletter";
 import Head from "next/head";
 
 export default function Home() {
@@ -19,10 +20,11 @@ export default function Home() {
       </Head>
       <main>
         <Hero />
-        <Destinations/>
-        <HowItWorks/>
-        <Pricing/>
-        <Testimonials/>
+        <Destinations />
+        <HowItWorks />
+        <Testimonials />
+        <FAQ />
+        <Newsletter />
       </main>
     </>
   );

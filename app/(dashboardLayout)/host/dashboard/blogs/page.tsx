@@ -1,21 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-// import { DashboardHeader } from "@/components/dashboard-header"
-// import { DashboardShell } from "@/components/dashboard-shell"
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Eye, Heart, MessageCircle, FileText, Search, Filter } from "lucide-react"
+import { Eye, Heart, MessageCircle, FileText, Search, Filter, Sparkles, PlusCircle } from "lucide-react"
 import { getMyBlogs, IBlog } from "@/services/blog.service"
 import { CreateBlogDialog } from "@/components/module/Blogs/CreateBlogModal"
 import { BlogCard } from "@/components/module/Blogs/BlogCard"
 import { UpdateBlogDialog } from "@/components/module/Blogs/UpdateBlogDialog"
 import { DeleteBlogDialog } from "@/components/module/Blogs/DeleteBlogDialog"
+import { cn } from "@/lib/utils"
 
 export default function MyBlogsPage() {
   const [blogs, setBlogs] = useState<IBlog[]>([])
@@ -41,7 +39,7 @@ export default function MyBlogsPage() {
     try {
       setLoading(true)
       const response = await getMyBlogs()
-      
+
       if (response.success) {
         setBlogs(response.data)
         setFilteredBlogs(response.data)
@@ -56,7 +54,6 @@ export default function MyBlogsPage() {
   const filterBlogs = () => {
     let filtered = [...blogs]
 
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(blog =>
         blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,12 +62,10 @@ export default function MyBlogsPage() {
       )
     }
 
-    // Apply category filter
     if (categoryFilter !== "all") {
       filtered = filtered.filter(blog => blog.category === categoryFilter)
     }
 
-    // Apply status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(blog => blog.status === statusFilter)
     }
@@ -88,15 +83,6 @@ export default function MyBlogsPage() {
     setDeleteDialogOpen(true)
   }
 
-  const handleDeleteSuccess = () => {
-    fetchMyBlogs()
-  }
-
-  const handleUpdateSuccess = () => {
-    fetchMyBlogs()
-  }
-
-  // Calculate statistics
   const stats = {
     total: blogs.length,
     published: blogs.filter(b => b.status === "PUBLISHED").length,
@@ -108,144 +94,131 @@ export default function MyBlogsPage() {
 
   const categories = Array.from(new Set(blogs.map(b => b.category)))
 
-  return (
-    <div>
-      {/* <DashboardHeader
-        heading="My Blogs"
-        text="Manage your blog posts and track performance"
-      >
-        
-      </DashboardHeader> */}
-      
+  const statCards = [
+    { title: "Total Blogs", value: stats.total, sub: `${stats.published} live posts`, icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
+    { title: "Engagement", value: stats.totalViews.toLocaleString(), sub: "Total views reached", icon: Eye, color: "text-purple-600", bgColor: "bg-purple-50" },
+    { title: "Community", value: stats.totalLikes, sub: "Likes from readers", icon: Heart, color: "text-rose-600", bgColor: "bg-rose-50" },
+    { title: "Discussions", value: stats.totalComments, sub: "Total comments", icon: MessageCircle, color: "text-emerald-600", bgColor: "bg-emerald-50" },
+  ]
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Blogs</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.published} published, {stats.drafts} drafts
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalViews}</div>
-            <p className="text-xs text-muted-foreground">
-              All-time views across all blogs
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Likes</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalLikes}</div>
-            <p className="text-xs text-muted-foreground">
-              Total likes received
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Comments</CardTitle>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalComments}</div>
-            <p className="text-xs text-muted-foreground">
-              Total comments received
-            </p>
-          </CardContent>
-        </Card>
+  return (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900">Content Studio</h1>
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#138bc9]" />
+            Craft and manage your travel stories
+          </p>
+        </div>
+        <CreateBlogDialog />
       </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search blogs..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+      {/* Statistics Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((card, i) => (
+          <Card key={i} className="border-none shadow-sm bg-white overflow-hidden group">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-2">
+                    {card.title}
+                  </p>
+                  <h3 className="text-3xl font-black text-gray-900 leading-tight">{card.value}</h3>
+                  <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">
+                    {card.sub}
+                  </p>
+                </div>
+                <div className={cn("p-3.5 rounded-2xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3", card.bgColor, card.color)}>
+                  <card.icon className="h-6 w-6" />
+                </div>
               </div>
-            </div>
-            <div className="flex gap-4">
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category.replace(/_/g, " ")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="PUBLISHED">Published</SelectItem>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
-                </SelectContent>
-              </Select>
-              <CreateBlogDialog />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {/* Blog List */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">All Blogs ({blogs.length})</TabsTrigger>
-          <TabsTrigger value="published">Published ({stats.published})</TabsTrigger>
-          <TabsTrigger value="drafts">Drafts ({stats.drafts})</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="space-y-4">
+      {/* Filters & Controls */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 bg-white rounded-2xl border border-gray-100 p-1.5 flex items-center shadow-sm">
+          <Search className="ml-3 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search articles by title or keywords..."
+            className="border-none focus-visible:ring-0 w-full h-10 font-bold text-sm text-gray-600 placeholder:text-gray-300"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-4">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px] rounded-2xl border-gray-100 h-13 shadow-sm font-bold text-xs uppercase tracking-widest text-gray-500">
+              <Filter className="h-3 w-3 mr-2" />
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border-gray-100 shadow-xl font-bold">
+              <SelectItem value="all">Every Category</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px] rounded-2xl border-gray-100 h-13 shadow-sm font-bold text-xs uppercase tracking-widest text-gray-500">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border-gray-100 shadow-xl font-bold">
+              <SelectItem value="all">Total Status</SelectItem>
+              <SelectItem value="PUBLISHED">Published</SelectItem>
+              <SelectItem value="DRAFT">Internal Draft</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Blog List Content */}
+      <Tabs defaultValue="all" className="space-y-6">
+        <div className="bg-white p-1.5 rounded-[20px] border border-gray-100 shadow-sm w-fit">
+          <TabsList className="bg-transparent h-auto p-0 gap-1 font-black">
+            {[
+              { label: "All Stories", value: "all", count: blogs.length },
+              { label: "Live", value: "published", count: stats.published },
+              { label: "Drafts", value: "drafts", count: stats.drafts }
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={cn(
+                  "rounded-2xl px-5 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all duration-500",
+                  "data-[state=active]:bg-[#138bc9] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#138bc9]/20",
+                  "text-gray-400 hover:text-gray-600"
+                )}
+              >
+                {tab.label} <span className="ml-2 opacity-50 text-[9px]">{tab.count}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        <TabsContent value="all" className="focus-visible:ring-0 mt-0">
           {loading ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Card key={i}>
+                <Card key={i} className="border-none shadow-sm rounded-3xl overflow-hidden bg-white">
+                  <div className="h-48 bg-gray-100 animate-pulse" />
                   <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-6 w-3/4 rounded-lg" />
+                    <Skeleton className="h-4 w-1/2 rounded-lg" />
                   </CardHeader>
                   <CardContent>
-                    <Skeleton className="h-48 w-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-full rounded-full" />
+                      <Skeleton className="h-3 w-full rounded-full" />
+                      <Skeleton className="h-3 w-2/3 rounded-full" />
+                    </div>
                   </CardContent>
-                  <CardFooter>
-                    <Skeleton className="h-10 w-full" />
-                  </CardFooter>
                 </Card>
               ))}
             </div>
@@ -261,22 +234,21 @@ export default function MyBlogsPage() {
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No blogs found</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  {searchQuery || categoryFilter !== "all" || statusFilter !== "all"
-                    ? "No blogs match your filters. Try adjusting your search criteria."
-                    : "You haven't created any blogs yet. Start sharing your travel experiences!"}
-                </p>
-                <CreateBlogDialog />
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[40px] border border-gray-50 text-center shadow-sm">
+              <div className="h-20 w-20 rounded-[30px] bg-gray-50 flex items-center justify-center text-gray-200 mb-6">
+                <FileText className="h-10 w-10" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900">No stories found</h3>
+              <p className="text-sm font-bold text-gray-400 mt-2 max-w-xs mx-auto uppercase tracking-tight">
+                {searchQuery || categoryFilter !== "all" || statusFilter !== "all"
+                  ? "Try adjusting your filters to find what you're looking for."
+                  : "Ready to become a travel expert? Start by sharing your first journey."}
+              </p>
+            </div>
           )}
         </TabsContent>
-        
-        <TabsContent value="published" className="space-y-4">
+
+        <TabsContent value="published" className="focus-visible:ring-0 mt-0">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredBlogs
               .filter(blog => blog.status === "PUBLISHED")
@@ -290,8 +262,8 @@ export default function MyBlogsPage() {
               ))}
           </div>
         </TabsContent>
-        
-        <TabsContent value="drafts" className="space-y-4">
+
+        <TabsContent value="drafts" className="focus-visible:ring-0 mt-0">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredBlogs
               .filter(blog => blog.status === "DRAFT")
@@ -307,22 +279,23 @@ export default function MyBlogsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Update Dialog */}
+      {/* Dialogs */}
       {selectedBlog && (
         <UpdateBlogDialog
           blog={selectedBlog}
           open={updateDialogOpen}
           onOpenChange={setUpdateDialogOpen}
+          onSuccess={() => fetchMyBlogs()}
         />
       )}
 
-      {/* Delete Dialog */}
       {blogToDelete && (
         <DeleteBlogDialog
           blogId={blogToDelete.id}
           blogTitle={blogToDelete.title}
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
+          onSuccess={() => fetchMyBlogs()}
         />
       )}
     </div>

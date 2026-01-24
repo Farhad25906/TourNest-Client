@@ -7,6 +7,7 @@ export interface UserInfo {
   id: string;
   name: string;
   email: string;
+  profilePhoto?: string | null;
   role: UserRole;
   status?: UserStatus;
   admin?: AdminInfo;
@@ -19,7 +20,7 @@ export interface UserInfo {
 }
 
 export interface AdminInfo {
- id: string;
+  id: string;
   name: string;
   email: string;
   profilePhoto?: string;

@@ -27,8 +27,8 @@ interface BlogCardProps {
 export function BlogCardPublic({ blog }: BlogCardProps) {
   const router = useRouter();
   const { isAuthenticated, login, user } = useAuthClient();
-  console.log(isAuthenticated,login,user);
-  
+  console.log(isAuthenticated, login, user);
+
 
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(blog.likesCount);
@@ -142,7 +142,7 @@ export function BlogCardPublic({ blog }: BlogCardProps) {
         {blog.excerpt && (
           <p className="text-gray-600 text-sm italic">{blog.excerpt}</p>
         )}
-        <span className="inline-block px-3 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded-full mt-2">
+        <span className="inline-block px-3 py-1 bg-[#138bc9]/10 text-[#138bc9] text-xs font-medium rounded-full mt-2">
           {formatCategory(blog.category)}
         </span>
       </div>
@@ -182,9 +182,8 @@ export function BlogCardPublic({ blog }: BlogCardProps) {
       <div className="px-4 py-2 border-t border-gray-200 flex items-center gap-2">
         <Button
           variant="ghost"
-          className={`flex-1 gap-2 ${
-            isLiked ? "text-red-600" : "text-gray-600"
-          }`}
+          className={`flex-1 gap-2 ${isLiked ? "text-red-600" : "text-gray-600"
+            }`}
           onClick={handleLike}
           disabled={liking}
         >
@@ -252,7 +251,7 @@ export function BlogCardPublic({ blog }: BlogCardProps) {
                       size="icon"
                       onClick={handleComment}
                       disabled={commenting || !newComment.trim()}
-                      className="rounded-full bg-blue-600 hover:bg-blue-700"
+                      className="rounded-full bg-[#138bc9] hover:bg-[#138bc9]/90"
                     >
                       {commenting ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

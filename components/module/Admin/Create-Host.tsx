@@ -1,4 +1,3 @@
-// components/forms/create-host-form.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,240 +6,181 @@ import { useRouter } from "next/navigation";
 import { createHost } from "@/services/auth/auth.services";
 import Link from "next/link";
 import { toast } from "sonner";
-
-function SubmitButton({ pending }: { pending: boolean }) {
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={`w-full py-3 px-4 rounded-lg font-medium ${
-        pending
-          ? "bg-gray-400 cursor-not-allowed"
-          : "bg-blue-600 hover:bg-blue-700"
-      } text-white transition-colors duration-200`}
-    >
-      {pending ? (
-        <div className="flex items-center justify-center">
-          <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-          Creating Host...
-        </div>
-      ) : (
-        "Create Host"
-      )}
-    </button>
-  );
-}
+import {
+  UserPlus,
+  Image as ImageIcon,
+  Mail,
+  Lock,
+  Phone,
+  Home,
+  FileText,
+  Sparkles,
+  X,
+  ShieldCheck,
+  ChevronLeft,
+  Loader2
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CreateHostForm() {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(createHost, null);
-  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string>("");
 
-  // Handle profile photo file change
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setProfilePhotoFile(file);
-    
-    // Create preview URL
+    const file = e.target.files?.[0];
     if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setProfilePreview(previewUrl);
-    } else {
-      setProfilePreview("");
+      if (profilePreview) URL.revokeObjectURL(profilePreview);
+      setProfilePreview(URL.createObjectURL(file));
     }
   };
 
-  // Clean up blob URL on unmount
   useEffect(() => {
-    return () => {
-      if (profilePreview) {
-        URL.revokeObjectURL(profilePreview);
-      }
-    };
-  }, [profilePreview]);
-
-  // Handle form success
-  useEffect(() => {
-    console.log(state);
-    
     if (state?.success) {
-      toast.success("Host created successfully!");
+      toast.success("Host authorized successfully!");
       router.push("/admin/dashboard/users-management");
     }
   }, [state, router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Host</h1>
-          <p className="mt-2 text-gray-600">
-            Fill in the details below to create a new host account.
-          </p>
+    <div className="container mx-auto py-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Link href="/admin/dashboard/users-management" className="text-xs font-black text-[#138bc9] uppercase tracking-widest flex items-center gap-1 hover:underline mb-2">
+              <ChevronLeft className="h-3 w-3" />
+              Back to Registry
+            </Link>
+            <h1 className="text-3xl font-black tracking-tight text-gray-900">Authorize New Host</h1>
+            <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
+              Initialize guide credentials for the global network
+            </p>
+          </div>
         </div>
 
-        {/* Error Messages */}
-        {state?.errors?.map((error, index) => (
-          <div key={index} className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700">{error.message}</p>
-          </div>
-        ))}
-
-        {/* Form */}
-        <form action={formAction} className="space-y-6 bg-white rounded-xl shadow-sm p-6">
-          {/* Basic Information */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">
-              Basic Information
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="John Doe"
-                  defaultValue={state?.formData?.host?.name}
-                />
-              </div>
-
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="john@example.com"
-                  defaultValue={state?.formData?.host?.email}
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="At least 6 characters"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                  placeholder="+1 (555) 123-4567"
-                  defaultValue={state?.formData?.host?.phone}
-                />
-              </div>
-            </div>
-
-            {/* Hometown */}
-            <div>
-              <label htmlFor="hometown" className="block text-sm font-medium text-gray-700 mb-1">
-                Hometown
-              </label>
-              <input
-                type="text"
-                id="hometown"
-                name="hometown"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                placeholder="e.g., New York, USA"
-                defaultValue={state?.formData?.host?.hometown}
-              />
-            </div>
-
-            {/* Bio */}
-            <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                name="bio"
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
-                placeholder="Tell us about yourself, your experience, and why you'd make a great host..."
-                defaultValue={state?.formData?.host?.bio}
-              />
-            </div>
-          </div>
-
-          {/* Profile Photo */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">
-              Profile Photo
-            </h2>
-            
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+        <form action={formAction} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Section */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl shadow-gray-200/50 flex flex-col items-center text-center space-y-6">
+              <div className="relative group">
+                <div className="h-32 w-32 rounded-[40px] bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden transition-all group-hover:border-[#138bc9]/50">
                   {profilePreview ? (
-                    <img
-                      src={profilePreview}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={profilePreview} alt="Preview" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-gray-500 text-sm">No photo</span>
+                    <ImageIcon className="h-10 w-10 text-gray-300" />
                   )}
                 </div>
-              </div>
-              
-              <div className="flex-1">
-                <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Profile Photo
-                </label>
                 <input
                   type="file"
-                  id="file"
                   name="file"
+                  id="file"
+                  className="hidden"
                   accept="image/*"
                   onChange={handleProfilePhotoChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
-                <p className="mt-1 text-sm text-gray-500">
-                  Optional. Upload a clear profile photo (JPG, PNG, max 5MB).
-                </p>
+                <label
+                  htmlFor="file"
+                  className="absolute -bottom-2 -right-2 h-10 w-10 bg-white shadow-lg border border-gray-100 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  <Sparkles className="h-4 w-4 text-[#138bc9]" />
+                </label>
+              </div>
+              <div>
+                <h3 className="font-black text-gray-900 uppercase text-[10px] tracking-widest">Guide Identity</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Recommended dimensions 500x500px</p>
+              </div>
+
+              <div className="w-full pt-4 border-t border-gray-50 flex flex-col gap-3">
+                <div className="flex items-center gap-3 px-4 py-3 bg-blue-50/50 rounded-2xl border border-blue-100/30">
+                  <Lock className="h-3 w-3 text-[#138bc9]" />
+                  <span className="text-[9px] font-black text-[#138bc9] uppercase tracking-widest text-left">Encrypted Storage</span>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50/50 rounded-2xl border border-emerald-100/30">
+                  <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest text-left">Official Credentials</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="pt-6 border-t">
-            <div className="flex justify-end space-x-4">
-              <Link
-                href="/dashboard/hosts"
-                className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </Link>
-              <SubmitButton pending={isPending} />
+          {/* Fields Section */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-xl shadow-gray-200/50 space-y-8">
+              {state?.errors && (
+                <div className="bg-red-50 p-4 rounded-2xl border border-red-100 space-y-1">
+                  {state.errors.map((err, i) => (
+                    <p key={i} className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-2">
+                      <X className="h-3 w-3" />
+                      {err.message}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Identity Name</Label>
+                    <div className="relative">
+                      <UserPlus className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input name="name" placeholder="Protocol Name" className="pl-12 h-12 rounded-2xl border-gray-50 bg-gray-50/50 font-bold focus-visible:ring-[#138bc9]/20" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Active Email Sync</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input name="email" type="email" placeholder="guide@tournest.io" className="pl-12 h-12 rounded-2xl border-gray-50 bg-gray-50/50 font-bold focus-visible:ring-[#138bc9]/20" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Access Passcode</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input name="password" type="password" placeholder="At least 6 characters" className="pl-12 h-12 rounded-2xl border-gray-50 bg-gray-50/50 font-bold focus-visible:ring-[#138bc9]/20" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telecom Sync</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input name="phone" placeholder="+1 (000) 000-0000" className="pl-12 h-12 rounded-2xl border-gray-50 bg-gray-50/50 font-bold focus-visible:ring-[#138bc9]/20" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hometown Node</Label>
+                  <div className="relative">
+                    <Home className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input name="hometown" placeholder="City, Country" className="pl-12 h-12 rounded-2xl border-gray-50 bg-gray-50/50 font-bold focus-visible:ring-[#138bc9]/20" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Professional Narrative</Label>
+                  <div className="relative">
+                    <FileText className="absolute left-4 top-4 h-4 w-4 text-gray-400" />
+                    <Textarea name="bio" placeholder="Brief chronicle of professional travel expertise..." className="pl-12 min-h-[120px] rounded-[30px] border-gray-50 bg-gray-50/50 font-bold focus-visible:ring-[#138bc9]/20 resize-none py-4" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8 border-t border-gray-50 flex items-center justify-between">
+                <Link href="/admin/dashboard/users-management">
+                  <Button type="button" variant="ghost" className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest text-[10px] text-gray-400 hover:text-gray-900 transition-colors">Terminate Operation</Button>
+                </Link>
+                <Button
+                  disabled={isPending}
+                  className="h-14 px-10 rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-[#138bc9]/20 transition-all active:scale-95"
+                >
+                  {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Authorize Host Registry"}
+                </Button>
+              </div>
             </div>
           </div>
         </form>

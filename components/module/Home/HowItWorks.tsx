@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'framer-motion'
 import { SearchIcon, CalendarCheckIcon, MapPinIcon, PlaneIcon } from 'lucide-react'
+import { SectionHeading } from '@/components/ui/SectionHeading'
 
 const steps = [
   {
@@ -10,28 +11,28 @@ const steps = [
     title: 'Browse Tours',
     description:
       'Explore hundreds of curated tours created by experienced hosts from around the world.',
-    color: '#2563eb',
+    color: '#138bc9',
   },
   {
     icon: CalendarCheckIcon,
     title: 'Book Your Adventure',
     description:
       'Select your preferred dates, review itinerary details, and securely book your spot on the tour.',
-    color: '#3b82f6',
+    color: '#3498db',
   },
   {
     icon: MapPinIcon,
     title: 'Meet Your Host',
     description:
       'Connect with your expert tour host who will guide you through an unforgettable journey.',
-    color: '#60a5fa',
+    color: '#5dade2',
   },
   {
     icon: PlaneIcon,
     title: 'Travel & Explore',
     description:
       'Embark on your adventure with confidence, knowing every detail has been carefully planned.',
-    color: '#93c5fd',
+    color: '#aed6f1',
   },
 ]
 
@@ -45,22 +46,11 @@ export function HowItWorks() {
   return (
     <section ref={ref} className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <span className="inline-block px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-4">
-            Simple Process
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            How It Works
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            From browsing to booking in four simple steps
-          </p>
-        </motion.div>
+        <SectionHeading
+          badge="Simple Process"
+          title="How It Works"
+          subtitle="From browsing to booking in four simple steps"
+        />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, index) => (

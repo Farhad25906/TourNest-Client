@@ -5,7 +5,6 @@ import {
   ApiResponse,
   getHostEarnings,
   type IEarningsData,
-  type IPayment,
 } from "@/services/payment.service";
 import {
   Download,
@@ -14,448 +13,272 @@ import {
   TrendingUp,
   Users,
   Target,
+  Sparkles,
+  CreditCard,
+  History,
+  ShieldCheck,
+  Activity,
+  ArrowUpRight,
+  PieChart as PieIcon,
+  Calendar,
+  Clock,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  Legend
 } from "recharts";
 import { formatCurrency } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { format } from "date-fns";
 
 const PAYMENT_STATUS_OPTIONS = [
-  { value: "PENDING", label: "Pending", color: "yellow" },
-  { value: "PROCESSING", label: "Processing", color: "blue" },
-  { value: "COMPLETED", label: "Completed", color: "green" },
-  { value: "FAILED", label: "Failed", color: "red" },
-  { value: "CANCELLED", label: "Cancelled", color: "gray" },
-  { value: "REFUNDED", label: "Refunded", color: "orange" },
-];
-
-const PAYMENT_METHOD_OPTIONS = [
-  { value: "card", label: "Card" },
-  { value: "cash", label: "Cash" },
-  { value: "bkash", label: "Bkash" },
+  { value: "COMPLETED", label: "Settled", color: "bg-emerald-50 text-emerald-600" },
+  { value: "PENDING", label: "In Pipeline", color: "bg-amber-50 text-amber-600" },
+  { value: "FAILED", label: "Rejected", color: "bg-rose-50 text-rose-600" },
+  { value: "REFUNDED", label: "Returned", color: "bg-purple-50 text-purple-600" },
 ];
 
 export default function HostEarningsDashboard() {
   const [earningsData, setEarningsData] = useState<IEarningsData>({
     payments: [],
-    summary: {
-      totalEarnings: 0,
-      totalTransactions: 0,
-      pendingBalance: 0,
-      totalEarningsToDate: 0,
-    },
+    summary: { totalEarnings: 0, totalTransactions: 0, pendingBalance: 0, totalEarningsToDate: 0 },
     earningsByMonth: [],
   });
-
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchEarnings();
-  }, []);
 
   const fetchEarnings = async () => {
     try {
       setLoading(true);
-      const response: ApiResponse<IEarningsData> = await getHostEarnings();
-
-      if (response.success && response.data) {
-        setEarningsData(response.data);
-      } else if (response.success && !response.data) {
-        setEarningsData({
-          payments: [],
-          summary: {
-            totalEarnings: 0,
-            totalTransactions: 0,
-            pendingBalance: 0,
-            totalEarningsToDate: 0,
-          },
-          earningsByMonth: [],
-        });
-        toast.error("No earnings data found");
-      } else {
-        toast.error(response.message || "Failed to fetch earnings");
-      }
-    } catch (error) {
-      toast.error("Failed to load earnings");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      const res = await getHostEarnings();
+      if (res.success && res.data) setEarningsData(res.data);
+    } finally { setLoading(false); }
   };
 
-  const handleRefresh = () => {
-    fetchEarnings();
-  };
+  useEffect(() => { fetchEarnings(); }, []);
 
-  const exportToCSV = () => {
-    toast.info("Export feature coming soon");
-  };
+  const formatDate = (d: any) => d ? format(new Date(d), "MMM dd, yyyy") : "N/A";
 
-  const getStatusColor = (status: string) => {
-    const statusOption = PAYMENT_STATUS_OPTIONS.find((s) => s.value === status);
-    switch (statusOption?.color) {
-      case "green":
-        return "bg-green-100 text-green-800";
-      case "red":
-        return "bg-red-100 text-red-800";
-      case "yellow":
-        return "bg-yellow-100 text-yellow-800";
-      case "blue":
-        return "bg-blue-100 text-blue-800";
-      case "orange":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  const chartData = earningsData.earningsByMonth.map(m => ({ name: m.month, earnings: m.earnings }));
+  const COLORS = ["#138bc9", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
 
-  const formatDate = (dateInput: string | Date | undefined): string => {
-    if (!dateInput) return "N/A";
-
-    try {
-      const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
-
-      if (isNaN(date.getTime())) {
-        return "Invalid date";
-      }
-
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return "Invalid date";
-    }
-  };
-
-  // Prepare chart data
-  const chartData = earningsData.earningsByMonth.map((item) => ({
-    name: item.month,
-    earnings: item.earnings,
-  }));
-
-  const paymentMethodData = earningsData.payments.reduce((acc, payment) => {
-    const method =
-      PAYMENT_METHOD_OPTIONS.find((m) => m.value === payment.paymentMethod)
-        ?.label || payment.paymentMethod;
-    acc[method] = (acc[method] || 0) + payment.amount;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const pieData = Object.entries(paymentMethodData).map(([name, value]) => ({
-    name,
-    value,
-  }));
-
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+  if (loading) return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-2"><div className="h-10 w-64 bg-gray-100 animate-pulse rounded-2xl" /><div className="h-5 w-96 bg-gray-50 animate-pulse rounded-xl" /></div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">{[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-gray-50 animate-pulse rounded-[30px]" />)}</div>
+      <TableSkeleton columnCount={7} rowCount={10} />
+    </div>
+  );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Earnings Dashboard
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Track your earnings and payment history
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black tracking-tight text-gray-900 italic">Financial Manifest</h1>
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
+            Official guide settlement oversight and revenue telemetry
           </p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Download size={18} />
-            Export Report
-          </button>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <RefreshCw size={18} />
-            Refresh
-          </button>
+        <div className="flex gap-2">
+          <Button onClick={fetchEarnings} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-400 gap-2 hover:bg-gray-50 h-12 px-6">
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            Sync Ledger
+          </Button>
+          <Button variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-400 gap-2 hover:bg-gray-50 h-12 px-6">
+            <Download className="h-4 w-4" />
+            Audit Report
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100">Total Earnings</p>
-              <h3 className="text-3xl font-bold mt-2">
-                {formatCurrency(earningsData.summary.totalEarnings)}
-              </h3>
-              <p className="text-blue-200 text-sm mt-1">
-                From {earningsData.summary.totalTransactions} transactions
-              </p>
-            </div>
-            <DollarSign size={32} />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Pending Balance</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {formatCurrency(earningsData.summary.pendingBalance)}
-              </h3>
-              <p className="text-gray-400 text-sm mt-1">
-                Available for withdrawal
-              </p>
-            </div>
-            <Target className="text-yellow-500" size={32} />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Earnings (All Time)</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {formatCurrency(earningsData.summary.totalEarningsToDate)}
-              </h3>
-              <p className="text-gray-400 text-sm mt-1">Lifetime earnings</p>
-            </div>
-            <TrendingUp className="text-green-500" size={32} />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Avg. per Booking</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {earningsData.summary.totalTransactions > 0
-                  ? formatCurrency(
-                      earningsData.summary.totalEarnings /
-                        earningsData.summary.totalTransactions
-                    )
-                  : formatCurrency(0)}
-              </h3>
-              <p className="text-gray-400 text-sm mt-1">Average transaction</p>
-            </div>
-            <Users className="text-purple-500" size={32} />
-          </div>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Earnings Trend Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold">Earnings Trend</h3>
-            <div className="text-sm text-gray-500">
-              Last {earningsData.earningsByMonth.length} months
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => value.slice(5)}
-                />
-                <YAxis
-                  tickFormatter={(value) => `$${value}`}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip
-                  formatter={(value: number | undefined) => [
-                    `$${value || 0}`,
-                    "Earnings",
-                  ]}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="earnings"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="Monthly Earnings"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Payment Methods Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-lg font-semibold mb-6">
-            Payment Methods Distribution
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {pieData.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-
-                <Tooltip
-                  formatter={(value: number | undefined) => [
-                    `$${value || 0}`,
-                    "Amount",
-                  ]}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Payments */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Recent Payments</h3>
-            <div className="text-sm text-gray-500">
-              {earningsData.payments.length} total payments
-            </div>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : earningsData.payments.length === 0 ? (
-          <div className="text-center py-12">
-            <DollarSign className="mx-auto text-gray-400" size={48} />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              No payments found
-            </h3>
-            <p className="mt-2 text-gray-500">
-              Your completed payments will appear here.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tour Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {earningsData.payments.slice(0, 10).map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {payment.user?.tourist?.name || "Guest"}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {payment.user?.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {payment.booking?.tour?.title || "N/A"}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {payment.booking?.numberOfPeople} traveler(s)
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-green-600">
-                        {formatCurrency(payment.amount, payment.currency)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        {PAYMENT_METHOD_OPTIONS.find(
-                          (m) => m.value === payment.paymentMethod
-                        )?.label || payment.paymentMethod}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(payment.paidAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                          payment.status
-                        )}`}
-                      >
-                        {PAYMENT_STATUS_OPTIONS.find(
-                          (s) => s.value === payment.status
-                        )?.label || payment.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {earningsData.payments.length > 10 && (
-              <div className="px-6 py-4 text-center border-t border-gray-200">
-                <p className="text-sm text-gray-500">
-                  Showing 10 of {earningsData.payments.length} payments
-                </p>
+      {/* Finance Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {[
+          { label: "Net Earnings", value: formatCurrency(earningsData.summary.totalEarnings), sub: "Total guide paycheck", icon: DollarSign, color: "text-white", bg: "bg-[#138bc9]", primary: true },
+          { label: "Awaiting Clearance", value: formatCurrency(earningsData.summary.pendingBalance), sub: "On-hold pipeline", icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Success Velocity", value: earningsData.summary.totalTransactions, sub: "Cleared expeditions", icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Lifetime Payload", value: formatCurrency(earningsData.summary.totalEarningsToDate), sub: "Total generated value", icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" }
+        ].map((item, i) => (
+          <Card key={i} className={cn("border-none shadow-sm overflow-hidden group transition-all duration-300 hover:shadow-md", item.primary ? item.bg : "bg-white")}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn("text-[10px] font-black uppercase tracking-widest mb-1", item.primary ? "text-white/70" : "text-gray-400")}>{item.label}</p>
+                  <h3 className={cn("text-2xl font-black leading-none", item.primary ? "text-white" : "text-gray-900")}>{item.value}</h3>
+                  <p className={cn("text-[9px] font-bold uppercase tracking-tighter mt-2", item.primary ? "text-white/60" : "text-gray-400")}>{item.sub}</p>
+                </div>
+                <div className={cn("p-3 rounded-xl transition-all duration-300 group-hover:scale-110", item.primary ? "bg-white/20 text-white" : cn(item.bg, item.color))}>
+                  <item.icon className="h-5 w-5" />
+                </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
+        {/* Area Chart */}
+        <Card className="lg:col-span-4 border-none shadow-sm bg-white overflow-hidden rounded-[40px]">
+          <CardHeader className="p-10 pb-0">
+            <CardTitle className="text-xl font-black text-gray-800 uppercase tracking-tighter">Monetization Velocity</CardTitle>
+            <CardDescription className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Guide revenue trajectory across intervals</CardDescription>
+          </CardHeader>
+          <CardContent className="p-10 pt-4">
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorEar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#138bc9" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#138bc9" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }}
+                    dy={10}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 700 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '20px',
+                      border: 'none',
+                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                      padding: '15px'
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="earnings"
+                    stroke="#138bc9"
+                    strokeWidth={4}
+                    fillOpacity={1}
+                    fill="url(#colorEar)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Panel */}
+        <div className="lg:col-span-3 space-y-8">
+          <Card className="border-none shadow-sm bg-[#138bc9] text-white rounded-[40px] overflow-hidden flex flex-col justify-center p-10 space-y-6">
+            <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black italic tracking-tighter leading-tight uppercase">Ready for Withdrawal?</h3>
+              <p className="text-white/60 text-xs font-medium leading-relaxed">Your settled funds are available for clearance. Standard bank processing timeframe applies.</p>
+            </div>
+            <Button className="w-full h-14 rounded-3xl bg-white text-gray-900 font-black uppercase text-[11px] tracking-widest shadow-xl shadow-black/10 hover:bg-gray-50 transition-all">Command Payout</Button>
+          </Card>
+
+          <div className="bg-white p-6 rounded-[40px] border border-gray-100 flex items-center justify-between group cursor-pointer hover:bg-gray-50 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-blue-50 text-[#138bc9] flex items-center justify-center">
+                <PieIcon className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tax Documents</p>
+                <p className="text-sm font-black text-gray-900">Annual Manifest 2024</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-gray-300 group-hover:translate-x-1 transition-transform" />
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Ledger Table */}
+      <div className="rounded-[40px] border border-gray-100 overflow-hidden bg-white shadow-xl shadow-gray-200/40">
+        <table className="w-full">
+          <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400">
+            <tr>
+              <th className="px-8 py-5 text-left font-black text-[10px] uppercase tracking-widest pl-10">Settlement Identifier</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Expedition Node</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Payload</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Cleared Date</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Protocol Status</th>
+              <th className="px-8 py-5 text-right font-black text-[10px] uppercase tracking-widest pr-10">Ops</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {earningsData.payments.length > 0 ? (
+              earningsData.payments.map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50/30 transition-all group">
+                  <td className="px-8 py-5 pl-10">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-mono font-black text-gray-400 uppercase">HASH_{p.id.slice(0, 8).toUpperCase()}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <Badge variant="outline" className="px-1.5 py-0 rounded-md text-[8px] font-black uppercase bg-blue-50 border-blue-100 text-[#138bc9]">{p.paymentMethod}</Badge>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <p className="font-black text-gray-900 text-sm line-clamp-1 group-hover:text-[#138bc9] transition-colors">{p.booking?.tour?.title || "Manual Payout"}</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Expedition Clearance</p>
+                  </td>
+                  <td className="px-6 py-5">
+                    <p className="text-base font-black text-gray-900">{formatCurrency(p.amount)}</p>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-2 text-xs font-black text-gray-600 uppercase tracking-tighter">
+                      <Calendar className="h-3.5 w-3.5 text-[#138bc9]" />
+                      {formatDate(p.paidAt || p.createdAt)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <Badge className={cn(
+                      "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none shadow-none",
+                      PAYMENT_STATUS_OPTIONS.find(s => s.value === p.status)?.color || "bg-gray-100 text-gray-500"
+                    )}>
+                      {p.status}
+                    </Badge>
+                  </td>
+                  <td className="px-8 py-5 text-right pr-10">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-[#138bc9]/10 transition-all text-gray-300 hover:text-[#138bc9]">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-32 text-center text-gray-400">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="h-20 w-20 rounded-[35px] bg-gray-50 flex items-center justify-center text-gray-200">
+                      <DollarSign className="h-10 w-10" />
+                    </div>
+                    <p className="text-sm font-black uppercase tracking-widest">Ledger Empty</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

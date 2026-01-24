@@ -50,12 +50,13 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
         <div className="grid grid-cols-1 gap-4">
           {/* Email */}
           <Field>
-            <FieldLabel htmlFor="email">Email *</FieldLabel>
+            <FieldLabel htmlFor="email" className="text-sm font-semibold text-gray-700">Email *</FieldLabel>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="john@example.com"
+              placeholder="yourname@example.com"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.email}
               aria-describedby={serverErrors.email ? "email-error" : undefined}
               required
@@ -69,12 +70,13 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
 
           {/* Password */}
           <Field>
-            <FieldLabel htmlFor="password">Password *</FieldLabel>
+            <FieldLabel htmlFor="password" className="text-sm font-semibold text-gray-700">Password *</FieldLabel>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="••••••••"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.password}
               aria-describedby={
                 serverErrors.password ? "password-error" : undefined
@@ -89,15 +91,17 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
           </Field>
 
           {/* Auto-fill buttons */}
-          <div>
-            <h1>Autofill Credentials</h1>
-            <div className="flex flex-col sm:flex-row gap-2 mt-2 mb-2">
+          <div className="mt-2 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50">
+            <h3 className="text-xs font-bold text-[#138bc9] uppercase tracking-wider mb-3">
+              Quick Autofill
+            </h3>
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => autoFillCredentials("farhad@ph.com", "123456")}
-                className="flex-1"
+                className="flex-1 bg-white border-blue-200 text-blue-700 hover:bg-[#138bc9] hover:text-white hover:border-[#138bc9] rounded-xl transition-all h-10 font-semibold"
               >
                 Admin
               </Button>
@@ -108,7 +112,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
                 onClick={() =>
                   autoFillCredentials("farhadhossen2590@gmail.com", "123456")
                 }
-                className="flex-1"
+                className="flex-1 bg-white border-blue-200 text-blue-700 hover:bg-[#138bc9] hover:text-white hover:border-[#138bc9] rounded-xl transition-all h-10 font-semibold"
               >
                 Host
               </Button>
@@ -119,7 +123,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
                 onClick={() =>
                   autoFillCredentials("farhadhossen9036@gmail.com", "123456")
                 }
-                className="flex-1"
+                className="flex-1 bg-white border-blue-200 text-blue-700 hover:bg-[#138bc9] hover:text-white hover:border-[#138bc9] rounded-xl transition-all h-10 font-semibold"
               >
                 Tourist
               </Button>
@@ -129,13 +133,18 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
 
         <FieldGroup className="mt-4">
           <Field>
-            <Button type="submit" disabled={isPending} className="w-full">
-              {isPending ? "Logging in..." : "Login"}
+            <Button type="submit" disabled={isPending} className="w-full h-12 rounded-xl bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-bold shadow-lg shadow-[#138bc9]/20 transition-all">
+              {isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Logging in...
+                </div>
+              ) : "Sign In"}
             </Button>
 
-            <FieldDescription className="px-6 text-center mt-4">
+            <FieldDescription className="px-6 text-center mt-6">
               Don&apos;t have an account?{" "}
-              <a href="/register" className="text-blue-600 hover:underline">
+              <a href="/register" className="text-[#138bc9] font-bold hover:underline">
                 Sign up
               </a>
             </FieldDescription>
@@ -143,7 +152,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
             <FieldDescription className="px-6 text-center mt-2">
               <a
                 href="/forget-password"
-                className="text-blue-600 hover:underline"
+                className="text-[#138bc9] hover:underline"
               >
                 Forgot password?
               </a>

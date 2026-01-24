@@ -36,7 +36,6 @@ const PublicNavbar = async () => {
     { href: "/blogs", label: "Blogs", icon: BookOpen },
     // { href: "/about", label: "About", icon: Info },
     { href: "/pricing", label: "Pricing", icon: CreditCard },
-    { href: "/faq", label: "FAQ", icon: HelpCircle },
     // { href: "/contact", label: "Contact", icon: Mail },
   ];
 
@@ -95,7 +94,7 @@ const PublicNavbar = async () => {
       case "HOST":
         return <MapPin className="w-4 h-4 text-green-600" />;
       case "TOURIST":
-        return <User className="w-4 h-4 text-blue-600" />;
+        return <User className="w-4 h-4 text-[#138bc9]" />;
       default:
         return null;
     }
@@ -123,12 +122,12 @@ const PublicNavbar = async () => {
   const dashboardRoute = getDashboardRoute();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-blue-100 bg-white/95 backdrop-blur-md shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-[#138bc9]/10 bg-white/95 backdrop-blur-md shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-3 group">
           <div className="relative">
-            <div className="absolute inset-0 bg-blue-400 rounded-xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-[#138bc9]/30 rounded-xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
             <Image
               src={logo}
               width={140}
@@ -145,13 +144,13 @@ const PublicNavbar = async () => {
             <Link
               key={link.label}
               href={link.href}
-              className="relative px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200 group"
+              className="relative px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#138bc9] transition-colors duration-200 group"
             >
               <span className="relative z-10 flex items-center gap-2">
                 {link.icon && <link.icon className="w-4 h-4" />}
                 {link.label}
               </span>
-              <span className="absolute inset-0 bg-blue-50 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-200" />
+              <span className="absolute inset-0 bg-[#138bc9]/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-200" />
             </Link>
           ))}
         </nav>
@@ -163,7 +162,7 @@ const PublicNavbar = async () => {
               <Link href={dashboardRoute}>
                 <Button
                   variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full font-medium shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
+                  className="border-[#138bc9] text-[#138bc9] hover:bg-[#138bc9]/10 rounded-full font-medium shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   Dashboard
@@ -175,11 +174,11 @@ const PublicNavbar = async () => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-10 w-10 rounded-full ring-2 ring-blue-100 hover:ring-blue-300 transition-all duration-200"
+                    className="relative h-10 w-10 rounded-full ring-2 ring-[#138bc9]/10 hover:ring-[#138bc9]/30 transition-all duration-200"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={getProfilePhoto()} />
-                      <AvatarFallback className="bg-blue-600 text-white">
+                      <AvatarFallback className="bg-[#138bc9] text-white">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
@@ -189,7 +188,7 @@ const PublicNavbar = async () => {
                   <div className="flex items-center gap-3 p-2">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={getProfilePhoto()} />
-                      <AvatarFallback className="bg-blue-600 text-white">
+                      <AvatarFallback className="bg-[#138bc9] text-white">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
@@ -235,13 +234,13 @@ const PublicNavbar = async () => {
               <Link href="/login">
                 <Button
                   variant="outline"
-                  className="border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                  className="border-[#138bc9] text-[#138bc9] hover:bg-[#138bc9]/10 rounded-full font-medium shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   Sign In
                 </Button>
               </Link>
               <Link href="/register">
-                <Button className="bg-blue-600 hover:bg-blue-700 rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Button className="bg-[#138bc9] hover:bg-[#138bc9]/90 rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-200">
                   Get Started
                 </Button>
               </Link>
@@ -256,7 +255,7 @@ const PublicNavbar = async () => {
               <Button
                 variant="outline"
                 size="icon"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full"
+                className="border-[#138bc9] text-[#138bc9] hover:bg-[#138bc9]/10 rounded-full"
               >
                 <Menu className="w-5 h-5" />
               </Button>
@@ -266,10 +265,10 @@ const PublicNavbar = async () => {
 
               {/* Mobile User Info */}
               {accessToken && userInfo && (
-                <div className="flex items-center gap-3 pb-6 border-b border-blue-100">
-                  <Avatar className="h-12 w-12 ring-2 ring-blue-200">
+                <div className="flex items-center gap-3 pb-6 border-b border-[#138bc9]/10">
+                  <Avatar className="h-12 w-12 ring-2 ring-[#138bc9]/20">
                     <AvatarImage src={getProfilePhoto()} />
-                    <AvatarFallback className="bg-blue-600 text-white">
+                    <AvatarFallback className="bg-[#138bc9] text-white">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
@@ -290,11 +289,11 @@ const PublicNavbar = async () => {
                 {accessToken && userInfo && (
                   <Link
                     href={dashboardRoute}
-                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-[#138bc9]/10 hover:text-[#138bc9] rounded-lg transition-colors"
                   >
                     <LayoutDashboard className="w-5 h-5" />
                     Dashboard
-                    <span className="ml-auto text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                    <span className="ml-auto text-xs px-2 py-1 bg-[#138bc9]/10 text-[#138bc9] rounded-full">
                       {userInfo?.role?.toLowerCase().replace("_", " ")}
                     </span>
                   </Link>
@@ -304,19 +303,19 @@ const PublicNavbar = async () => {
                   <Link
                     key={link.label}
                     href={link.href}
-                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-[#138bc9]/10 hover:text-[#138bc9] rounded-lg transition-colors"
                   >
                     {link.icon && <link.icon className="w-5 h-5" />}
                     {link.label}
                   </Link>
                 ))}
 
-                <div className="border-t border-blue-100 pt-4 mt-4 flex flex-col space-y-2">
+                <div className="border-t border-[#138bc9]/10 pt-4 mt-4 flex flex-col space-y-2">
                   {accessToken && userInfo ? (
                     <>
                       <Link
                         href="/profile"
-                        className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                        className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-[#138bc9]/10 hover:text-[#138bc9] rounded-lg transition-colors"
                       >
                         <User className="w-5 h-5" />
                         Profile
@@ -331,13 +330,13 @@ const PublicNavbar = async () => {
                       <Link href="/login" className="w-full">
                         <Button
                           variant="outline"
-                          className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full"
+                          className="w-full border-[#138bc9] text-[#138bc9] hover:bg-[#138bc9]/10 rounded-full"
                         >
                           Sign In
                         </Button>
                       </Link>
                       <Link href="/register" className="w-full">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 rounded-full">
+                        <Button className="w-full bg-[#138bc9] hover:bg-[#138bc9]/90 rounded-full">
                           Get Started
                         </Button>
                       </Link>

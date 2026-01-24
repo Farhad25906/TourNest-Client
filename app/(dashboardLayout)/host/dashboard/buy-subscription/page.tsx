@@ -1,4 +1,3 @@
-// app/(host)/host/buy-subscription/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,6 +14,11 @@ import {
   Calendar,
   Star,
   Check,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  TrendingUp,
+  Infinity
 } from "lucide-react";
 import {
   getPublicSubscriptions,
@@ -22,6 +26,9 @@ import {
   createSubscription,
   initiateSubscriptionPayment,
 } from "@/services/subscription.service";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface SubscriptionPlan {
   id: string;
@@ -57,448 +64,257 @@ interface CurrentSubscription {
 
 export default function BuySubscriptionPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [currentSubscription, setCurrentSubscription] =
-    useState<CurrentSubscription | null>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [paymentProcessing, setPaymentProcessing] = useState<string | null>(
-    null
-  );
+  const [paymentProcessing, setPaymentProcessing] = useState<string | null>(null);
 
-  // Load plans and current subscription
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Load available plans
-      const plansResult = await getPublicSubscriptions();
-      if (plansResult.success && Array.isArray(plansResult.data)) {
-        setPlans(plansResult.data);
-      }
+      const [plansRes, subsRes] = await Promise.all([
+        getPublicSubscriptions(),
+        getCurrentSubscription()
+      ]);
 
-      // Load current subscription
-      const subscriptionResult = await getCurrentSubscription();
-      if (subscriptionResult.success) {
-        setCurrentSubscription(subscriptionResult.data);
-        
-        // If user has an active plan, select it
-        if (subscriptionResult.data.plan?.id) {
-          setSelectedPlan(subscriptionResult.data.plan.id);
-        }
+      if (plansRes.success) setPlans(plansRes.data);
+      if (subsRes.success) {
+        setCurrentSubscription(subsRes.data);
+        if (subsRes.data.plan?.id) setSelectedPlan(subsRes.data.plan.id);
       }
     } catch (error) {
       console.error("Error loading data:", error);
-      toast.error("Failed to load subscription data");
+      toast.error("Failed to synchronize subscription metadata");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
-  // Handle plan selection
-  const handlePlanSelect = (planId: string) => {
-    if (currentSubscription?.isActive && !confirm("Are you sure you want to change your subscription? Your current subscription will be cancelled.")) {
-      return;
-    }
-    setSelectedPlan(planId);
-  };
-
-  // Handle subscription creation/payment
   const handleSubscribe = async (planId: string) => {
-    if (!planId) {
-      toast.error("Please select a plan");
-      return;
-    }
-
     const plan = plans.find((p) => p.id === planId);
-    if (!plan) {
-      toast.error("Selected plan not found");
-      return;
-    }
+    if (!plan) return;
 
     setProcessing(true);
-
     try {
-      // Create subscription
-      const subscriptionResult = await createSubscription(planId);
-      
-      if (!subscriptionResult.success) {
-        throw new Error(subscriptionResult.message || "Failed to create subscription");
-      }
+      const result = await createSubscription(planId);
+      if (!result.success) throw new Error(result.message);
 
-      // For free plans, activate immediately
       if (plan.price === 0) {
-        toast.success("Free subscription activated successfully!");
+        toast.success("Internal membership activated!");
         await loadData();
-        return;
-      }
-
-      // For paid plans, initiate payment
-      if (subscriptionResult.data?.subscriptionId) {
-        await handlePaymentInitiation(subscriptionResult.data.subscriptionId);
+      } else if (result.data?.subscriptionId) {
+        const paymentRes = await initiateSubscriptionPayment(result.data.subscriptionId);
+        if (paymentRes.success && paymentRes.data?.paymentUrl) {
+          window.location.href = paymentRes.data.paymentUrl;
+        } else {
+          throw new Error("Payment gateway unreachable");
+        }
       }
     } catch (error: any) {
-      console.error("Subscribe error:", error);
-      toast.error(error.message || "Failed to subscribe to plan");
+      toast.error(error.message || "Checkout failed");
     } finally {
       setProcessing(false);
     }
   };
 
-  // Handle payment initiation
-  const handlePaymentInitiation = async (subscriptionId: string) => {
-    setPaymentProcessing(subscriptionId);
-
-    try {
-      const paymentResult = await initiateSubscriptionPayment(subscriptionId);
-      
-      if (paymentResult.success && paymentResult.data?.paymentUrl) {
-        // Redirect to Stripe payment page
-        window.location.href = paymentResult.data.paymentUrl;
-      } else {
-        throw new Error("Failed to initiate payment");
-      }
-    } catch (error: any) {
-      console.error("Payment initiation error:", error);
-      toast.error(error.message || "Failed to initiate payment");
-      setPaymentProcessing(null);
-    }
-  };
-
-  // Render plan card
-  const renderPlanCard = (plan: SubscriptionPlan) => {
-    const isSelected = selectedPlan === plan.id;
-    const isCurrentPlan = currentSubscription?.plan?.id === plan.id;
-    const isProcessingPayment = paymentProcessing === plan.id;
-    const isRecommended = plan.name === "Standard";
-
-    return (
-      <div
-        key={plan.id}
-        className={`relative rounded-2xl border-2 transition-all duration-300 ${
-          isSelected
-            ? "border-blue-600 bg-blue-50 shadow-lg"
-            : "border-gray-200 bg-white"
-        } ${isRecommended ? "ring-2 ring-blue-300 ring-offset-2" : ""}`}
-      >
-        {isRecommended && (
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-            <span className="bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-              MOST POPULAR
-            </span>
-          </div>
-        )}
-
-        <div className="p-8">
-          {/* Plan Header */}
-          <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              {plan.name}
-            </h3>
-            <p className="text-gray-600 text-sm">{plan.description}</p>
-          </div>
-
-          {/* Price */}
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center">
-              <span className="text-5xl font-bold text-gray-900">
-                ${plan.price}
-              </span>
-              <span className="text-gray-500 ml-2">
-                /{plan.duration} months
-              </span>
-            </div>
-            {plan.price === 0 && (
-              <p className="text-green-600 font-medium mt-2">Forever free!</p>
-            )}
-          </div>
-
-          {/* Current Plan Badge */}
-          {isCurrentPlan && (
-            <div className="mb-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                <CheckCircle className="w-4 h-4" />
-                Current Plan
-              </div>
-            </div>
-          )}
-
-          {/* Limits */}
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                <span className="font-medium">Tour Limit</span>
-              </div>
-              <span className="font-bold text-gray-900">{plan.tourLimit}</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <span className="font-medium">Blog Posts</span>
-              </div>
-              <span className="font-bold text-gray-900">
-                {plan.blogLimit === null ? "Unlimited" : plan.blogLimit}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                <span className="font-medium">Duration</span>
-              </div>
-              <span className="font-bold text-gray-900">{plan.duration} months</span>
-            </div>
-          </div>
-
-          {/* Features */}
-          <div className="mb-8">
-            <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500" />
-              Features included:
-            </h4>
-            <ul className="space-y-3">
-              {plan.features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Action Button */}
-          <button
-            onClick={() => {
-              if (isCurrentPlan && currentSubscription?.isActive) {
-                toast.info("You are already on this plan");
-                return;
-              }
-              handlePlanSelect(plan.id);
-              handleSubscribe(plan.id);
-            }}
-            disabled={
-              processing ||
-              (isCurrentPlan && currentSubscription?.isActive) ||
-              isProcessingPayment
-            }
-            className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 ${
-              isCurrentPlan && currentSubscription?.isActive
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : isSelected
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700"
-            }`}
-          >
-            {isProcessingPayment ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
-              </>
-            ) : isCurrentPlan && currentSubscription?.isActive ? (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                Current Plan
-              </>
-            ) : plan.price === 0 ? (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                Activate Free Plan
-              </>
-            ) : (
-              <>
-                <CreditCard className="w-5 h-5" />
-                {isCurrentPlan ? "Upgrade Now" : "Get Started"}
-              </>
-            )}
-          </button>
-
-          {/* Free plan note */}
-          {plan.price === 0 && (
-            <p className="text-center text-gray-500 text-sm mt-4">
-              No payment required
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading subscription plans...</p>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8">
+        <div className="relative h-20 w-20 mb-8">
+          <div className="absolute inset-0 rounded-full border-4 border-[#138bc9]/10" />
+          <div className="absolute inset-0 rounded-full border-4 border-[#138bc9] border-t-transparent animate-spin" />
         </div>
+        <p className="text-sm font-black text-gray-400 uppercase tracking-widest animate-pulse">Syncing Plans...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Choose Your Plan
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Select the perfect subscription plan for your hosting needs
-              </p>
-            </div>
+    <div className="min-h-screen bg-gray-50/30 pb-20 animate-in fade-in duration-700">
+      {/* Hero Section */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-16 text-center space-y-6">
+          <Badge className="bg-[#138bc9]/5 text-[#138bc9] border-none font-bold px-4 py-1.5 rounded-full uppercase tracking-widest text-[10px]">
+            Membership tiers
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Scale your expedition empire.</h1>
+          <p className="text-gray-500 font-medium max-w-2xl mx-auto text-lg leading-relaxed">
+            Choose the membership that aligns with your growth trajectory. Unlock premium placement, extended listing capacity, and deep analytics.
+          </p>
 
-            {/* Current Plan Info */}
-            {currentSubscription && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 p-2 rounded-lg">
-                    <Shield className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Current Plan:{" "}
-                      {currentSubscription.plan?.name || "Free Plan"}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {currentSubscription.isActive
-                        ? `Active until ${new Date(
-                            currentSubscription.endDate || ""
-                          ).toLocaleDateString()}`
-                        : "Inactive or pending payment"}
-                    </p>
-                  </div>
-                </div>
+          {currentSubscription?.isActive && (
+            <div className="inline-flex items-center gap-4 p-2 pl-6 pr-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full shadow-sm">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
+                <span className="text-xs font-black text-gray-700 uppercase tracking-tight">
+                  Current: {currentSubscription.plan?.name}
+                </span>
               </div>
-            )}
-          </div>
+              <Badge className="bg-emerald-500 text-white border-none text-[9px] font-black uppercase">Active</Badge>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Benefits Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Zap className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-2">
-                  Grow Your Business
-                </h3>
-                <p className="text-gray-600">
-                  Increase your tour visibility and reach more travelers
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <div className="flex items-start gap-4">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Shield className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-2">
-                  Priority Support
-                </h3>
-                <p className="text-gray-600">
-                  Get dedicated support and faster response times
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <div className="flex items-start gap-4">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Star className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 mb-2">
-                  Featured Listings
-                </h3>
-                <p className="text-gray-600">
-                  Your tours get premium placement in search results
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-6 -mt-12">
         {/* Plans Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          {plans
-            .filter((plan) => plan.isActive)
-            .map((plan) => renderPlanCard(plan))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+          {plans.filter(p => p.isActive).map((plan) => {
+            const isCurrent = currentSubscription?.plan?.id === plan.id;
+            const isFeatured = plan.name.toLowerCase().includes('gold') || plan.name.toLowerCase().includes('pro');
+
+            return (
+              <div
+                key={plan.id}
+                className={cn(
+                  "relative rounded-[40px] border transition-all duration-500 overflow-hidden group",
+                  isFeatured
+                    ? "bg-[#138bc9] border-[#138bc9] text-white shadow-2xl shadow-[#138bc9]/20 -translate-y-4"
+                    : "bg-white border-gray-100 text-gray-900 shadow-xl shadow-gray-200/50 hover:-translate-y-2"
+                )}
+              >
+                {isFeatured && (
+                  <div className="absolute top-6 right-8">
+                    <Badge className="bg-white/20 text-white border-none backdrop-blur-md px-3 font-black text-[9px] uppercase tracking-widest">Recommended</Badge>
+                  </div>
+                )}
+
+                <div className="p-10 space-y-8">
+                  <div>
+                    <h3 className="text-2xl font-black mb-2">{plan.name}</h3>
+                    <p className={cn("text-sm font-medium", isFeatured ? "text-blue-100/80" : "text-gray-400")}>{plan.description}</p>
+                  </div>
+
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black">${plan.price}</span>
+                    <span className={cn("text-xs font-bold uppercase tracking-widest", isFeatured ? "text-blue-100/60" : "text-gray-400")}>
+                      /{plan.duration} Month{plan.duration > 1 ? 's' : ''}
+                    </span>
+                  </div>
+
+                  <div className="space-y-4 pt-4">
+                    <div className={cn("p-4 rounded-2xl flex items-center justify-between", isFeatured ? "bg-white/10" : "bg-gray-50")}>
+                      <div className="flex items-center gap-2">
+                        <Zap className={cn("h-4 w-4", isFeatured ? "text-amber-400" : "text-[#138bc9]")} />
+                        <span className="text-[11px] font-black uppercase tracking-widest">Listing Capacity</span>
+                      </div>
+                      <span className="text-lg font-black">{plan.tourLimit}</span>
+                    </div>
+                    <div className={cn("p-4 rounded-2xl flex items-center justify-between", isFeatured ? "bg-white/10" : "bg-gray-50")}>
+                      <div className="flex items-center gap-2">
+                        <FileText className={cn("h-4 w-4", isFeatured ? "text-amber-400" : "text-[#138bc9]")} />
+                        <span className="text-[11px] font-black uppercase tracking-widest">Storytelling</span>
+                      </div>
+                      <span className="text-lg font-black">{plan.blogLimit === null ? <Infinity className="h-5 w-5" /> : plan.blogLimit}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className={cn("text-[10px] font-black uppercase tracking-[0.2em]", isFeatured ? "text-blue-100/50" : "text-gray-400")}>Everything Included:</p>
+                    <ul className="space-y-3">
+                      {plan.features.slice(0, 5).map((f, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <div className={cn("h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5", isFeatured ? "bg-white/20" : "bg-emerald-50 text-emerald-500")}>
+                            <Check className="h-3 w-3" />
+                          </div>
+                          <span className={cn("text-xs font-bold", isFeatured ? "text-blue-50" : "text-gray-600")}>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <Button
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={processing || isCurrent}
+                    className={cn(
+                      "w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all duration-300 shadow-lg",
+                      isFeatured
+                        ? "bg-white text-[#138bc9] hover:bg-blue-50 hover:scale-[1.02] shadow-black/10"
+                        : "bg-gray-900 text-white hover:bg-black hover:scale-[1.02]"
+                    )}
+                  >
+                    {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : isCurrent ? "Active Position" : "Secure Placement"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* FAQ Section */}
-        <div className="bg-white rounded-2xl shadow-sm border p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Frequently Asked Questions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-bold text-gray-900 mb-2">
-                How does payment work?
-              </h3>
-              <p className="text-gray-600">
-                Payments are processed securely through Stripe. You'll be
-                redirected to a secure payment page to complete your purchase.
-              </p>
+        {/* Benefits Section */}
+        <div className="mt-32 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {[
+            { title: "Rapid Growth", desc: "Accelerate your tour revenue with premium search priority.", icon: TrendingUp, color: "text-[#138bc9]", bg: "bg-blue-50" },
+            { title: "Direct Settlements", desc: "Fast payouts directly to your connected bank through Stripe.", icon: CreditCard, color: "text-emerald-500", bg: "bg-emerald-50" },
+            { title: "Secure Protocol", desc: "Every transaction is shielded with enterprise-grade encryption.", icon: ShieldCheck, color: "text-purple-500", bg: "bg-purple-50" },
+            { title: "Global Network", desc: "Connect with tens of thousands of travelers every month.", icon: Users, color: "text-amber-500", bg: "bg-amber-50" }
+          ].map((benefit, i) => (
+            <div key={i} className="space-y-4 p-8 rounded-[30px] border border-gray-100 bg-white hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-500">
+              <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center", benefit.bg, benefit.color)}>
+                <benefit.icon className="h-7 w-7" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-black text-gray-900 uppercase text-[11px] tracking-widest">{benefit.title}</h4>
+                <p className="text-xs font-medium text-gray-500 leading-relaxed">{benefit.desc}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-gray-900 mb-2">
-                Can I change my plan later?
-              </h3>
-              <p className="text-gray-600">
-                Yes! You can upgrade or downgrade your plan at any time. The
-                change will take effect at the start of your next billing cycle.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 mb-2">
-                Is there a free trial?
-              </h3>
-              <p className="text-gray-600">
-                We offer a free plan with basic features. Paid plans start with
-                a full-featured trial period as indicated in each plan.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 mb-2">
-                What happens if I cancel?
-              </h3>
-              <p className="text-gray-600">
-                You can cancel anytime. You'll keep access to premium features
-                until the end of your current billing period.
-              </p>
-            </div>
+          ))}
+        </div>
+
+        {/* FAQ - Specialized */}
+        <div className="mt-32 max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-black text-gray-900">Information Center</h2>
+            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Everything you need to know about membership</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
+            {[
+              { q: "Membership versatility?", a: "Transition between tiers at any phase. Enhancements apply instantaneously while downgrades synchronize at the next interval." },
+              { q: "Currency & Settlements?", a: "All transactions are denominated in USD. Settlements clear our gateway within 48-72 business hours after expedition completion." },
+              { q: "Refund Protocols?", a: "Membership fees are final once processed. However, we offer prorated credits for internal tier upgrades." },
+              { q: "Global Accessibility?", a: "Memberships are available to certified hosts globally. Some regional processor restrictions may apply depending on your location." }
+            ].map((faq, i) => (
+              <div key={i} className="space-y-3">
+                <h4 className="font-black text-gray-900 text-sm">{faq.q}</h4>
+                <p className="text-xs font-medium text-gray-500 leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Payment Security Info */}
-        <div className="mt-8 text-center">
-          <div className="inline-flex items-center gap-4 text-gray-600">
-            <Shield className="w-5 h-5 text-green-600" />
-            <span>Secure payment processed by Stripe</span>
-            <Shield className="w-5 h-5 text-green-600" />
-            <span>256-bit SSL encryption</span>
-            <Shield className="w-5 h-5 text-green-600" />
-            <span>PCI DSS compliant</span>
+        <div className="mt-32 pt-16 border-t border-gray-100 flex flex-col items-center gap-8 opacity-50">
+          <div className="flex items-center gap-8 grayscale opacity-70">
+            <Shield className="h-6 w-6" />
+            <CreditCard className="h-6 w-6" />
+            <LockIcon className="h-5 w-5" />
           </div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Institutional Grade Security Shielding</p>
         </div>
       </div>
     </div>
   );
+}
+
+function LockIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  )
 }

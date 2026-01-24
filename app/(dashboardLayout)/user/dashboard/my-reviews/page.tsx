@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,7 +25,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,10 +38,16 @@ import {
   RefreshCw,
   User,
   AlertTriangle,
+  Sparkles,
+  MessageSquare,
+  CheckCircle2,
+  Clock
 } from "lucide-react";
 import { getMyReviews, updateReview, deleteReview } from "@/services/review.service";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
 
 interface Review {
   id: string;
@@ -62,9 +66,6 @@ interface Review {
     title: string;
     destination: string;
   };
-  booking?: {
-    bookingDate: string;
-  };
 }
 
 export default function UserReviewsPage() {
@@ -74,475 +75,354 @@ export default function UserReviewsPage() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editData, setEditData] = useState({
-    rating: 5,
-    comment: "",
-  });
+  const [editData, setEditData] = useState({ rating: 5, comment: "" });
 
   const loadReviews = async () => {
     try {
       setLoading(true);
       const result = await getMyReviews();
-
-      if (result.success) {
-        setReviews(result.data || []);
-      } else {
-        toast.error("Failed to load reviews", {
-          description: result.message,
-        });
-      }
+      if (result.success) setReviews(result.data || []);
     } catch (error) {
-      console.error("Error loading reviews:", error);
-      toast.error("Error loading reviews");
+      toast.error("Failed to sync feedback ledger");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadReviews();
-  }, []);
-
-  const handleDeleteClick = (review: Review) => {
-    setSelectedReview(review);
-    setIsDeleteDialogOpen(true);
-  };
+  useEffect(() => { loadReviews(); }, []);
 
   const handleDeleteConfirm = async () => {
     if (!selectedReview) return;
-
     try {
       const result = await deleteReview(selectedReview.id);
       if (result.success) {
-        toast.success("Review deleted successfully");
+        toast.success("Feedback redacted successfully");
         setIsDeleteDialogOpen(false);
         loadReviews();
-      } else {
-        toast.error(result.message);
       }
-    } catch (error: any) {
-      console.error("Delete error:", error);
-      toast.error(error.message || "Failed to delete review");
+    } catch (error) {
+      toast.error("Redaction protocol failed");
     }
-  };
-
-  const handleEdit = (review: Review) => {
-    setSelectedReview(review);
-    setEditData({
-      rating: review.rating,
-      comment: review.comment,
-    });
-    setIsEditDialogOpen(true);
   };
 
   const handleUpdate = async () => {
     if (!selectedReview) return;
-
     try {
       const result = await updateReview(selectedReview.id, editData);
       if (result.success) {
-        toast.success("Review updated successfully");
+        toast.success("Feedback updated & queued for review");
         setIsEditDialogOpen(false);
         loadReviews();
-      } else {
-        toast.error(result.message);
       }
-    } catch (error: any) {
-      console.error("Update error:", error);
-      toast.error(error.message || "Failed to update review");
+    } catch (error) {
+      toast.error("Update protocol failed");
     }
   };
 
-  const handleView = (review: Review) => {
-    setSelectedReview(review);
-    setIsViewDialogOpen(true);
-  };
-
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: number, interactive = false) => {
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
-          <Star
+          <button
             key={star}
-            className={`w-4 h-4 ${
-              star <= rating
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-gray-300"
-            }`}
-          />
+            type="button"
+            disabled={!interactive}
+            onClick={() => interactive && setEditData(prev => ({ ...prev, rating: star }))}
+            className={cn("focus:outline-none transition-transform active:scale-95", interactive && "hover:scale-110")}
+          >
+            <Star
+              className={cn(
+                "w-4 h-4",
+                star <= (interactive ? editData.rating : rating) ? "fill-amber-400 text-amber-400" : "text-gray-200"
+              )}
+            />
+          </button>
         ))}
-        <span className="ml-2 text-sm font-medium">{rating}.0</span>
       </div>
     );
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "MMM dd, yyyy");
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy");
+    } catch {
+      return "N/A";
+    }
   };
 
-  const approvedCount = reviews.filter(r => r.isApproved).length;
-  const pendingCount = reviews.filter(r => !r.isApproved).length;
-
-  if (loading && reviews.length === 0) {
+  if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-center items-center h-64">
-          <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex flex-col gap-2">
+          <div className="h-10 w-64 bg-gray-100 animate-pulse rounded-2xl" />
+          <div className="h-5 w-96 bg-gray-50 animate-pulse rounded-xl" />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => <div key={i} className="h-28 bg-gray-50 animate-pulse rounded-[30px]" />)}
+        </div>
+        <TableSkeleton columnCount={6} rowCount={8} />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">My Reviews</h1>
-        <p className="text-muted-foreground mt-2">
-          Reviews you have submitted for tours
-        </p>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900">Feedback Ledger</h1>
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[#138bc9]" />
+            Manage the stories you've shared with the community
+          </p>
+        </div>
+        <Button onClick={loadReviews} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-[#138bc9]/5 hover:text-[#138bc9] transition-all">
+          <RefreshCw className="h-4 w-4" />
+          Sync Records
+        </Button>
       </div>
 
-      {/* Stats Summary */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{reviews.length}</div>
-              <p className="text-sm text-muted-foreground">Total Reviews</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{approvedCount}</div>
-              <p className="text-sm text-muted-foreground">Approved Reviews</p>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{pendingCount}</div>
-              <p className="text-sm text-muted-foreground">Pending Reviews</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {[
+          { label: "Total Testimony", value: reviews.length, sub: "Experiences documented", icon: MessageSquare, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Verified Posts", value: reviews.filter(r => r.isApproved).length, sub: "Publicly visible", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Pending Audit", value: reviews.filter(r => !r.isApproved).length, sub: "In verification queue", icon: Clock, color: "text-amber-600", bg: "bg-amber-50" }
+        ].map((stat, i) => (
+          <Card key={i} className="border-none shadow-sm bg-white group overflow-hidden transition-all duration-300 hover:shadow-md">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                  <h3 className="text-3xl font-black text-gray-900 leading-none">{stat.value}</h3>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-2">{stat.sub}</p>
+                </div>
+                <div className={cn("p-3 rounded-[20px] transition-all duration-300 group-hover:scale-110", stat.bg, stat.color)}>
+                  <stat.icon className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {/* Reviews Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>My Reviews ({reviews.length})</CardTitle>
-          <CardDescription>
-            All reviews you have submitted
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
+      <div className="rounded-[30px] border border-gray-100 overflow-hidden bg-white shadow-sm">
+        <Table>
+          <TableHeader className="bg-gray-50/50">
+            <TableRow className="hover:bg-transparent border-gray-50 text-gray-400">
+              <TableHead className="font-black text-[10px] uppercase tracking-widest py-5 pl-8">Expedition Host</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest py-5">Score</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest py-5">Snippet</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest py-5">Status</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest py-5">Documented</TableHead>
+              <TableHead className="font-black text-[10px] uppercase tracking-widest py-5 text-right pr-8">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reviews.length === 0 ? (
               <TableRow>
-                <TableHead>Host & Tour</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Comment</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="py-20 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-16 w-16 rounded-[25px] bg-gray-50 flex items-center justify-center text-gray-200">
+                      <MessageSquare className="h-8 w-8" />
+                    </div>
+                    <p className="text-sm font-black text-gray-400 uppercase tracking-widest">No feedback documented</p>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reviews.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No reviews found
+            ) : (
+              reviews.map((review) => (
+                <TableRow key={review.id} className="hover:bg-gray-50/30 transition-all duration-300 group border-gray-50">
+                  <TableCell className="py-5 pl-8">
+                    <div className="max-w-[200px]">
+                      <p className="font-bold text-gray-900 text-sm line-clamp-1 group-hover:text-[#138bc9] transition-colors">{review.tour?.title || "Journey"}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                          <User className="h-3 w-3" />
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase truncate">
+                          Lead: {review.host?.name || "Member"}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      {renderStars(review.rating)}
+                      <span className="text-[9px] font-black text-amber-600">{review.rating}.0 SCORE</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <p className="text-xs font-medium text-gray-500 line-clamp-2 max-w-[250px] italic">
+                      "{review.comment.length > 80 ? review.comment.slice(0, 80) + "..." : review.comment}"
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[8px] font-black uppercase tracking-widest border-none shadow-none",
+                      review.isApproved ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
+                    )}>
+                      {review.isApproved ? "Public" : "Awaiting"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 uppercase tracking-tighter">
+                      <Calendar className="h-3 w-3 text-[#138bc9]" />
+                      {formatDate(review.createdAt)}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right pr-8">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-all"
+                        onClick={() => { setSelectedReview(review); setIsViewDialogOpen(true); }}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-all"
+                        onClick={() => {
+                          setSelectedReview(review);
+                          setEditData({ rating: review.rating, comment: review.comment });
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all text-gray-300"
+                        onClick={() => { setSelectedReview(review); setIsDeleteDialogOpen(true); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                reviews.map((review) => (
-                  <TableRow key={review.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium line-clamp-1">
-                          {review.tour?.title || "Unknown Tour"}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User className="w-3 h-3 text-gray-600" />
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {review.host?.name || "Unknown Host"}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                          <MapPin className="w-3 h-3" />
-                          {review.tour?.destination || "Unknown"}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{renderStars(review.rating)}</TableCell>
-                    <TableCell>
-                      <div className="max-w-[250px]">
-                        <p className="line-clamp-2">
-                          {review.comment}
-                        </p>
-                        {review.comment.length > 100 && (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="p-0 h-auto"
-                            onClick={() => handleView(review)}
-                          >
-                            Read more
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={review.isApproved ? "default" : "secondary"}
-                        className={
-                          review.isApproved
-                            ? "bg-green-100 text-green-800 hover:bg-green-100"
-                            : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                        }
-                      >
-                        {review.isApproved ? "Approved" : "Pending"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(review.createdAt)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleView(review)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(review)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteClick(review)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-      {/* View Dialog */}
+      {/* Detail Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Review Details</DialogTitle>
-            <DialogDescription>
-              Complete information about your review
-            </DialogDescription>
-          </DialogHeader>
-          
+        <DialogContent className="max-w-xl rounded-[40px] border-none shadow-2xl p-0 overflow-hidden">
           {selectedReview && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Host</Label>
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="w-5 h-5 text-gray-600" />
+            <div className="animate-in zoom-in-95 duration-300">
+              <div className="bg-[#138bc9] p-8 text-white">
+                <div className="flex items-center gap-2 mb-2 opacity-80">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Traveler Memoir</span>
+                </div>
+                <h2 className="text-2xl font-black">Feedback Registry</h2>
+                <p className="text-blue-100 font-medium text-sm mt-1">Expedition memoirs for {selectedReview.tour?.title}</p>
+              </div>
+              <div className="p-8 space-y-8">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Lead Guide</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-gray-50 flex items-center justify-center text-[#138bc9]">
+                        <User className="h-5 w-5" />
+                      </div>
+                      <p className="text-sm font-black text-gray-900">{selectedReview.host?.name || "Community Member"}</p>
                     </div>
-                    <div>
-                      <p className="font-medium">{selectedReview.host?.name || "Unknown"}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Logged Date</Label>
+                    <div className="flex items-center justify-end gap-2 h-10">
+                      <span className="text-sm font-black text-gray-800">{formatDate(selectedReview.createdAt)}</span>
+                      <Calendar className="h-4 w-4 text-[#138bc9]" />
                     </div>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">Tour</Label>
-                  <p className="font-medium mt-2">{selectedReview.tour?.title || "Unknown"}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedReview.tour?.destination}
-                  </p>
+
+                <div className="p-6 bg-gray-50 rounded-[30px] border border-gray-100 italic text-gray-700 leading-relaxed font-medium">
+                  "{selectedReview.comment}"
                 </div>
-              </div>
 
-              <div>
-                <Label className="text-muted-foreground">Rating</Label>
-                <div className="mt-2">{renderStars(selectedReview.rating)}</div>
-              </div>
-
-              <div>
-                <Label className="text-muted-foreground">Your Comment</Label>
-                <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                  <p className="whitespace-pre-wrap">{selectedReview.comment}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">Status</Label>
-                  <Badge
-                    variant={selectedReview.isApproved ? "default" : "secondary"}
-                    className={
-                      selectedReview.isApproved
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }
-                  >
-                    {selectedReview.isApproved ? "Approved" : "Pending"}
+                <div className="flex items-center justify-between p-4 bg-blue-50/30 rounded-2xl">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Memoir Score</p>
+                    {renderStars(selectedReview.rating)}
+                  </div>
+                  <Badge className={cn("rounded-full px-4 h-8 font-black uppercase tracking-widest border-none", selectedReview.isApproved ? "bg-emerald-500 text-white" : "bg-amber-500 text-white")}>
+                    {selectedReview.isApproved ? "Verified public" : "Pending audit"}
                   </Badge>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">Created Date</Label>
-                  <p className="font-medium">{formatDate(selectedReview.createdAt)}</p>
-                </div>
-              </div>
 
-              {selectedReview.booking?.bookingDate && (
-                <div>
-                  <Label className="text-muted-foreground">Booking Date</Label>
-                  <p className="font-medium">
-                    {formatDate(selectedReview.booking.bookingDate)}
-                  </p>
-                </div>
-              )}
+                <Button onClick={() => setIsViewDialogOpen(false)} className="w-full h-12 bg-gray-900 hover:bg-black text-white font-black rounded-2xl uppercase tracking-widest text-[10px]">Close Document</Button>
+              </div>
             </div>
           )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Your Review</DialogTitle>
-            <DialogDescription>
-              Update your review for this tour
-            </DialogDescription>
-          </DialogHeader>
-          
+        <DialogContent className="max-w-xl rounded-[40px] border-none shadow-2xl p-0 overflow-hidden">
           {selectedReview && (
-            <div className="space-y-6">
-              <div>
-                <Label className="text-muted-foreground block mb-2">Tour</Label>
-                <p className="font-medium">{selectedReview.tour?.title}</p>
+            <div className="animate-in slide-in-from-bottom-4 duration-300">
+              <div className="bg-gray-900 p-8 text-white">
+                <h2 className="text-2xl font-black">Edit Memoir</h2>
+                <p className="text-gray-400 font-medium text-sm mt-1">Enhance your feedback for the guide</p>
               </div>
-
-              <div>
-                <Label htmlFor="rating">Rating</Label>
-                <div className="flex items-center gap-2 mt-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setEditData(prev => ({ ...prev, rating: star }))}
-                      className="p-1 focus:outline-none"
-                    >
-                      <Star
-                        className={`w-8 h-8 transition-colors ${
-                          star <= editData.rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    </button>
-                  ))}
-                  <span className="ml-2 text-lg font-medium">
-                    {editData.rating}.0 out of 5
-                  </span>
+              <div className="p-8 space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Expedition Rating</Label>
+                  <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    {renderStars(0, true)}
+                    <span className="text-xs font-black text-amber-600 uppercase tracking-tighter">{editData.rating}.0 SATISFACTION</span>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="comment">Your Comment</Label>
-                <Textarea
-                  id="comment"
-                  value={editData.comment}
-                  onChange={(e) => setEditData(prev => ({ ...prev, comment: e.target.value }))}
-                  rows={6}
-                  className="mt-2"
-                  placeholder="Share your experience..."
-                />
-              </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Narrative Description</Label>
+                  <Textarea
+                    value={editData.comment}
+                    onChange={(e) => setEditData(prev => ({ ...prev, comment: e.target.value }))}
+                    rows={6}
+                    className="rounded-[30px] border-gray-100 bg-gray-50/50 p-6 focus:ring-[#138bc9] font-medium leading-relaxed"
+                    placeholder="Describe your journey in detail..."
+                  />
+                </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-700">
-                  <strong>Note:</strong> Updating your review will change its status to "Pending" until it's reviewed by an admin again.
-                </p>
+                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                  <p className="text-[10px] font-bold text-amber-700 leading-normal uppercase">Modifying this ledger will re-initialize the manual verification protocol by our admin team.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="h-14 rounded-2xl font-black uppercase text-[10px] border-gray-100">Abort</Button>
+                  <Button onClick={handleUpdate} className="h-14 rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-black uppercase text-[10px] shadow-lg shadow-[#138bc9]/20">Update Ledger</Button>
+                </div>
               </div>
             </div>
           )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdate}>Update Review</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />
-              Delete Review
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this review? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedReview && (
-            <div className="space-y-4">
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="font-medium">{selectedReview.tour?.title}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedReview.comment.substring(0, 100)}...
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  {renderStars(selectedReview.rating)}
-                </div>
-              </div>
-              
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-700">
-                  <strong>Warning:</strong> Deleting this review will also update the tour and host ratings.
-                </p>
-              </div>
+        <DialogContent className="max-w-md rounded-[40px] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="p-10 text-center space-y-6">
+            <div className="mx-auto h-20 w-20 rounded-[30px] bg-red-50 flex items-center justify-center text-red-500 mb-2">
+              <Trash2 className="h-10 w-10" />
             </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-            >
-              Delete Review
-            </Button>
-          </DialogFooter>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-gray-900 tracking-tight">Redact Memoir?</h3>
+              <p className="text-sm font-medium text-gray-500 leading-relaxed">This action will permanently purge this feedback from the public registry and expedition guide's record. This cannot be undone.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="h-12 rounded-2xl font-black uppercase text-[10px] border-gray-100">Keep</Button>
+              <Button onClick={handleDeleteConfirm} className="h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase text-[10px] shadow-lg shadow-red-200">Purge Record</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

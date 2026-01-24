@@ -9,11 +9,12 @@ import { Search, Filter } from 'lucide-react'
 import { BlogCardPublic } from '@/components/module/Blogs/BlogCardPublic'
 import { getAllBlogs, IBlog } from '@/services/blog.service'
 import { useAuthClient } from '@/hooks/use-auth-client'
+import { SectionHeading } from '@/components/ui/SectionHeading'
 
 export default function PublicBlogsPage() {
   const router = useRouter()
   const { isAuthenticated, login } = useAuthClient()
-  
+
   const [blogs, setBlogs] = useState<IBlog[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -31,7 +32,7 @@ export default function PublicBlogsPage() {
         category: category || undefined,
         status: 'PUBLISHED'
       })
-      
+
       if (result.success) {
         setBlogs(result.data)
       }
@@ -52,22 +53,13 @@ export default function PublicBlogsPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Travel Blogs</h1>
-              <p className="text-sm text-gray-600">Discover amazing travel experiences</p>
-            </div>
-            {/* <Button 
-              onClick={() => {
-                if (!isAuthenticated) {
-                  login()
-                  return
-                }
-                router.push('/dashboard/blogs')
-              }}
-            >
-              Write a Blog
-            </Button> */}
+          <div className="mb-8">
+            <SectionHeading
+              center={false}
+              badge="Stories"
+              title="Travel Blogs"
+              subtitle="Discover amazing travel experiences from around the world"
+            />
           </div>
 
           {/* Search */}
@@ -81,7 +73,9 @@ export default function PublicBlogsPage() {
                 className="pl-10"
               />
             </div>
-            <Button type="submit">Search</Button>
+            <Button type="submit" className="bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-bold h-12 px-8 rounded-xl shadow-md transition-all">
+              Search
+            </Button>
           </form>
         </div>
       </div>
@@ -91,7 +85,7 @@ export default function PublicBlogsPage() {
         {loading ? (
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+              <div key={i} className="bg-white rounded-2xl shadow-sm border border-[#138bc9]/10 p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Skeleton className="w-12 h-12 rounded-full" />
                   <div className="space-y-2">
@@ -100,10 +94,12 @@ export default function PublicBlogsPage() {
                   </div>
                 </div>
                 <Skeleton className="h-6 w-3/4 mb-3" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3 mb-4" />
-                <Skeleton className="h-48 w-full rounded-lg" />
+                <div className="space-y-2 mb-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+                <Skeleton className="h-64 w-full rounded-2xl" />
               </div>
             ))}
           </div>

@@ -24,8 +24,8 @@ function PublicFooter() {
                 width={120}
                 height={120}
                 alt="Tour Company Logo"
-                // className="object-contain"
-                // priority
+              // className="object-contain"
+              // priority
               />
             </Link>
             <p className="text-sm text-gray-600 leading-relaxed">
@@ -35,25 +35,25 @@ function PublicFooter() {
             <div className="flex gap-3">
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-[#138bc9] hover:bg-[#138bc9]/90 flex items-center justify-center text-white transition-colors"
               >
                 <Facebook className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-[#138bc9] hover:bg-[#138bc9]/90 flex items-center justify-center text-white transition-colors"
               >
                 <Instagram className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-[#138bc9] hover:bg-[#138bc9]/90 flex items-center justify-center text-white transition-colors"
               >
                 <Twitter className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-[#138bc9] hover:bg-[#138bc9]/90 flex items-center justify-center text-white transition-colors"
               >
                 <Youtube className="w-5 h-5" />
               </a>
@@ -67,7 +67,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Home
                 </Link>
@@ -75,7 +75,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#destinations"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Destinations
                 </Link>
@@ -83,7 +83,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#tours"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Tour Packages
                 </Link>
@@ -91,7 +91,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#about"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   About Us
                 </Link>
@@ -99,7 +99,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#contact"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Contact
                 </Link>
@@ -114,7 +114,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   FAQ
                 </Link>
@@ -122,7 +122,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Travel Guide
                 </Link>
@@ -130,7 +130,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Booking Policy
                 </Link>
@@ -138,7 +138,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Terms & Conditions
                 </Link>
@@ -146,7 +146,7 @@ function PublicFooter() {
               <li>
                 <Link
                   href="#"
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-600 hover:text-[#138bc9] transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -159,7 +159,7 @@ function PublicFooter() {
             <h3 className="font-semibold text-gray-900 mb-4">Contact Us</h3>
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2 text-gray-600">
-                <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-5 h-5 text-[#138bc9] flex-shrink-0 mt-0.5" />
                 <span>
                   456 Travel Avenue
                   <br />
@@ -167,11 +167,11 @@ function PublicFooter() {
                 </span>
               </li>
               <li className="flex items-center gap-2 text-gray-600">
-                <Phone className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <Phone className="w-5 h-5 text-[#138bc9] flex-shrink-0" />
                 <span>+1 (555) 123-4567</span>
               </li>
               <li className="flex items-center gap-2 text-gray-600">
-                <Mail className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <Mail className="w-5 h-5 text-[#138bc9] flex-shrink-0" />
                 <span>info@wanderlusttours.com</span>
               </li>
             </ul>
@@ -188,19 +188,19 @@ function PublicFooter() {
             <div className="flex gap-6 text-sm">
               <Link
                 href="#"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
+                className="text-gray-600 hover:text-[#138bc9] transition-colors"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="#"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
+                className="text-gray-600 hover:text-[#138bc9] transition-colors"
               >
                 Terms of Service
               </Link>
               <Link
                 href="#"
-                className="text-gray-600 hover:text-blue-600 transition-colors"
+                className="text-gray-600 hover:text-[#138bc9] transition-colors"
               >
                 Cookie Policy
               </Link>

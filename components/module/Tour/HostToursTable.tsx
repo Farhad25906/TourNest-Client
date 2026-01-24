@@ -32,10 +32,8 @@ import {
   Users,
   Star,
   TrendingUp,
-  Copy,
   CheckCircle,
   XCircle,
-  CheckCheck,
   AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
@@ -44,7 +42,8 @@ import DeleteTourDialog from "./DeleteTourDialog";
 import { formatCurrency, formatDate } from "@/lib/date-utils";
 import { ITour } from "@/types/tour.interface";
 import CompleteTourDialog from "./CompleteTourDialog";
-import { completeTour, updateTourStatus } from "@/services/tour/tour.service"; // Add updateTourStatus
+import { completeTour, updateTourStatus } from "@/services/tour/tour.service";
+import { cn } from "@/lib/utils";
 
 interface HostToursTableProps {
   tours: ITour[];
@@ -70,11 +69,6 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
     setDeletingTour(tour);
   };
 
-  // Handle Deactivate button click
-  const handleDeactivate = (tour: ITour) => {
-    setCompletingTour(tour);
-  };
-
   const confirmCompleteTour = async (
     tour: ITour,
     option: "complete" | "deactivate"
@@ -85,17 +79,13 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
       setIsCompleting(true);
 
       if (option === "complete") {
-        // Complete tour with booking updates
         const result = await completeTour(tour.id);
         if (result.success) {
-          toast.success(
-            result.message || "Tour marked as completed! All bookings updated."
-          );
+          toast.success(result.message || "Tour marked as completed!");
         } else {
           throw new Error(result.message || "Failed to complete tour");
         }
       } else {
-        // Just deactivate without updating bookings
         const result = await updateTourStatus(tour.id, false);
         if (result.success) {
           toast.success("Tour deactivated successfully!");
@@ -107,60 +97,18 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Failed to process tour");
-      console.error(error);
     } finally {
       setIsCompleting(false);
       setCompletingTour(null);
     }
   };
 
-  // Simple deactivate without updating bookings
-  const handleSimpleDeactivate = async (tour: ITour) => {
-    try {
-      setIsDeactivating(true);
-      const result = await updateTourStatus(tour.id, false);
-
-      if (result.success) {
-        toast.success("Tour deactivated successfully!");
-        router.refresh();
-      } else {
-        throw new Error(result.message || "Failed to deactivate tour");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to deactivate tour");
-      console.error(error);
-    } finally {
-      setIsDeactivating(false);
-    }
-  };
-
-  const handleDuplicate = async (tour: ITour) => {
-    try {
-      const response = await fetch(`/api/host/tours/${tour.id}/duplicate`, {
-        method: "POST",
-      });
-
-      if (response.ok) {
-        toast.success("Tour duplicated successfully!");
-        router.refresh();
-      } else {
-        throw new Error("Failed to duplicate tour");
-      }
-    } catch (error) {
-      toast.error("Failed to duplicate tour");
-      console.error(error);
-    }
-  };
-
   const handleStatusToggle = async (tour: ITour) => {
     if (tour.isActive) {
-      // For active tours, show the complete dialog when clicking "Deactivate"
       setCompletingTour(tour);
     } else {
-      // For inactive tours, just activate normally
       try {
         const result = await updateTourStatus(tour.id, true);
-
         if (result.success) {
           toast.success("Tour activated successfully!");
           router.refresh();
@@ -169,68 +117,37 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
         }
       } catch (error: any) {
         toast.error(error.message || "Failed to activate tour");
-        console.error(error);
       }
     }
   };
 
-  const handleFeaturedToggle = async (tour: ITour) => {
-    try {
-      const response = await fetch(`/api/host/tours/${tour.id}/featured`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isFeatured: !tour.isFeatured }),
-      });
-
-      if (response.ok) {
-        toast.success(
-          `Tour ${
-            !tour.isFeatured ? "marked as featured" : "removed from featured"
-          }!`
-        );
-        router.refresh();
-      } else {
-        throw new Error("Failed to update featured status");
-      }
-    } catch (error) {
-      toast.error("Failed to update featured status");
-      console.error(error);
-    }
-  };
-
-  // Check if a tour can be completed (tour has ended)
   const canCompleteTour = (tour: ITour) => {
     if (!tour.isActive) return false;
-    const tourEndDate = new Date(tour.endDate);
-    const currentDate = new Date();
-    return tourEndDate <= currentDate;
+    return new Date(tour.endDate) <= new Date();
   };
 
-  // Check if tour hasn't ended yet
   const isTourActiveAndNotEnded = (tour: ITour) => {
     if (!tour.isActive) return false;
-    const tourEndDate = new Date(tour.endDate);
-    const currentDate = new Date();
-    return tourEndDate > currentDate;
+    return new Date(tour.endDate) > new Date();
   };
 
   if (tours.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-10">
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-              <MapPin className="h-12 w-12 text-muted-foreground" />
+      <Card className="border-none shadow-sm bg-gray-50/50">
+        <CardContent className="py-16">
+          <div className="text-center space-y-6">
+            <div className="mx-auto w-24 h-24 rounded-3xl bg-white shadow-sm flex items-center justify-center border border-gray-100">
+              <MapPin className="h-10 w-10 text-gray-300" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">No tours yet</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Start by creating your first tour to showcase your expertise
+            <div className="max-w-xs mx-auto">
+              <h3 className="text-xl font-black text-gray-900">No tours yet</h3>
+              <p className="text-sm font-medium text-gray-500 mt-2">
+                Start by creating your first tour to showcase your expertise and start earning.
               </p>
             </div>
-            <Button>Create Your First Tour</Button>
+            <Button className="bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-bold rounded-2xl px-8 h-12 shadow-lg shadow-[#138bc9]/20 transition-all duration-300 hover:scale-105">
+              Create Your First Tour
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -239,25 +156,24 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-2xl border border-gray-50 overflow-hidden bg-white shadow-sm">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[300px]">Tour</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Bookings</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          <TableHeader className="bg-gray-50/50">
+            <TableRow className="hover:bg-transparent border-gray-50">
+              <TableHead className="font-black text-gray-400 uppercase tracking-widest text-[10px] py-4">Tour details</TableHead>
+              <TableHead className="font-black text-gray-400 uppercase tracking-widest text-[10px] py-4">Status</TableHead>
+              <TableHead className="font-black text-gray-400 uppercase tracking-widest text-[10px] py-4">Pricing</TableHead>
+              <TableHead className="font-black text-gray-400 uppercase tracking-widest text-[10px] py-4">Engagement</TableHead>
+              <TableHead className="font-black text-gray-400 uppercase tracking-widest text-[10px] py-4">Schedule</TableHead>
+              <TableHead className="font-black text-gray-400 uppercase tracking-widest text-[10px] py-4 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {tours.map((tour) => (
-              <TableRow key={tour.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-16 w-24 rounded-md overflow-hidden">
+              <TableRow key={tour.id} className="hover:bg-gray-50/50 transition-colors duration-300 group border-gray-50">
+                <TableCell className="py-5">
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-14 w-20 rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-300 shrink-0">
                       {tour.images && tour.images.length > 0 ? (
                         <Image
                           src={tour.images[0]}
@@ -266,162 +182,134 @@ export function HostToursTable({ tours = [] }: HostToursTableProps) {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="h-full w-full bg-muted flex items-center justify-center">
-                          <MapPin className="h-6 w-6 text-muted-foreground" />
+                        <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+                          <MapPin className="h-5 w-5 text-gray-300" />
                         </div>
                       )}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium line-clamp-1">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold text-gray-900 line-clamp-1 group-hover:text-[#138bc9] transition-colors">
                           {tour.title}
                         </h4>
                         {tour.isFeatured && (
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <MapPin className="h-3 w-3" />
-                        <span className="line-clamp-1">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                        <MapPin className="h-3 w-3 text-[#138bc9]" />
+                        <span className="truncate">
                           {tour.destination}, {tour.city}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline">{tour.category}</Badge>
-                        <Badge variant="outline">{tour.difficulty}</Badge>
-                      </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <Badge
-                      variant={tour.isActive ? "default" : "secondary"}
-                      className="w-fit"
+                      className={cn(
+                        "w-fit rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest border-none shadow-none",
+                        tour.isActive ? "bg-blue-50 text-[#138bc9]" : "bg-gray-100 text-gray-500"
+                      )}
                     >
                       {tour.isActive ? "Active" : "Inactive"}
                     </Badge>
-                    {tour.isFeatured && (
-                      <Badge variant="outline" className="w-fit">
-                        Featured
-                      </Badge>
-                    )}
-                    {/* {canCompleteTour(tour) && (
-                      <Badge
-                        variant="outline"
-                        className="w-fit bg-amber-50 text-amber-700 border-amber-200"
-                      >
-                        Ready to Complete
-                      </Badge>
-                    )} */}
                     {isTourActiveAndNotEnded(tour) && (
-                      <Badge
-                        variant="outline"
-                        className="w-fit bg-blue-50 text-blue-700 border-blue-200"
-                      >
+                      <Badge className="w-fit rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border-none">
                         Ongoing
                       </Badge>
                     )}
+                    {canCompleteTour(tour) && (
+                      <Badge className="w-fit rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 border-none">
+                        Ended
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium">
+                  <div className="font-black text-gray-900">
                     {formatCurrency(tour.price)}
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {tour.duration} days
+                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">
+                    {tour.duration} Day{tour.duration > 1 ? 's' : ''} Expedition
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>
-                      {tour.currentGroupSize || 0}/{tour.maxGroupSize}
-                    </span>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {tour.bookingCount || 0} bookings
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-[#138bc9]" />
+                      <span className="text-[11px] font-black text-gray-700">
+                        {tour.currentGroupSize || 0}/{tour.maxGroupSize} Filled
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-3 w-3 text-purple-500" />
+                      <span className="text-[11px] font-black text-gray-700">
+                        {tour.views || 0} Views
+                      </span>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
-                    <span>{tour.views || 0}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black text-gray-900 uppercase tracking-tighter">
+                      <Calendar className="h-3 w-3 text-blue-500" />
                       {formatDate(tour.startDate)}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[9px] font-bold text-gray-400 flex items-center gap-1.5 px-4">
                       to {formatDate(tour.endDate)}
                     </div>
-                    {canCompleteTour(tour) && (
-                      <div className="text-xs text-amber-600 mt-1">
-                        <AlertTriangle className="h-3 w-3 inline mr-1" />
-                        Tour has ended
-                      </div>
-                    )}
-                    {isTourActiveAndNotEnded(tour) && (
-                      <div className="text-xs text-blue-600 mt-1">
-                        <Calendar className="h-3 w-3 inline mr-1" />
-                        Still ongoing
-                      </div>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-colors duration-300">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleView(tour)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Public Page
+                    <DropdownMenuContent align="end" className="w-56 rounded-2xl border-gray-100 shadow-xl p-2">
+                      <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 py-2">Management</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-gray-50" />
+                      <DropdownMenuItem onClick={() => handleView(tour)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                        <Eye className="h-4 w-4 mr-3" />
+                        <span className="text-sm font-bold">Public View</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(tour)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Tour
+                      <DropdownMenuItem onClick={() => handleEdit(tour)} className="rounded-xl cursor-pointer py-2.5 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                        <Edit className="h-4 w-4 mr-3" />
+                        <span className="text-sm font-bold">Edit Details</span>
                       </DropdownMenuItem>
-                      {/* <DropdownMenuItem onClick={() => handleDuplicate(tour)}>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Duplicate
-                      </DropdownMenuItem> */}
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="bg-gray-50" />
                       <DropdownMenuItem
                         onClick={() => handleStatusToggle(tour)}
                         disabled={isDeactivating}
+                        className={cn(
+                          "rounded-xl cursor-pointer py-2.5 transition-colors",
+                          tour.isActive
+                            ? "focus:bg-red-50 focus:text-red-500"
+                            : "focus:bg-[#138bc9]/10 focus:text-[#138bc9]"
+                        )}
                       >
                         {tour.isActive ? (
                           <>
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Deactivate
+                            <XCircle className="h-4 w-4 mr-3" />
+                            <span className="text-sm font-bold">Deactivate</span>
                           </>
                         ) : (
                           <>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Activate
+                            <CheckCircle className="h-4 w-4 mr-3" />
+                            <span className="text-sm font-bold">Activate</span>
                           </>
                         )}
                       </DropdownMenuItem>
-                      {/* <DropdownMenuItem onClick={() => handleFeaturedToggle(tour)}>
-                        <Star className="h-4 w-4 mr-2" />
-                        {tour.isFeatured ? "Remove Featured" : "Mark as Featured"}
-                      </DropdownMenuItem> */}
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="bg-gray-50" />
                       <DropdownMenuItem
                         onClick={() => handleDelete(tour)}
-                        className="text-destructive focus:text-destructive"
+                        className="rounded-xl cursor-pointer py-2.5 text-red-500 focus:bg-red-50 focus:text-red-600"
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Tour
+                        <Trash2 className="h-4 w-4 mr-3" />
+                        <span className="text-sm font-bold">Delete permanently</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -211,7 +211,7 @@ export const adminNavItems: NavSection[] = [
                 icon: "Home",
                 roles: ["ADMIN"],
             },
-            
+
         ],
     },
     {
@@ -227,6 +227,12 @@ export const adminNavItems: NavSection[] = [
                 title: "Subscription",
                 href: "/admin/dashboard/subscription-management",
                 icon: "BarChart",
+                roles: ["ADMIN"],
+            },
+            {
+                title: "User Subscriptions",
+                href: "/admin/dashboard/user-subscriptions",
+                icon: "Users",
                 roles: ["ADMIN"],
             },
         ],

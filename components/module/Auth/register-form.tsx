@@ -33,12 +33,13 @@ const RegisterForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Name */}
           <Field>
-            <FieldLabel htmlFor="name">Full Name *</FieldLabel>
-            <Input 
-              id="name" 
-              name="name" 
-              type="text" 
+            <FieldLabel htmlFor="name" className="text-sm font-semibold text-gray-700">Full Name *</FieldLabel>
+            <Input
+              id="name"
+              name="name"
+              type="text"
               placeholder="John Doe"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.name}
               aria-describedby={serverErrors.name ? "name-error" : undefined}
               required
@@ -49,15 +50,16 @@ const RegisterForm = () => {
               </p>
             )}
           </Field>
-          
+
           {/* Address */}
           <Field>
-            <FieldLabel htmlFor="address">Address *</FieldLabel>
+            <FieldLabel htmlFor="address" className="text-sm font-semibold text-gray-700">Address *</FieldLabel>
             <Input
               id="address"
               name="address"
               type="text"
               placeholder="123 Main St, City, Country"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.address}
               aria-describedby={serverErrors.address ? "address-error" : undefined}
               required
@@ -68,15 +70,16 @@ const RegisterForm = () => {
               </p>
             )}
           </Field>
-          
+
           {/* Email */}
           <Field>
-            <FieldLabel htmlFor="email">Email *</FieldLabel>
+            <FieldLabel htmlFor="email" className="text-sm font-semibold text-gray-700">Email *</FieldLabel>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="john@example.com"
+              placeholder="yourname@example.com"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.email}
               aria-describedby={serverErrors.email ? "email-error" : undefined}
               required
@@ -87,15 +90,16 @@ const RegisterForm = () => {
               </p>
             )}
           </Field>
-          
+
           {/* Password */}
           <Field>
-            <FieldLabel htmlFor="password">Password *</FieldLabel>
-            <Input 
-              id="password" 
-              name="password" 
+            <FieldLabel htmlFor="password" className="text-sm font-semibold text-gray-700">Password *</FieldLabel>
+            <Input
+              id="password"
+              name="password"
               type="password"
-              placeholder="Min. 6 characters"
+              placeholder="••••••••"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.password}
               aria-describedby={serverErrors.password ? "password-error" : undefined}
               required
@@ -106,15 +110,16 @@ const RegisterForm = () => {
               </p>
             )}
           </Field>
-          
+
           {/* Confirm Password */}
           <Field className="md:col-span-2">
-            <FieldLabel htmlFor="confirmPassword">Confirm Password *</FieldLabel>
+            <FieldLabel htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">Confirm Password *</FieldLabel>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              placeholder="Re-enter your password"
+              placeholder="••••••••"
+              className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20 transition-all"
               aria-invalid={!!serverErrors.confirmPassword}
               aria-describedby={serverErrors.confirmPassword ? "confirmPassword-error" : undefined}
               required
@@ -126,20 +131,25 @@ const RegisterForm = () => {
             )}
           </Field>
         </div>
-        
-        <FieldGroup className="mt-4">
+
+        <FieldGroup className="mt-6">
           <Field>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isPending}
-              className="w-full"
+              className="w-full h-12 rounded-xl bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-bold shadow-lg shadow-[#138bc9]/20 transition-all"
             >
-              {isPending ? "Creating Account..." : "Create Account"}
+              {isPending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Creating Account...
+                </div>
+              ) : "Create Account"}
             </Button>
 
-            <FieldDescription className="px-6 text-center mt-4">
+            <FieldDescription className="px-6 text-center mt-6">
               Already have an account?{" "}
-              <a href="/login" className="text-blue-600 hover:underline">
+              <a href="/login" className="text-[#138bc9] font-bold hover:underline">
                 Sign in
               </a>
             </FieldDescription>

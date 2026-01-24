@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// components/admin/booking/AdminBookingManagement.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,15 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -38,7 +27,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import {
   Calendar,
   Users,
@@ -54,525 +42,303 @@ import {
   Clock,
   Download,
   RefreshCw,
+  Briefcase,
+  ShieldCheck,
+  UserCircle,
+  Activity,
+  Search,
+  ChevronDown
 } from "lucide-react";
-import {
-  IBooking,
-  IBookingStats,
-} from "@/types/booking.interface";
-import {
-  getAllBookings,
-  deleteBooking,
-  updateBookingStatus,
-} from "@/services/booking.service";
+import { IBooking, IBookingStats } from "@/types/booking.interface";
+import { getAllBookings, deleteBooking, updateBookingStatus } from "@/services/booking.service";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
-interface AdminBookingManagementProps {
-  initialBookings?: IBooking[];
-  stats?: IBookingStats;
-}
-
-export default function AdminBookingManagement({
-  initialBookings = [],
-  stats,
-}: AdminBookingManagementProps) {
+export default function AdminBookingManagement() {
   const router = useRouter();
-  const [bookings, setBookings] = useState<IBooking[]>(initialBookings);
-  const [loading, setLoading] = useState(false);
+  const [bookings, setBookings] = useState<IBooking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<IBooking | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [stats, setStats] = useState<any>(null);
 
-  // Fetch bookings
   const fetchBookings = async () => {
-    setLoading(true);
     try {
-      const result = await getAllBookings();
-
-      if (result.success) {
-        setBookings(result.data || []);
-      } else {
-        toast.error(result.message || "Failed to fetch bookings");
+      setLoading(true);
+      const res = await getAllBookings();
+      if (res.success) {
+        setBookings(res.data || []);
+        // Compute local stats for visual richness
+        const totalRevenue = res.data?.reduce((sum: number, b: any) => sum + (b.totalAmount || 0), 0) || 0;
+        setStats({
+          total: res.data?.length || 0,
+          confirmed: res.data?.filter((b: any) => b.status === 'CONFIRMED').length || 0,
+          pending: res.data?.filter((b: any) => b.status === 'PENDING').length || 0,
+          revenue: totalRevenue
+        });
       }
-    } catch (error) {
-      console.error("Error fetching bookings:", error);
-      toast.error("Failed to load bookings");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  useEffect(() => { fetchBookings(); }, []);
 
-  // Handle status update
-  const handleStatusUpdate = async (bookingId: string, status: string) => {
+  const handleStatusUpdate = async (id: string, status: string) => {
     try {
-      const result = await updateBookingStatus(bookingId, status);
-      if (result.success) {
-        toast.success("Booking status updated successfully");
-        fetchBookings();
-        setStatusDialogOpen(false);
-      } else {
-        toast.error(result.message || "Failed to update status");
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update booking status");
-    }
+      const res = await updateBookingStatus(id, status);
+      if (res.success) { toast.success("Expedition protocol updated"); fetchBookings(); setStatusDialogOpen(false); }
+    } catch { toast.error("Status update failure"); }
   };
 
-  // Handle delete booking
-  const handleDeleteBooking = async () => {
+  const handleDelete = async () => {
     if (!selectedBooking) return;
-
     try {
-      const result = await deleteBooking(selectedBooking.id);
-      if (result.success) {
-        toast.success("Booking deleted successfully");
-        fetchBookings();
-        setDeleteDialogOpen(false);
-        setSelectedBooking(null);
-      } else {
-        toast.error(result.message || "Failed to delete booking");
-      }
-    } catch (error) {
-      console.error("Error deleting booking:", error);
-      toast.error("Failed to delete booking");
-    }
+      const res = await deleteBooking(selectedBooking.id);
+      if (res.success) { toast.success("Reservation redacted"); fetchBookings(); setDeleteDialogOpen(false); }
+    } catch { toast.error("Redaction failure"); }
   };
 
-  // Get status badge
-  const getStatusBadge = (status: IBooking["status"]) => {
-    switch (status) {
-      case "CONFIRMED":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Confirmed
-          </Badge>
-        );
-      case "PENDING":
-        return (
-          <Badge variant="outline" className="text-amber-600 border-amber-300">
-            Pending
-          </Badge>
-        );
-      case "CANCELLED":
-        return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-            Cancelled
-          </Badge>
-        );
-      case "COMPLETED":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-            Completed
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  const formatDate = (d: any) => d ? format(new Date(d), "MMM dd, yyyy") : "N/A";
 
-  // Get payment status badge
-  const getPaymentStatusBadge = (status: IBooking["paymentStatus"]) => {
-    switch (status) {
-      case "PAID":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Paid
-          </Badge>
-        );
-      case "PENDING":
-        return (
-          <Badge variant="outline" className="text-amber-600 border-amber-300">
-            Pending
-          </Badge>
-        );
-      case "FAILED":
-        return <Badge variant="destructive">Failed</Badge>;
-      case "REFUNDED":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-            Refunded
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
-  // Export data (placeholder)
-  const handleExportData = () => {
-    toast.info("Export functionality coming soon!");
-  };
-
-  // Handle refresh
-  const handleRefresh = () => {
-    fetchBookings();
-  };
+  if (loading && bookings.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-gray-50 animate-pulse rounded-[30px]" />)}
+        </div>
+        <TableSkeleton columnCount={7} rowCount={10} />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Booking Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage all bookings, view statistics, and update booking status
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900">Booking Pipeline</h1>
+          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-[#138bc9]" />
+            Global reservation audit and protocol orchestration
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={handleExportData}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
+        <div className="flex gap-2">
+          <Button onClick={fetchBookings} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-gray-50 h-11 px-6">
+            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            Sync Registry
           </Button>
-          <Button onClick={handleRefresh} disabled={loading}>
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
+          <Button variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-gray-50 h-11 px-6">
+            <Download className="h-4 w-4" />
+            Audit Log
           </Button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Bookings
-              </CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalBookings}</div>
-              <p className="text-xs text-muted-foreground">All-time bookings</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${stats.totalSpent?.toFixed(2) || "0.00"}
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {[
+          { label: "Total Volume", value: stats?.total || 0, icon: Briefcase, color: "text-[#138bc9]", bg: "bg-blue-50" },
+          { label: "Pipeline Revenue", value: `$${(stats?.revenue || 0).toLocaleString()}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Active Missions", value: stats?.confirmed || 0, icon: CheckCircle, color: "text-purple-600", bg: "bg-purple-50" },
+          { label: "Pending Audit", value: stats?.pending || 0, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" }
+        ].map((item, i) => (
+          <Card key={i} className="border-none shadow-sm bg-white overflow-hidden group transition-all duration-300 hover:shadow-md">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{item.label}</p>
+                  <h3 className="text-2xl font-black text-gray-900 leading-none">{item.value}</h3>
+                </div>
+                <div className={cn("p-3 rounded-xl transition-all duration-300 group-hover:scale-110", item.bg, item.color)}>
+                  <item.icon className="h-5 w-5" />
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Total booking amount
-              </p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.confirmedBookings}
-              </div>
-              <p className="text-xs text-muted-foreground">Active bookings</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-amber-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingBookings}</div>
-              <p className="text-xs text-muted-foreground">Awaiting action</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Bookings Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Bookings</CardTitle>
-          <CardDescription>
-            {bookings.length} total bookings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking ID</TableHead>
-                      <TableHead>Tourist</TableHead>
-                      <TableHead>Tour Details</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Dates</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings.map((booking) => (
-                      <TableRow key={booking.id}>
-                        <TableCell className="font-mono text-sm">
-                          {booking.id.slice(0, 8)}...
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {booking.tourist?.name || "Unknown"}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {booking.tourist?.email}
-                            </span>
+      {/* Registry Table */}
+      <div className="rounded-[40px] border border-gray-100 overflow-hidden bg-white shadow-xl shadow-gray-200/40">
+        <table className="w-full">
+          <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400">
+            <tr>
+              <th className="px-8 py-5 text-left font-black text-[10px] uppercase tracking-widest pl-10">Identifier / Scout</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Expedition Node</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Settlement</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Protocol</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] uppercase tracking-widest">Chronicle</th>
+              <th className="px-8 py-5 text-right font-black text-[10px] uppercase tracking-widest pr-10">Ops</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {bookings.length > 0 ? (
+              bookings.map((booking) => (
+                <tr key={booking.id} className="hover:bg-gray-50/30 transition-all group">
+                  <td className="px-8 py-5 pl-10">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-mono font-black text-gray-400 uppercase">HASH_{booking.id.slice(0, 8)}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                          <UserCircle className="h-4 w-4" />
+                        </div>
+                        <span className="text-xs font-black text-gray-800 uppercase tracking-tighter">{booking.tourist?.name || "ANONYMOUS"}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-10 w-14 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-50 shadow-sm">
+                        {booking.tour?.images?.length ? (
+                          <Image src={booking.tour.images[0]} alt="" fill className="object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-200">
+                            <Briefcase className="h-4 w-4" />
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="relative h-12 w-16 rounded-md overflow-hidden">
-                              {booking.tour?.images &&
-                              booking.tour.images.length > 0 ? (
-                                <Image
-                                  src={booking.tour.images[0]}
-                                  alt={booking.tour.title}
-                                  fill
-                                  className="object-cover"
-                                />
-                              ) : (
-                                <div className="h-full w-full bg-muted flex items-center justify-center">
-                                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium line-clamp-1">
-                                {booking.tour?.title || "N/A"}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                <Users className="inline h-3 w-3 mr-1" />
-                                {booking.numberOfPeople} people
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(booking.totalAmount)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                        <TableCell>
-                          {getPaymentStatusBadge(booking.paymentStatus)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm space-y-1">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {formatDate(booking.bookingDate)}
-                            </div>
-                            {booking.tour?.startDate && (
-                              <div className="text-xs text-muted-foreground">
-                                Tour: {formatDate(booking.tour.startDate)}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  router.push(`/admin/bookings/${booking.id}`)
-                                }
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  router.push(`/tours/${booking.tourId}`)
-                                }
-                              >
-                                <MapPin className="h-4 w-4 mr-2" />
-                                View Tour
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedBooking(booking);
-                                  setStatusDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Update Status
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedBooking(booking);
-                                  setDeleteDialogOpen(true);
-                                }}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Booking
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate max-w-[150px] group-hover:text-[#138bc9] transition-colors">{booking.tour?.title || "UNRESOLVED"}</p>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                          <Users className="h-2.5 w-2.5" />
+                          {booking.numberOfPeople} Passengers
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="space-y-1">
+                      <p className="text-sm font-black text-emerald-600">${booking.totalAmount}</p>
+                      <Badge variant="outline" className={cn(
+                        "px-1.5 py-0 rounded text-[7px] font-black uppercase border-none shadow-none",
+                        booking.paymentStatus === 'PAID' ? "bg-emerald-50 text-emerald-600 font-black" : "bg-gray-50 text-gray-400"
+                      )}>
+                        {booking.paymentStatus}
+                      </Badge>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <Badge className={cn(
+                      "rounded-full px-3 py-0.5 text-[9px] font-black uppercase tracking-widest border-none shadow-none",
+                      booking.status === 'CONFIRMED' ? "bg-blue-50 text-[#138bc9]" :
+                        booking.status === 'COMPLETED' ? "bg-emerald-50 text-emerald-600" :
+                          booking.status === 'PENDING' ? "bg-amber-50 text-amber-600" :
+                            "bg-gray-100 text-gray-400"
+                    )}>
+                      {booking.status}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 uppercase tracking-tighter">
+                        <Calendar className="h-3 w-3 text-[#138bc9]" />
+                        {formatDate(booking.bookingDate)}
+                      </div>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest italic">Booked On</p>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-right pr-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl hover:bg-gray-50 transition-all">
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56 rounded-2xl border-gray-100 shadow-2xl p-2 font-bold">
+                        <DropdownMenuLabel className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-3 py-2">Mission Control</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-gray-50" />
+                        <DropdownMenuItem onClick={() => router.push(`/admin/dashboard/bookings/${booking.id}`)} className="rounded-xl cursor-pointer py-3 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]">
+                          <Eye className="h-4 w-4 mr-3" />
+                          <span>Full Manifest</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => { setSelectedBooking(booking); setStatusDialogOpen(true); }}
+                          className="rounded-xl cursor-pointer py-3 transition-colors focus:bg-[#138bc9]/10 focus:text-[#138bc9]"
+                        >
+                          <Activity className="h-4 w-4 mr-3" />
+                          <span>Orchestrate Status</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-gray-50" />
+                        <DropdownMenuItem
+                          onClick={() => { setSelectedBooking(booking); setDeleteDialogOpen(true); }}
+                          className="rounded-xl cursor-pointer py-3 transition-colors focus:bg-red-50 focus:text-red-600 text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4 mr-3" />
+                          <span>Purge Record</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-32 text-center text-gray-400">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="h-20 w-20 rounded-[35px] bg-gray-50 flex items-center justify-center text-gray-200">
+                      <Briefcase className="h-10 w-10" />
+                    </div>
+                    <p className="text-sm font-black uppercase tracking-widest">Pipeline Clear</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-              {bookings.length === 0 && !loading && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No bookings found</p>
-                </div>
-              )}
+      {/* Status Orchestration Dialog */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent className="max-w-md rounded-[40px] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="p-10 space-y-8 animate-in zoom-in-95">
+            <div className="space-y-1">
+              <h3 className="text-2xl font-black text-gray-900 tracking-tight">Orchestrate Protocol</h3>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Update reservation terminal status</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-red-600">Delete Booking</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this booking? This action cannot
-              be undone.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedBooking && (
-            <div className="p-4 border rounded-md">
-              <p className="font-medium">
-                {selectedBooking.tour?.title || "Booking"}
-              </p>
-              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Booking ID:</span>
-                  <p className="font-mono">
-                    {selectedBooking.id.slice(0, 10)}...
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Amount:</span>
-                  <p>{formatCurrency(selectedBooking.totalAmount)}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Status:</span>
-                  <p>{selectedBooking.status}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Tourist:</span>
-                  <p>{selectedBooking.tourist?.name || "Unknown"}</p>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-2">
+              {["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map((status) => (
+                <Button
+                  key={status}
+                  variant="outline"
+                  onClick={() => handleStatusUpdate(selectedBooking!.id, status)}
+                  className={cn(
+                    "h-14 rounded-2xl border-gray-100 font-black uppercase tracking-widest text-[10px] justify-between px-6 hover:bg-[#138bc9] hover:text-white transition-all group",
+                    selectedBooking?.status === status && "bg-[#138bc9] text-white border-[#138bc9]"
+                  )}
+                >
+                  {status}
+                  {selectedBooking?.status === status ? <CheckCircle className="h-4 w-4" /> : <ChevronDown className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                </Button>
+              ))}
             </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteBooking}>
-              Delete Booking
-            </Button>
-          </DialogFooter>
+
+            <Button variant="ghost" onClick={() => setStatusDialogOpen(false)} className="w-full h-12 rounded-2xl font-black uppercase text-[10px] text-gray-400">Abort Protocol</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Status Update Dialog */}
-      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Update Booking Status</DialogTitle>
-            <DialogDescription>
-              Change the status of this booking
-            </DialogDescription>
-          </DialogHeader>
-          {selectedBooking && (
-            <>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-md">
-                  <p className="font-medium">
-                    {selectedBooking.tour?.title || "Booking"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Current status: <Badge>{selectedBooking.status}</Badge>
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Select New Status</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map(
-                      (status) => (
-                        <Button
-                          key={status}
-                          variant={
-                            selectedBooking.status === status
-                              ? "default"
-                              : "outline"
-                          }
-                          onClick={() =>
-                            handleStatusUpdate(selectedBooking.id, status)
-                          }
-                          className="justify-start"
-                        >
-                          {status}
-                        </Button>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setStatusDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </DialogFooter>
-            </>
-          )}
+      {/* Delete Confirmation */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md rounded-[40px] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="p-10 text-center space-y-8">
+            <div className="mx-auto h-20 w-20 rounded-[35px] bg-red-50 flex items-center justify-center text-red-500">
+              <Trash2 className="h-10 w-10" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-gray-900">Purge Reservation?</h3>
+              <p className="text-sm font-medium text-gray-500 leading-relaxed uppercase tracking-tighter">This will permanently redact the expedition HASH_{selectedBooking?.id.slice(0, 8)} from all system ledgers.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="h-12 rounded-2xl font-black uppercase text-[10px] border-gray-100">Keep</Button>
+              <Button onClick={handleDelete} className="h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black uppercase text-[10px] shadow-lg shadow-red-200">Purge Registry</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

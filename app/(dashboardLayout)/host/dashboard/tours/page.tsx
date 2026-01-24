@@ -11,7 +11,7 @@ async function ToursContent() {
     getMyTourStats()
   ]);
   console.log(toursResponse);
-  
+
 
   const tours = toursResponse?.data || [];
   const stats = statsResponse?.data || null;
@@ -29,7 +29,7 @@ async function ToursContent() {
       </div>
 
       {stats && <HostTourStats stats={stats} />}
-      
+
       <Card>
         <CardHeader>
           <CardTitle>All Tours</CardTitle>
@@ -48,7 +48,7 @@ async function ToursContent() {
 export default function HostToursPage() {
   return (
     <div className="container mx-auto py-6">
-      <Suspense fallback={<TableSkeleton columns={8} rows={10} />}>
+      <Suspense fallback={<TableSkeleton columnCount={8} rowCount={10} />}>
         <ToursContent />
       </Suspense>
     </div>

@@ -1,5 +1,4 @@
-// app/admin/tours/_components/TourTable.tsx
-'use client';
+"use client";
 
 import React, { useState } from 'react';
 import { ITour } from '@/types/tour.interface';
@@ -7,501 +6,234 @@ import { deleteTour, updateTourStatus } from '@/services/tour/tour.service';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Search, Filter, Eye, Edit, Trash2, Plus, Calendar, Users, DollarSign, MapPin, CheckCircle, XCircle, Star } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  Calendar,
+  Users,
+  DollarSign,
+  MapPin,
+  CheckCircle,
+  XCircle,
+  Star,
+  Sparkles,
+  Briefcase,
+  Activity,
+  ChevronLeft,
+  ChevronRight,
+  Loader2
+} from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface TourTableProps {
   tours: ITour[];
-  meta?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  meta?: any;
   currentPage: number;
   searchTerm: string;
   statusFilter: string;
 }
 
-const TourTable: React.FC<TourTableProps> = ({ 
-  tours, 
-  meta, 
-  currentPage, 
-  searchTerm, 
-  statusFilter 
-}) => {
+const TourTable: React.FC<TourTableProps> = ({ tours, meta, currentPage, searchTerm, statusFilter }) => {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [localSearch, setLocalSearch] = useState(searchTerm);
-  const [localStatus, setLocalStatus] = useState(statusFilter);
 
   const handleDeleteTour = async (tourId: string) => {
-    if (!confirm('Are you sure you want to delete this tour? This action cannot be undone.')) return;
-
+    if (!confirm('Redact this expedition from the global registry?')) return;
     setDeletingId(tourId);
     try {
-      const result = await deleteTour(tourId);
-      if (result.success) {
-        toast.success('Tour deleted successfully');
-        router.refresh();
-      } else {
-        toast.error(result.message || 'Failed to delete tour');
-      }
-    } catch (error) {
-      toast.error('An error occurred while deleting the tour');
-    } finally {
-      setDeletingId(null);
-    }
+      const res = await deleteTour(tourId);
+      if (res.success) { toast.success('Expedition purged'); router.refresh(); }
+    } finally { setDeletingId(null); }
   };
 
   const handleToggleStatus = async (tourId: string, currentStatus: boolean) => {
     setUpdatingStatus(tourId);
     try {
-      const result = await updateTourStatus(tourId, !currentStatus);
-      if (result.success) {
-        toast.success(`Tour ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-        router.refresh();
-      } else {
-        toast.error(result.message || 'Failed to update tour status');
-      }
-    } catch (error) {
-      toast.error('An error occurred while updating tour status');
-    } finally {
-      setUpdatingStatus(null);
-    }
+      const res = await updateTourStatus(tourId, !currentStatus);
+      if (res.success) { toast.success(`Deployment ${!currentStatus ? 'activated' : 'deactivated'}`); router.refresh(); }
+    } finally { setUpdatingStatus(null); }
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
     if (localSearch) params.set('search', localSearch);
-    if (localStatus) params.set('status', localStatus);
-    if (currentPage > 1) params.set('page', currentPage.toString());
-    
-    router.push(`/admin/tours?${params.toString()}`);
+    router.push(`/admin/dashboard/tours-management?${params.toString()}`);
   };
 
-  const handleStatusChange = (status: string) => {
-    setLocalStatus(status);
-    const params = new URLSearchParams();
-    if (localSearch) params.set('search', localSearch);
-    if (status) params.set('status', status);
-    if (currentPage > 1) params.set('page', currentPage.toString());
-    
-    router.push(`/admin/tours?${params.toString()}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams();
-    if (localSearch) params.set('search', localSearch);
-    if (localStatus) params.set('status', localStatus);
-    params.set('page', page.toString());
-    
-    router.push(`/admin/tours?${params.toString()}`);
-  };
-
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const getStatusBadge = (isActive: boolean, isFeatured: boolean) => {
-    if (isFeatured) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          <Star className="w-3 h-3 mr-1" />
-          Featured
-        </span>
-      );
-    }
-    
-    return isActive ? (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-        <CheckCircle className="w-3 h-3 mr-1" />
-        Active
-      </span>
-    ) : (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-        <XCircle className="w-3 h-3 mr-1" />
-        Inactive
-      </span>
-    );
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      ADVENTURE: 'bg-purple-100 text-purple-800',
-      CULTURE: 'bg-blue-100 text-blue-800',
-      CULTURAL: 'bg-blue-100 text-blue-800',
-      FOOD: 'bg-red-100 text-red-800',
-      NATURE: 'bg-green-100 text-green-800',
-      RELAXATION: 'bg-teal-100 text-teal-800',
-      URBAN: 'bg-gray-100 text-gray-800',
-      BEACH: 'bg-cyan-100 text-cyan-800',
-      MOUNTAIN: 'bg-amber-100 text-amber-800',
-      HISTORICAL: 'bg-orange-100 text-orange-800',
-      RELIGIOUS: 'bg-indigo-100 text-indigo-800',
-      LUXURY: 'bg-pink-100 text-pink-800',
-    };
-    
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
+  const formatDate = (date: any) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">All Tours</h2>
-            <p className="text-gray-600 text-sm mt-1">
-              Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, meta?.total || 0)} of {meta?.total || 0} tours
-            </p>
-          </div>
-          
-          <Link
-            href="/admin/tours/create"
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Tour
-          </Link>
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Filters Hub */}
+      <div className="bg-white rounded-[30px] border border-gray-100 p-2 shadow-sm flex flex-col md:flex-row gap-2">
+        <form onSubmit={handleSearch} className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Identify by expedition title or destination..."
+            className="pl-12 rounded-2xl border-none bg-gray-50/50 h-14 font-medium focus-visible:ring-[#138bc9]/20"
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+          />
+        </form>
+        <div className="flex gap-2 p-1">
+          <Badge variant="outline" className="h-10 px-4 rounded-xl border-gray-100 font-bold text-gray-400 uppercase text-[10px] tracking-widest">
+            {meta?.total || tours.length} Deployments
+          </Badge>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                placeholder="Search tours by title, destination, city..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
-              />
-            </div>
-          </div>
-          
-          <div className="flex gap-3">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <select
-                value={localStatus}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none appearance-none bg-white"
-              >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-            >
-              Search
-            </button>
-            
-            {(localSearch || localStatus) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setLocalSearch('');
-                  setLocalStatus('');
-                  router.push('/admin/tours');
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
-
-      {/* Tours Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="rounded-[40px] border border-gray-100 overflow-hidden bg-white shadow-xl shadow-gray-200/40">
+        <table className="w-full">
+          <thead className="bg-gray-50/50 border-b border-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tour Details
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Location
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Info
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th className="px-8 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest pl-10">Expedition Detail</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Geography</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Capacities</th>
+              <th className="px-6 py-5 text-left font-black text-[10px] text-gray-400 uppercase tracking-widest">Status Protocol</th>
+              <th className="px-8 py-5 text-right font-black text-[10px] text-gray-400 uppercase tracking-widest pr-10">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {tours.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-12 text-center">
-                  <div className="text-gray-500">
-                    <Search className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-lg font-medium">No tours found</p>
-                    <p className="mt-1">
-                      {searchTerm || statusFilter 
-                        ? 'Try adjusting your search or filter criteria'
-                        : 'No tours have been created yet'
-                      }
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
+          <tbody className="divide-y divide-gray-50">
+            {tours.length > 0 ? (
               tours.map((tour) => (
-                <tr key={tour.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      {tour.images && tour.images.length > 0 ? (
-                        <div className="flex-shrink-0 h-16 w-24 rounded-lg overflow-hidden mr-4">
-                          <img
-                            className="h-full w-full object-cover"
-                            src={tour.images[0]}
-                            alt={tour.title}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex-shrink-0 h-16 w-24 rounded-lg bg-gray-200 flex items-center justify-center mr-4">
-                          <MapPin className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-                      <div>
-                        <Link
-                          href={`/tours/${tour.id}`}
-                          className="text-sm font-medium text-gray-900 hover:text-indigo-600 line-clamp-1"
-                        >
-                          {tour.title}
-                        </Link>
-                        <p className="text-sm text-gray-500 line-clamp-2 mt-1">
-                          {tour.description.substring(0, 100)}...
-                        </p>
-                        <div className="flex items-center mt-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${getCategoryColor(tour.category)}`}>
-                            {tour.category}
-                          </span>
-                          <span className="ml-2 inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-                            {tour.difficulty}
-                          </span>
+                <tr key={tour.id} className="hover:bg-gray-50/30 transition-all group">
+                  <td className="px-8 py-5 pl-10">
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-14 w-20 rounded-2xl bg-gray-100 border border-gray-100 overflow-hidden shrink-0 group-hover:scale-105 transition-transform duration-300">
+                        {tour.images?.length ? (
+                          <img src={tour.images[0]} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-300">
+                            <Briefcase className="h-5 w-5" />
+                          </div>
+                        )}
+                        {tour.isFeatured && (
+                          <div className="absolute inset-0 bg-amber-500/10 flex items-center justify-center">
+                            <Star className="h-6 w-6 text-amber-500 fill-amber-500" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-black text-gray-900 text-sm group-hover:text-[#138bc9] transition-colors line-clamp-1">{tour.title}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Badge variant="outline" className="px-1.5 py-0 rounded-md text-[8px] font-black uppercase bg-blue-50 border-blue-100 text-[#138bc9]">{tour.category}</Badge>
+                          <span className="text-[9px] font-bold text-gray-300 uppercase tracking-tighter italic">{tour.difficulty} Intensity</span>
                         </div>
                       </div>
                     </div>
                   </td>
-                  
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      <div className="flex items-center mb-1">
-                        <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                  <td className="px-6 py-5">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-gray-800 uppercase tracking-tighter">
+                        <MapPin className="h-3.5 w-3.5 text-[#138bc9]" />
                         {tour.destination}
                       </div>
-                      <div className="text-gray-500">
-                        {tour.city}, {tour.country}
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{tour.city}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs font-black text-gray-800 uppercase tracking-tighter">
+                        <Users className="h-3.5 w-3.5 text-gray-400" />
+                        {tour.currentGroupSize}/{tour.maxGroupSize}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-black text-[#10b981] uppercase tracking-tighter">
+                        <DollarSign className="h-3.5 w-3.5" />
+                        {tour.price}
                       </div>
                     </div>
                   </td>
-                  
-                  <td className="px-6 py-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                        {formatDate(tour.startDate)} - {formatDate(tour.endDate)}
-                        <span className="ml-2 text-gray-500">({tour.duration} days)</span>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Users className="w-4 h-4 text-gray-400 mr-2" />
-                        {tour.currentGroupSize}/{tour.maxGroupSize} people
-                      </div>
-                      <div className="flex items-center text-sm text-gray-900">
-                        <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-                        {formatCurrency(tour.price)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Views: {tour.views} • Created: {formatDate(tour.createdAt)}
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-2">
-                      {getStatusBadge(tour.isActive, tour.isFeatured)}
-                      <button
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <Badge className={cn(
+                        "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none shadow-none",
+                        tour.isActive ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                      )}>
+                        {tour.isActive ? 'Active Node' : 'Suspended'}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        className="h-8 px-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-[#138bc9] hover:bg-blue-50"
                         onClick={() => handleToggleStatus(tour.id, tour.isActive)}
                         disabled={updatingStatus === tour.id}
-                        className={`inline-flex items-center px-3 py-1 rounded text-xs font-medium transition-colors ${
-                          tour.isActive
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        } ${updatingStatus === tour.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {updatingStatus === tour.id ? (
-                          'Updating...'
-                        ) : tour.isActive ? (
-                          <>
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Activate
-                          </>
-                        )}
-                      </button>
+                        {updatingStatus === tour.id ? <Loader2 className="h-3 w-3 animate-spin" /> : tour.isActive ? 'DEACTIVATE' : 'ACTIVATE'}
+                      </Button>
                     </div>
                   </td>
-                  
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <Link
-                        href={`/tours/${tour.id}`}
-                        className="inline-flex items-center p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        title="View Tour"
-                      >
-                        <Eye className="w-4 h-4" />
+                  <td className="px-8 py-5 text-right pr-10">
+                    <div className="flex justify-end gap-1">
+                      <Link href={`/tours/${tour.id}`}>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-all">
+                          <Eye className="w-4 h-4" />
+                        </Button>
                       </Link>
-                      
-                      <Link
-                        href={`/admin/tours/edit/${tour.id}`}
-                        className="inline-flex items-center p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Edit Tour"
-                      >
-                        <Edit className="w-4 h-4" />
+                      <Link href={`/admin/dashboard/tours/edit/${tour.id}`}>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-[#138bc9]/10 hover:text-[#138bc9] transition-all">
+                          <Edit className="w-4 h-4" />
+                        </Button>
                       </Link>
-                      
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all text-gray-300"
                         onClick={() => handleDeleteTour(tour.id)}
                         disabled={deletingId === tour.id}
-                        className="inline-flex items-center p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete Tour"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="mt-3">
-                      <Link
-                        href={`/admin/bookings?tourId=${tour.id}`}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
-                      >
-                        View Bookings ({tour.bookingCount || 0})
-                      </Link>
+                      </Button>
                     </div>
                   </td>
                 </tr>
               ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-32 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="h-20 w-20 rounded-[35px] bg-gray-50 flex items-center justify-center text-gray-200">
+                      <Briefcase className="h-10 w-10" />
+                    </div>
+                    <div className="max-w-xs mx-auto">
+                      <p className="text-base font-black text-gray-900 uppercase tracking-widest">Expedition Void</p>
+                      <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-tighter">No deployments found matching these telemetry parameters.</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
-      {meta && meta.totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Page {currentPage} of {meta.totalPages}
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-              className="px-3 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            
-            {Array.from({ length: Math.min(5, meta.totalPages) }, (_, i) => {
-              let pageNum;
-              if (meta.totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= meta.totalPages - 2) {
-                pageNum = meta.totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-              
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => handlePageChange(pageNum)}
-                  className={`px-3 py-2 border rounded text-sm font-medium ${
-                    currentPage === pageNum
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-            
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= meta.totalPages}
-              className="px-3 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Stats Summary */}
-      {tours.length > 0 && (
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="text-sm text-gray-500">Total Tours</div>
-            <div className="text-2xl font-semibold text-gray-900">{meta?.total || 0}</div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="text-sm text-gray-500">Active Tours</div>
-            <div className="text-2xl font-semibold text-green-600">
-              {tours.filter(t => t.isActive).length}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: "Total Deployments", value: meta?.total || tours.length, icon: Briefcase, color: "text-blue-500", bg: "bg-blue-50" },
+          { label: "Active Channels", value: tours.filter(t => t.isActive).length, icon: Activity, color: "text-emerald-500", bg: "bg-emerald-50" },
+          { label: "Featured Spotlight", value: tours.filter(t => t.isFeatured).length, icon: Star, color: "text-amber-500", bg: "bg-amber-50" },
+          { label: "Global Reach", value: new Set(tours.map(t => t.country)).size + " Regions", icon: MapPin, color: "text-purple-500", bg: "bg-purple-50" }
+        ].map((item, i) => (
+          <div key={i} className="bg-white p-6 rounded-[30px] border border-gray-100 flex items-center gap-4 hover:shadow-lg transition-shadow">
+            <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shrink-0", item.bg, item.color)}>
+              <item.icon className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
+              <p className="text-xl font-black text-gray-900">{item.value}</p>
             </div>
           </div>
-          
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="text-sm text-gray-500">Featured Tours</div>
-            <div className="text-2xl font-semibold text-yellow-600">
-              {tours.filter(t => t.isFeatured).length}
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="text-sm text-gray-500">Total Views</div>
-            <div className="text-2xl font-semibold text-blue-600">
-              {tours.reduce((sum, tour) => sum + tour.views, 0)}
-            </div>
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 };
