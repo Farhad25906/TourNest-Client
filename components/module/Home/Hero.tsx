@@ -1,162 +1,263 @@
-import { Compass, MapPin, Star, Calendar, Users, Award } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+"use client";
+
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  MapPin,
+  Shield,
+  Compass,
+  Award,
+  Users,
+  Clock,
+  Headphones,
+  Globe
+} from "lucide-react";
+import Link from "next/link";
+import React from "react";
+
+const FEATURE_VARIANTS = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0 },
+};
+
+const FEATURE_RIGHT_VARIANTS = {
+  hidden: { opacity: 0, x: 20 },
+  visible: { opacity: 1, x: 0 },
+};
 
 export function Hero() {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 150 };
+  const dx = useSpring(mouseX, springConfig);
+  const dy = useSpring(mouseY, springConfig);
+
+  const parallaxX = useTransform(dx, [0, 500], [5, -5]);
+  const parallaxY = useTransform(dy, [0, 500], [5, -5]);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    mouseX.set(clientX - window.innerWidth / 2);
+    mouseY.set(clientY - window.innerHeight / 2);
+  };
+
   return (
-    <div className="w-full relative overflow-hidden">
-      {/* Background */}
+    <div
+      className="relative min-h-[600px] md:min-h-[700px] flex items-center justify-center overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
+      {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-blue-50" />
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl" />
+        <img
+          alt="Stunning travel destination"
+          className="w-full h-full object-cover"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC9-SpzGiQ5UkLlJ2yU5G_ne0mIX-QN2SR408Z3ArjN-13qp8U3291jcCIsBi65np4kJaORGjx3tLAcEJv-rzJeYhJSa0R4DfWZ6r3DmLFmpEmCU_F7o7Ci5MPCV5WQXX-AM-gNC5VuxBu18Xr3ew8Q-rSyw7LdfYrfsIxmaeM2tVd4XnLKb_CBwFBhuibeyb6hT1ie1XUZEFay_Gg_zNbTrgaRO350zu1qDu90Gon9bJT5UIyTwlCNOxxSygLEj0w5rPIfsEnnmiM"
+        />
+        <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-none"></div>
       </div>
 
-      {/* Content Container */}
-      <div className="w-full px-4 py-16 md:px-8 lg:px-16 relative z-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+      {/* Unique Design Element: Animated Glow Blur */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#128bc8]/10 rounded-full blur-[120px]"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
 
-            {/* Left Column - Hero Content */}
-            <div className="flex flex-col justify-center space-y-8">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 self-start">
-                <div className="flex items-center gap-2 bg-[#138bc9] text-white px-4 py-2 rounded-full shadow-lg">
-                  <Compass className="w-4 h-4" />
-                  <span className="text-sm font-semibold">Explore the World</span>
-                </div>
-              </div>
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-[1fr_2fr_1fr] items-center gap-8">
 
-              {/* Heading */}
-              <div className="space-y-3">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                  Your Journey
-                </h1>
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#138bc9] leading-tight">
-                  Starts Here
-                </h1>
-              </div>
+        {/* Left Side Features */}
+        <motion.div
+          style={{ x: parallaxX, y: parallaxY }}
+          className="hidden lg:flex flex-col gap-12 items-end pr-8 relative"
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.15 }}
+        >
+          {/* Side Arc Decorative (Left) */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-2/3 bg-gradient-to-b from-transparent via-[#128bc8]/30 to-transparent"></div>
 
-              {/* Description */}
-              <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-xl">
-                Discover breathtaking destinations, immersive experiences, and unforgettable adventures tailored just for you. Let us turn your travel dreams into reality.
-              </p>
-
-              {/* Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="h-14 px-10 text-base bg-[#138bc9] hover:bg-[#138bc9]/90 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-bold">
-                  <Compass className="w-5 h-5 mr-2" />
-                  Explore Destinations
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-14 px-10 text-base border-2 border-[#138bc9] text-[#138bc9] hover:bg-blue-50 rounded-full transition-all duration-300 font-bold"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Plan Your Trip
-                </Button>
-              </div>
-
-
+          <motion.div variants={FEATURE_VARIANTS} className="flex items-center gap-4 group cursor-pointer">
+            <div className="text-right">
+              <h4 className="text-white font-semibold text-lg leading-tight">500+ Destinations</h4>
+              <p className="text-white/50 text-sm">Worldwide Coverage</p>
             </div>
+            <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#128bc8]/20 group-hover:border-[#128bc8]/50 transition-all duration-300">
+              <Globe className="w-6 h-6 text-white group-hover:text-[#128bc8]" />
+            </div>
+          </motion.div>
 
-            {/* Right Column - Search Card */}
-            <div className="flex items-center justify-center lg:justify-end">
-              <div className="w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl border border-blue-100">
+          <motion.div variants={FEATURE_VARIANTS} className="flex items-center gap-4 group cursor-pointer mr-6">
+            <div className="text-right">
+              <h4 className="text-white font-semibold text-lg leading-tight">Expert Hosts</h4>
+              <p className="text-white/50 text-sm">Local & Friendly</p>
+            </div>
+            <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#128bc8]/20 group-hover:border-[#128bc8]/50 transition-all duration-300">
+              <Compass className="w-6 h-6 text-white group-hover:text-[#128bc8]" />
+            </div>
+          </motion.div>
 
-                {/* Card Header */}
-                <div className="mb-6 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-[#138bc9] rounded-2xl mb-4 shadow-lg">
-                    <Compass className="w-8 h-8 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">Find Your Perfect Trip</h2>
-                  <p className="text-sm text-gray-600 mt-2">Tell us where you want to go</p>
-                </div>
+          <motion.div variants={FEATURE_VARIANTS} className="flex items-center gap-4 group cursor-pointer">
+            <div className="text-right">
+              <h4 className="text-white font-semibold text-lg leading-tight">24/7 Support</h4>
+              <p className="text-white/50 text-sm">Always Available</p>
+            </div>
+            <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#128bc8]/20 group-hover:border-[#128bc8]/50 transition-all duration-300">
+              <Headphones className="w-6 h-6 text-white group-hover:text-[#128bc8]" />
+            </div>
+          </motion.div>
+        </motion.div>
 
-                {/* Form */}
-                <form className="space-y-5">
+        {/* Center Content */}
+        <motion.div
+          className="text-center flex flex-col items-center justify-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <motion.span
+            className="text-[#128bc8] font-black text-2xl md:text-4xl mb-2 tracking-wide uppercase drop-shadow-lg"
+            animate={{
+              textShadow: [
+                "0 0 20px rgba(18, 139, 200, 0.4)",
+                "0 0 40px rgba(18, 139, 200, 0.6)",
+                "0 0 20px rgba(18, 139, 200, 0.4)"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            Explore the World
+          </motion.span>
+          <h1 className="text-7xl md:text-9xl font-black text-white leading-none tracking-tight mb-6 filter drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            Tour<span className="text-[#128bc8]">Nest</span>
+          </h1>
+          <p className="text-white/70 text-lg md:text-xl font-medium tracking-wide max-w-lg">
+            Your Gateway to Unforgettable Adventures and Expert-Curated Journeys
+          </p>
 
-                  {/* Destination Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="destination" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-[#138bc9]" />
-                      Destination
-                    </Label>
-                    <Input
-                      id="destination"
-                      name="destination"
-                      placeholder="Where would you like to go?"
-                      className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20"
-                    />
-                  </div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative mt-8 group"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#128bc8] to-[#3B82F6] rounded-full blur opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+            <button className="relative px-10 py-5 bg-[#128bc8] text-white rounded-full font-bold text-lg shadow-2xl flex items-center gap-3 transition-colors">
+              <MapPin className="w-5 h-5" />
+              <Link href="/tours">Start Your Journey</Link>
+            </button>
+          </motion.div>
+        </motion.div>
 
-                  {/* Travel Style Select */}
-                  <div className="space-y-2">
-                    <Label htmlFor="travelStyle" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <Star className="w-4 h-4 text-[#138bc9]" />
-                      Travel Style
-                    </Label>
-                    <Select defaultValue="adventure">
-                      <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20">
-                        <SelectValue placeholder="Select your style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="adventure">Adventure & Exploration</SelectItem>
-                        <SelectItem value="beach">Beach & Relaxation</SelectItem>
-                        <SelectItem value="cultural">Cultural & Historical</SelectItem>
-                        <SelectItem value="nature">Nature & Wildlife</SelectItem>
-                        <SelectItem value="luxury">Luxury Experience</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+        {/* Right Side Features */}
+        <motion.div
+          style={{ x: useTransform(parallaxX, (v) => -v), y: useTransform(parallaxY, (v) => -v) }}
+          className="hidden lg:flex flex-col gap-12 items-start pl-8 relative"
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.15, delayChildren: 0.5 }}
+        >
+          {/* Side Arc Decorative (Right) */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-2/3 bg-gradient-to-b from-transparent via-[#128bc8]/30 to-transparent"></div>
 
-                  {/* Date Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="travelDate" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#138bc9]" />
-                      When do you want to travel?
-                    </Label>
-                    <Input
-                      id="travelDate"
-                      name="travelDate"
-                      type="date"
-                      className="h-12 rounded-xl border-gray-200 focus:border-[#138bc9] focus:ring-2 focus:ring-[#138bc9]/20"
-                    />
-                  </div>
+          <motion.div variants={FEATURE_RIGHT_VARIANTS} className="flex items-center gap-4 group cursor-pointer">
+            <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#128bc8]/20 group-hover:border-[#128bc8]/50 transition-all duration-300">
+              <Shield className="w-6 h-6 text-white group-hover:text-[#128bc8]" />
+            </div>
+            <div>
+              <h4 className="text-white font-semibold text-lg leading-tight">100% Secure</h4>
+              <p className="text-white/50 text-sm">Safe Payments</p>
+            </div>
+          </motion.div>
 
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    className="h-14 w-full rounded-xl bg-[#138bc9] hover:bg-[#138bc9]/90 text-base font-bold shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <Compass className="w-5 h-5 mr-2" />
-                    Search Tours
-                  </Button>
-                </form>
+          <motion.div variants={FEATURE_RIGHT_VARIANTS} className="flex items-center gap-4 group cursor-pointer ml-6">
+            <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#128bc8]/20 group-hover:border-[#128bc8]/50 transition-all duration-300">
+              <Users className="w-6 h-6 text-white group-hover:text-[#128bc8]" />
+            </div>
+            <div>
+              <h4 className="text-white font-semibold text-lg leading-tight">100K+ Travelers</h4>
+              <p className="text-white/50 text-sm">Happy Customers</p>
+            </div>
+          </motion.div>
 
+          <motion.div variants={FEATURE_RIGHT_VARIANTS} className="flex items-center gap-4 group cursor-pointer">
+            <div className="w-14 h-14 bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-[#128bc8]/20 group-hover:border-[#128bc8]/50 transition-all duration-300">
+              <Award className="w-6 h-6 text-white group-hover:text-[#128bc8]" />
+            </div>
+            <div>
+              <h4 className="text-white font-semibold text-lg leading-tight">Award Winning</h4>
+              <p className="text-white/50 text-sm">Top Rated Service</p>
+            </div>
+          </motion.div>
+        </motion.div>
 
+        {/* Mobile View Features (Stacked) */}
+        <div className="lg:hidden grid grid-cols-2 gap-6 mt-12">
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#128bc8]/20 rounded-lg flex items-center justify-center">
+                <Globe className="w-5 h-5 text-[#128bc8]" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">500+ Destinations</p>
+                <p className="text-white/50 text-xs">Worldwide</p>
               </div>
             </div>
-
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#128bc8]/20 rounded-lg flex items-center justify-center">
+                <Compass className="w-5 h-5 text-[#128bc8]" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">Expert Guides</p>
+                <p className="text-white/50 text-xs">Licensed</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#128bc8]/20 rounded-lg flex items-center justify-center">
+                <Headphones className="w-5 h-5 text-[#128bc8]" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">24/7 Support</p>
+                <p className="text-white/50 text-xs">Always Here</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#128bc8]/20 rounded-lg flex items-center justify-center">
+                <Shield className="w-5 h-5 text-[#128bc8]" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">100% Secure</p>
+                <p className="text-white/50 text-xs">Safe Payments</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#128bc8]/20 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-[#128bc8]" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">100K+ Travelers</p>
+                <p className="text-white/50 text-xs">Happy</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#128bc8]/20 rounded-lg flex items-center justify-center">
+                <Award className="w-5 h-5 text-[#128bc8]" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold">Award Winning</p>
+                <p className="text-white/50 text-xs">Top Rated</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Decorative Elements */}
-      <div className="absolute top-20 right-10 opacity-10">
-        <Compass className="w-32 h-32 text-[#138bc9]" />
-      </div>
-      <div className="absolute bottom-20 left-10 opacity-10">
-        <MapPin className="w-24 h-24 text-[#138bc9]" />
       </div>
     </div>
   );
 }
+
+export default Hero;

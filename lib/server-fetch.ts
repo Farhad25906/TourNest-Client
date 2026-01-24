@@ -4,7 +4,7 @@ import { getCookie } from "@/services/auth/tokenHandlers";
 
 const BACKEND_API_URL =
   process.env.NEXT_PUBLIC_BASE_API_URL || "https://tournest-server.onrender.com/api/v1";
-  // process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:5000/api/v1";
+// process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:5000/api/v1";
 
 // Define custom type
 interface ServerFetchOptions extends RequestInit {
@@ -16,7 +16,7 @@ const serverFetchHelper = async (
   options: ServerFetchOptions = {}
 ): Promise<Response> => {
   const { headers, useRefreshToken, ...restOptions } = options;
-  
+
   // Get the appropriate token based on the flag
   const tokenName = useRefreshToken ? "refreshToken" : "accessToken";
   const token = await getCookie(tokenName);

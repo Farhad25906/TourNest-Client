@@ -1,10 +1,12 @@
 import { Destinations } from "@/components/module/Home/Destinations";
-import { Hero } from "@/components/module/Home/Hero";
+
 import { HowItWorks } from "@/components/module/Home/HowItWorks";
 import { Testimonials } from "@/components/module/Home/Testimonials";
 import { FAQ } from "@/components/module/Home/FAQ";
 import { Newsletter } from "@/components/module/Home/Newsletter";
 import Head from "next/head";
+import { Hero } from "@/components/module/Home/Hero";
+
 
 export default function Home() {
   return (
