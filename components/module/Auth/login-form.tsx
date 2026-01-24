@@ -100,7 +100,7 @@ const LoginForm = ({ redirect }: { redirect?: string }) => {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => autoFillCredentials("farhad@ph.com", "123456")}
+                onClick={() => autoFillCredentials("farhad@tournest.com", "123456")}
                 className="flex-1 bg-white border-blue-200 text-blue-700 hover:bg-[#138bc9] hover:text-white hover:border-[#138bc9] rounded-xl transition-all h-10 font-semibold"
               >
                 Admin
