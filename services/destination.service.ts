@@ -41,13 +41,11 @@ export const getAllDestinations = async (params: { searchTerm?: string; isFeatur
     }
 };
 
-export const createDestination = async (data: IDestination): Promise<ApiResponse<IDestination>> => {
+export const createDestination = async (formData: FormData): Promise<ApiResponse<IDestination>> => {
     try {
         const res = await serverFetch.post("/destinations", {
-            body: JSON.stringify(data),
-            headers: {
-                "Content-Type": "application/json",
-            },
+            body: formData,
+            // Don't set Content-Type - browser will set it with boundary for multipart/form-data
         });
 
         const result = await res.json();
@@ -64,13 +62,11 @@ export const createDestination = async (data: IDestination): Promise<ApiResponse
     }
 };
 
-export const updateDestination = async (id: string, data: Partial<IDestination>): Promise<ApiResponse<IDestination>> => {
+export const updateDestination = async (id: string, formData: FormData): Promise<ApiResponse<IDestination>> => {
     try {
         const res = await serverFetch.patch(`/destinations/${id}`, {
-            body: JSON.stringify(data),
-            headers: {
-                "Content-Type": "application/json",
-            },
+            body: formData,
+            // Don't set Content-Type - browser will set it with boundary for multipart/form-data
         });
 
         const result = await res.json();

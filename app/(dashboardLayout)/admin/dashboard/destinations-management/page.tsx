@@ -53,10 +53,12 @@ export default function DestinationsManagementPage() {
     const [selectedDestination, setSelectedDestination] = useState<IDestination | null>(null);
     const [formData, setFormData] = useState<Partial<IDestination>>({
         name: "",
-        image: "",
         description: "",
         isFeatured: false
     });
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>("");
+    const [imageUrl, setImageUrl] = useState<string>("");
     const [submitting, setSubmitting] = useState(false);
 
     const fetchDestinations = async () => {
@@ -83,31 +85,80 @@ export default function DestinationsManagementPage() {
             setSelectedDestination(destination);
             setFormData({
                 name: destination.name,
-                image: destination.image,
                 description: destination.description,
                 isFeatured: destination.isFeatured
             });
+            setImagePreview(destination.image);
+            setImageUrl("");
+            setSelectedFile(null);
         } else {
             setSelectedDestination(null);
             setFormData({
                 name: "",
-                image: "",
                 description: "",
                 isFeatured: false
             });
+            setImagePreview("");
+            setImageUrl("");
+            setSelectedFile(null);
         }
         setIsDialogOpen(true);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setImageUrl(""); // Clear URL input when file is selected
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleUrlChange = (url: string) => {
+        setImageUrl(url);
+        if (url) {
+            setSelectedFile(null); // Clear file when URL is entered
+            setImagePreview(url);
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setSelectedFile(null);
+        setImageUrl("");
+        setImagePreview("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         try {
+            // Prepare FormData
+            const submitData = new FormData();
+
+            // Append JSON data
+            const jsonData = {
+                name: formData.name,
+                description: formData.description,
+                isFeatured: formData.isFeatured,
+                ...(imageUrl && !selectedFile ? { image: imageUrl } : {})
+            };
+            submitData.append('data', JSON.stringify(jsonData));
+
+            // Append file if selected
+            if (selectedFile) {
+                submitData.append('file', selectedFile);
+            }
+
             let res;
             if (selectedDestination?.id) {
-                res = await updateDestination(selectedDestination.id, formData);
+                res = await updateDestination(selectedDestination.id, submitData);
             } else {
-                res = await createDestination(formData as IDestination);
+                res = await createDestination(submitData);
             }
 
             if (res.success) {
@@ -127,7 +178,12 @@ export default function DestinationsManagementPage() {
     const handleToggleFeatured = async (destination: IDestination) => {
         try {
             if (!destination.id) return;
-            const res = await updateDestination(destination.id, { isFeatured: !destination.isFeatured });
+
+            // Create FormData for the update
+            const toggleData = new FormData();
+            toggleData.append('data', JSON.stringify({ isFeatured: !destination.isFeatured }));
+
+            const res = await updateDestination(destination.id, toggleData);
             if (res.success) {
                 toast.success(`Priority protocol ${!destination.isFeatured ? 'activated' : 'deactivated'}`);
                 fetchDestinations();
@@ -296,16 +352,59 @@ export default function DestinationsManagementPage() {
                                         onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Visual Feed (URL)</Label>
-                                    <Input
-                                        required
-                                        placeholder="Enter image protocol URL"
-                                        className="rounded-2xl border-gray-100 h-12 font-bold focus:ring-[#138bc9]/20"
-                                        value={formData.image}
-                                        onChange={e => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                                    />
+
+                                {/* Image Upload Section */}
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Visual Feed</Label>
+
+                                    {/* Image Preview */}
+                                    {imagePreview && (
+                                        <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
+                                            <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="destructive"
+                                                className="absolute top-2 right-2 h-8 w-8 rounded-xl"
+                                                onClick={handleRemoveImage}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {/* File Upload */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="file-upload" className="text-xs font-bold text-gray-600">Upload Image File</Label>
+                                        <Input
+                                            id="file-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="rounded-2xl border-gray-100 h-12 font-bold focus:ring-[#138bc9]/20 cursor-pointer"
+                                            onChange={handleFileChange}
+                                        />
+                                    </div>
+
+                                    {/* OR Divider */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-px bg-gray-200" />
+                                        <span className="text-[10px] font-black text-gray-400 uppercase">Or</span>
+                                        <div className="flex-1 h-px bg-gray-200" />
+                                    </div>
+
+                                    {/* URL Input */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="image-url" className="text-xs font-bold text-gray-600">Paste Image URL</Label>
+                                        <Input
+                                            id="image-url"
+                                            placeholder="https://example.com/image.jpg"
+                                            className="rounded-2xl border-gray-100 h-12 font-bold focus:ring-[#138bc9]/20"
+                                            value={imageUrl}
+                                            onChange={e => handleUrlChange(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
+
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sector Brief</Label>
                                     <Textarea
