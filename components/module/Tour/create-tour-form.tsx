@@ -4,6 +4,7 @@
 import { createTour } from "@/services/tour/tour.service";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { getAllDestinations, IDestination } from "@/services/destination.service";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -63,8 +64,8 @@ export default function CreateTourForm() {
   const [state, formAction, isPending] = useActionState(createTour, null);
   const [includedItems, setIncludedItems] = useState<string[]>([""]);
   const [excludedItems, setExcludedItems] = useState<string[]>([""]);
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const router = useRouter();
 
   // Improved itinerary state
@@ -90,6 +91,18 @@ export default function CreateTourForm() {
     },
   ]);
 
+  const [destinations, setDestinations] = useState<IDestination[]>([]);
+
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      const res = await getAllDestinations();
+      if (res.success) {
+        setDestinations(res.data || []);
+      }
+    };
+    fetchDestinations();
+  }, []);
+
   useEffect(() => {
     if (!state) return; // Skip initial mount
 
@@ -102,8 +115,8 @@ export default function CreateTourForm() {
       requestAnimationFrame(() => {
         setIncludedItems([""]);
         setExcludedItems([""]);
-        setImage(null);
-        setImagePreview(null);
+        setImages([]);
+        setImagePreviews([]);
         setItinerary([
           {
             day: 1,
@@ -255,35 +268,40 @@ export default function CreateTourForm() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const remainingSlots = 5 - images.length;
+      const filesToAdd = filesArray.slice(0, remainingSlots);
 
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
-        return;
-      }
+      // Validate file types and sizes
+      const validFiles = filesToAdd.filter(file => {
+        if (!file.type.startsWith("image/")) {
+          toast.error(`${file.name} is not an image file`);
+          return false;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} is larger than 5MB`);
+          return false;
+        }
+        return true;
+      });
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
-      }
+      setImages(prev => [...prev, ...validFiles]);
 
-      setImage(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Create previews
+      validFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const removeImage = () => {
-    setImage(null);
-    setImagePreview(null);
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -329,13 +347,18 @@ export default function CreateTourForm() {
 
           <Field>
             <FieldLabel htmlFor="destination">Destination *</FieldLabel>
-            <Input
-              id="destination"
-              name="destination"
-              type="text"
-              placeholder="Bali, Indonesia"
-              required
-            />
+            <Select name="destination" required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a mapped sector" />
+              </SelectTrigger>
+              <SelectContent>
+                {destinations.map((dest) => (
+                  <SelectItem key={dest.id} value={dest.name}>
+                    {dest.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {hasErrors(state) &&
               getFieldErrors(state, "destination").map((error, index) => (
                 <p key={index} className="text-sm text-red-500 mt-1">
@@ -762,11 +785,11 @@ export default function CreateTourForm() {
             ))}
         </Field>
 
-        {/* Single Image Upload */}
+        {/* Multiple Image Upload */}
         <Field>
-          <FieldLabel htmlFor="images">Tour Image *</FieldLabel>
+          <FieldLabel htmlFor="images">Tour Images *</FieldLabel>
           <FieldDescription>
-            Upload a single image for your tour (max 5MB)
+            Upload up to 5 images for your tour (max 5MB each). First image will be the cover.
           </FieldDescription>
           <div className="space-y-4">
             <Input
@@ -774,30 +797,44 @@ export default function CreateTourForm() {
               name="images"
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
+              disabled={images.length >= 5}
             />
 
-            {imagePreview && (
-              <div className="mt-4">
-                <p className="text-sm font-medium mb-2">Preview:</p>
-                <div className="relative inline-block">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-64 h-64 object-cover rounded-lg border"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    className="absolute -top-2 -right-2 h-8 w-8 p-0 rounded-full"
-                    onClick={removeImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-600 mt-2">{image?.name}</p>
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg border"
+                    />
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                        Cover
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="absolute -top-2 -right-2 h-8 w-8 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeImage(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <p className="text-xs text-gray-600 mt-1 truncate">{images[index]?.name}</p>
+                  </div>
+                ))}
               </div>
+            )}
+
+            {images.length > 0 && (
+              <p className="text-sm text-gray-600">
+                {images.length} of 5 images selected
+              </p>
             )}
           </div>
           {hasErrors(state) &&

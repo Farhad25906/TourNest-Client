@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { getAllDestinations, IDestination } from "@/services/destination.service";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -78,34 +79,46 @@ export default function UpdateTourModal({ tour, open, onClose }: UpdateTourModal
   const [newIncludedItem, setNewIncludedItem] = useState("");
   const [newExcludedItem, setNewExcludedItem] = useState("");
 
-const form = useForm<UpdateTourInput>({
-  resolver: zodResolver(updateTourFrontendValidationSchema), // Use frontend schema
-  defaultValues: {
-    title: tour.title,
-    description: tour.description,
-    destination: tour.destination,
-    city: tour.city,
-    country: tour.country,
-    startDate: formatDateForInput(tour.startDate), // String
-    endDate: formatDateForInput(tour.endDate),     // String
-    duration: tour.duration,
-    price: tour.price,
-    maxGroupSize: tour.maxGroupSize,
-    category: tour.category as TourCategory,
-    difficulty: tour.difficulty as DifficultyLevel,
-    meetingPoint: tour.meetingPoint,
-    isActive: tour.isActive,
-    isFeatured: tour.isFeatured,
-    itinerary: tour.itinerary,
-  },
-});
+  const [destinations, setDestinations] = useState<IDestination[]>([]);
+
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      const res = await getAllDestinations();
+      if (res.success) {
+        setDestinations(res.data || []);
+      }
+    };
+    fetchDestinations();
+  }, []);
+
+  const form = useForm<UpdateTourInput>({
+    resolver: zodResolver(updateTourFrontendValidationSchema), // Use frontend schema
+    defaultValues: {
+      title: tour.title,
+      description: tour.description,
+      destination: tour.destination,
+      city: tour.city,
+      country: tour.country,
+      startDate: formatDateForInput(tour.startDate), // String
+      endDate: formatDateForInput(tour.endDate),     // String
+      duration: tour.duration,
+      price: tour.price,
+      maxGroupSize: tour.maxGroupSize,
+      category: tour.category as TourCategory,
+      difficulty: tour.difficulty as DifficultyLevel,
+      meetingPoint: tour.meetingPoint,
+      isActive: tour.isActive,
+      isFeatured: tour.isFeatured,
+      itinerary: tour.itinerary,
+    },
+  });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const newFiles = files.slice(0, 5 - images.length); // Limit to 5 images total
-    
+
     setNewImages((prev) => [...prev, ...newFiles]);
-    
+
     // Create preview URLs
     newFiles.forEach((file) => {
       const reader = new FileReader();
@@ -119,12 +132,12 @@ const form = useForm<UpdateTourInput>({
   const removeImage = (index: number) => {
     // Check if it's a new image or existing one
     const isNewImage = index >= (tour.images?.length || 0);
-    
+
     if (isNewImage) {
       const newIndex = index - (tour.images?.length || 0);
       setNewImages((prev) => prev.filter((_, i) => i !== newIndex));
     }
-    
+
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -152,17 +165,17 @@ const form = useForm<UpdateTourInput>({
 
   const onSubmit = async (data: UpdateTourInput) => {
     setIsLoading(true);
-    
+
     try {
       const formData = new FormData();
-      
+
       // Filter out blob URLs (temporary previews) and keep only actual image URLs
-      const filteredImages = images.filter(img => 
-        !img.startsWith("blob:") && 
+      const filteredImages = images.filter(img =>
+        !img.startsWith("blob:") &&
         !img.startsWith("data:") &&
         typeof img === 'string'
       );
-      
+
       // Append form data
       const tourData: Record<string, any> = {
         ...data,
@@ -170,19 +183,19 @@ const form = useForm<UpdateTourInput>({
         excluded: excludedItems,
         images: filteredImages.length > 0 ? filteredImages : undefined,
       };
-      
+
       // Clean up the data - remove undefined values
       Object.keys(tourData).forEach(key => {
         if (tourData[key] === undefined || tourData[key] === null) {
           delete tourData[key];
         }
       });
-      
+
       // Only append if there's data to update
       if (Object.keys(tourData).length > 0) {
         formData.append("data", JSON.stringify(tourData));
       }
-      
+
       // Append new images
       newImages.forEach((image) => {
         formData.append("images", image);
@@ -194,13 +207,13 @@ const form = useForm<UpdateTourInput>({
       }
 
       const result = await updateTour(tour.id, formData);
-      
+
       if (result.success) {
         toast.success(result.message || "Tour updated successfully!");
         onClose();
         router.refresh();
       } else {
-        const errorMessage = result.errors 
+        const errorMessage = result.errors
           ? Object.values(result.errors).flat().join(", ")
           : result.message || "Failed to update tour";
         toast.error(errorMessage);
@@ -229,7 +242,7 @@ const form = useForm<UpdateTourInput>({
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Basic Information</h3>
-                
+
                 <FormField
                   control={form.control}
                   name="title"
@@ -251,10 +264,10 @@ const form = useForm<UpdateTourInput>({
                     <FormItem>
                       <FormLabel>Description *</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Describe your tour in detail..." 
+                        <Textarea
+                          placeholder="Describe your tour in detail..."
                           className="min-h-[120px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -269,8 +282,8 @@ const form = useForm<UpdateTourInput>({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -297,8 +310,8 @@ const form = useForm<UpdateTourInput>({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Difficulty</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -324,19 +337,30 @@ const form = useForm<UpdateTourInput>({
               {/* Location Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Location & Dates</h3>
-                
+
                 <FormField
                   control={form.control}
                   name="destination"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Destination</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input className="pl-10" placeholder="E.g., Himalayas" {...field} />
-                        </div>
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select mapped sector" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {destinations.map((dest) => (
+                            <SelectItem key={dest.id} value={dest.name}>
+                              {dest.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -382,9 +406,9 @@ const form = useForm<UpdateTourInput>({
                         <FormControl>
                           <div className="relative">
                             <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              type="date" 
-                              className="pl-10" 
+                            <Input
+                              type="date"
+                              className="pl-10"
                               {...field}
                               value={field.value || ''}
                             />
@@ -404,9 +428,9 @@ const form = useForm<UpdateTourInput>({
                         <FormControl>
                           <div className="relative">
                             <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                              type="date" 
-                              className="pl-10" 
+                            <Input
+                              type="date"
+                              className="pl-10"
                               {...field}
                               value={field.value || ''}
                             />
@@ -439,7 +463,7 @@ const form = useForm<UpdateTourInput>({
             {/* Pricing & Group Size */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Pricing & Group</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -450,10 +474,10 @@ const form = useForm<UpdateTourInput>({
                       <FormControl>
                         <div className="relative">
                           <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             min="1"
-                            className="pl-10" 
+                            className="pl-10"
                             {...field}
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
@@ -474,11 +498,11 @@ const form = useForm<UpdateTourInput>({
                       <FormControl>
                         <div className="relative">
                           <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             min="0"
                             step="0.01"
-                            className="pl-10" 
+                            className="pl-10"
                             {...field}
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
@@ -499,10 +523,10 @@ const form = useForm<UpdateTourInput>({
                       <FormControl>
                         <div className="relative">
                           <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            type="number" 
+                          <Input
+                            type="number"
                             min="1"
-                            className="pl-10" 
+                            className="pl-10"
                             {...field}
                             value={field.value || ''}
                             onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
@@ -596,7 +620,7 @@ const form = useForm<UpdateTourInput>({
                   {images.length} / 5 images
                 </Badge>
               </div>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {images.map((image, index) => (
                   <div key={index} className="relative group">
@@ -627,7 +651,7 @@ const form = useForm<UpdateTourInput>({
                     </Button>
                   </div>
                 ))}
-                
+
                 {images.length < 5 && (
                   <label className="aspect-square border-2 border-dashed rounded-lg hover:border-primary transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 bg-muted/30">
                     <Upload className="h-8 w-8 text-muted-foreground" />
@@ -649,7 +673,7 @@ const form = useForm<UpdateTourInput>({
             {/* Status & Features */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Status & Features</h3>
-              
+
               <div className="space-y-4">
                 <FormField
                   control={form.control}

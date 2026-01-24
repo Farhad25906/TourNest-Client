@@ -63,6 +63,16 @@ const TourTable: React.FC<TourTableProps> = ({ tours, meta, currentPage, searchT
     } finally { setUpdatingStatus(null); }
   };
 
+  const [updatingFeatured, setUpdatingFeatured] = useState<string | null>(null);
+  const handleToggleFeatured = async (tourId: string, currentFeatured: boolean) => {
+    setUpdatingFeatured(tourId);
+    try {
+      const { updateTourFeatured } = await import('@/services/tour/tour.service');
+      const res = await updateTourFeatured(tourId, !currentFeatured);
+      if (res.success) { toast.success(`Spotlight ${!currentFeatured ? 'engaged' : 'disengaged'}`); router.refresh(); }
+    } finally { setUpdatingFeatured(null); }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
@@ -117,11 +127,16 @@ const TourTable: React.FC<TourTableProps> = ({ tours, meta, currentPage, searchT
                             <Briefcase className="h-5 w-5" />
                           </div>
                         )}
-                        {tour.isFeatured && (
-                          <div className="absolute inset-0 bg-amber-500/10 flex items-center justify-center">
-                            <Star className="h-6 w-6 text-amber-500 fill-amber-500" />
-                          </div>
-                        )}
+                        <button
+                          onClick={(e) => { e.preventDefault(); handleToggleFeatured(tour.id, tour.isFeatured); }}
+                          disabled={updatingFeatured === tour.id}
+                          className={cn(
+                            "absolute top-1 right-1 h-6 w-6 rounded-lg backdrop-blur-md flex items-center justify-center transition-all duration-300",
+                            tour.isFeatured ? "bg-amber-100 text-amber-600 border border-amber-200" : "bg-white/40 text-gray-400 border border-white/20 hover:bg-white/60"
+                          )}
+                        >
+                          {updatingFeatured === tour.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Star className={cn("h-3.5 w-3.5", tour.isFeatured && "fill-amber-600")} />}
+                        </button>
                       </div>
                       <div className="min-w-0">
                         <p className="font-black text-gray-900 text-sm group-hover:text-[#138bc9] transition-colors line-clamp-1">{tour.title}</p>

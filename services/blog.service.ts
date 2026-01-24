@@ -13,8 +13,11 @@ export interface IBlog {
   coverImage?: string;
   category: string;
   status: "DRAFT" | "PUBLISHED";
+  isApproved: boolean;
   views: number;
   likesCount: number;
+  isFeatured: boolean;
+  // ... (rest of the interface)
   hostId: string;
   tourId?: string;
   createdAt: string;
@@ -91,6 +94,7 @@ export async function getAllBlogs(params?: {
   limit?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  isAdminView?: string;
 }) {
   try {
     const queryString = new URLSearchParams();
@@ -123,11 +127,10 @@ export async function getAllBlogs(params?: {
     console.error("Error fetching blogs:", error);
     return {
       success: false,
-      message: `Failed to fetch blogs: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to fetch blogs: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
       data: [],
       meta: { page: 1, limit: 10, total: 0 },
     };
@@ -180,11 +183,10 @@ export async function createBlog(formData: FormData) {
     console.error("Error creating blog:", error);
     return {
       success: false,
-      message: `Failed to create blog: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to create blog: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
       data: null,
     };
   }
@@ -214,11 +216,10 @@ export async function updateBlog(blogId: string, formData: FormData) {
     console.error("Error updating blog:", error);
     return {
       success: false,
-      message: `Failed to update blog: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to update blog: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
       data: null,
     };
   }
@@ -246,11 +247,10 @@ export async function deleteBlog(blogId: string) {
     console.error("Error deleting blog:", error);
     return {
       success: false,
-      message: `Failed to delete blog: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to delete blog: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
     };
   }
 }
@@ -275,11 +275,10 @@ export async function getMyBlogs() {
     console.error("Error fetching my blogs:", error);
     return {
       success: false,
-      message: `Failed to fetch your blogs: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to fetch your blogs: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
       data: [],
     };
   }
@@ -319,11 +318,10 @@ export async function createComment(
     console.error("Error creating comment:", error);
     return {
       success: false,
-      message: `Failed to create comment: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to create comment: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
     };
   }
 }
@@ -349,11 +347,10 @@ export async function updateComment(
     console.error("Error updating comment:", error);
     return {
       success: false,
-      message: `Failed to update comment: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to update comment: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
     };
   }
 }
@@ -371,11 +368,10 @@ export async function deleteComment(commentId: string) {
     console.error("Error deleting comment:", error);
     return {
       success: false,
-      message: `Failed to delete comment: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to delete comment: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
     };
   }
 }
@@ -404,11 +400,10 @@ export async function toggleLike(blogId: string) {
     console.error("Error toggling like:", error);
     return {
       success: false,
-      message: `Failed to toggle like: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to toggle like: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
     };
   }
 }
@@ -428,11 +423,10 @@ export async function toggleCommentLike(commentId: string) {
     console.error("Error toggling comment like:", error);
     return {
       success: false,
-      message: `Failed to toggle comment like: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to toggle comment like: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
     };
   }
 }
@@ -457,11 +451,10 @@ export async function getBlogStats() {
     console.error("Error fetching blog stats:", error);
     return {
       success: false,
-      message: `Failed to fetch blog statistics: ${
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Please try again"
-      }`,
+      message: `Failed to fetch blog statistics: ${process.env.NODE_ENV === "development"
+        ? error.message
+        : "Please try again"
+        }`,
       data: null,
     };
   }
@@ -513,6 +506,36 @@ export async function commentOnBlog(blogId: string, content: string) {
     return {
       success: false,
       message: "Please login to comment",
+    };
+  }
+}
+
+/**
+ * Update blog approval status (Admin)
+ */
+export async function updateBlogStatus(blogId: string, isApproved: boolean) {
+  try {
+    const response = await serverFetch.patch(`/blogs/${blogId}/approve-status`, {
+      body: JSON.stringify({ isApproved }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      revalidateTag("blogs", { expire: 0 });
+      revalidateTag(`blog-${blogId}`, { expire: 0 });
+      revalidatePath("/admin/dashboard/blogs-management");
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("Error updating blog status:", error);
+    return {
+      success: false,
+      message: "Failed to update protocol status",
     };
   }
 }

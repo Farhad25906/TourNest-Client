@@ -125,20 +125,13 @@ export const createTour = async (
     const submitData = new FormData();
     submitData.append("data", JSON.stringify(dataForBackend));
 
-    // Handle single image upload - field name must be "file" for backend
-    const imageInput = formData.get("images");
-    if (imageInput instanceof File && imageInput.size > 0 && imageInput.name) {
-      submitData.append("file", imageInput);
-    } else {
-      // Check if there are multiple images (from the old implementation)
-      const images = formData.getAll("images");
-      const firstImage = images.find(
-        (img) => img instanceof File && img.size > 0
-      );
-      if (firstImage) {
-        submitData.append("file", firstImage);
+    // Handle multiple image uploads - field name must be "files" for backend
+    const imageInputs = formData.getAll("images");
+    imageInputs.forEach((imageInput) => {
+      if (imageInput instanceof File && imageInput.size > 0 && imageInput.name) {
+        submitData.append("files", imageInput);
       }
-    }
+    });
 
     // Make API call
     const res = await serverFetch.post("/tour/create-tour", {
@@ -167,11 +160,10 @@ export const createTour = async (
     console.error("Tour creation error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to create tour. Please try again."
-      }`,
+        }`,
     };
   }
 };
@@ -303,11 +295,10 @@ export const updateTour = async (
     console.error("Tour update error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to update tour. Please try again."
-      }`,
+        }`,
     };
   }
 };
@@ -358,11 +349,10 @@ export async function getAllTours(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch tours"
-      }`,
+        }`,
     };
   }
 }
@@ -394,11 +384,10 @@ export async function getSingleTour(
     return {
       success: false,
       data: undefined,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch tour details"
-      }`,
+        }`,
     };
   }
 }
@@ -450,11 +439,10 @@ export async function getAllToursForAdmin(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch tours for admin"
-      }`,
+        }`,
     };
   }
 }
@@ -480,11 +468,10 @@ export async function deleteTour(tourId: string): Promise<ApiResponse> {
     console.error("Delete tour error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to delete tour"
-      }`,
+        }`,
     };
   }
 }
@@ -529,11 +516,10 @@ export async function getMyTours(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch your tours"
-      }`,
+        }`,
     };
   }
 }
@@ -561,11 +547,10 @@ export async function getMyTourStats(): Promise<ApiResponse<HostTourStats>> {
     console.error("Get tour stats error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch tour statistics"
-      }`,
+        }`,
     };
   }
 }
@@ -596,11 +581,10 @@ export async function getMyTourDetails(
     return {
       success: false,
       data: undefined,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch tour details"
-      }`,
+        }`,
     };
   }
 }
@@ -640,11 +624,10 @@ export async function updateTourStatus(
     console.error("Update tour status error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to update tour status"
-      }`,
+        }`,
     };
   }
 }
@@ -671,9 +654,8 @@ export async function updateTourFeatured(
 
       return {
         success: true,
-        message: `Tour ${
-          isFeatured ? "marked as featured" : "removed from featured"
-        } successfully!`,
+        message: `Tour ${isFeatured ? "marked as featured" : "removed from featured"
+          } successfully!`,
         data: result.data,
       };
     }
@@ -683,11 +665,10 @@ export async function updateTourFeatured(
     console.error("Update tour featured error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to update tour featured status"
-      }`,
+        }`,
     };
   }
 }
@@ -719,11 +700,10 @@ export async function getFeaturedTours(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch featured tours"
-      }`,
+        }`,
     };
   }
 }
@@ -757,11 +737,10 @@ export async function getToursByCategory(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch tours by category"
-      }`,
+        }`,
     };
   }
 }
@@ -801,11 +780,10 @@ export async function searchTours(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to search tours"
-      }`,
+        }`,
     };
   }
 }
@@ -838,11 +816,10 @@ export async function getUpcomingTours(
     return {
       success: false,
       data: [],
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch upcoming tours"
-      }`,
+        }`,
     };
   }
 }
@@ -905,11 +882,10 @@ export async function duplicateTour(tourId: string): Promise<ApiResponse> {
     console.error("Duplicate tour error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to duplicate tour"
-      }`,
+        }`,
     };
   }
 }
@@ -926,8 +902,8 @@ export async function completeTour(tourId: string): Promise<ApiResponse<{ tour: 
 
     if (result.success) {
       // Revalidate all relevant cache tags
-      revalidateTag("my-tours","my-tour-stats");
-      revalidateTag(`my-tour-${tourId}`,"tours-list");
+      revalidateTag("my-tours", "my-tour-stats");
+      revalidateTag(`my-tour-${tourId}`, "tours-list");
 
 
       return {
@@ -942,11 +918,10 @@ export async function completeTour(tourId: string): Promise<ApiResponse<{ tour: 
     console.error("Complete tour error:", error);
     return {
       success: false,
-      message: `${
-        process.env.NODE_ENV === "development"
+      message: `${process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to complete tour. Please try again."
-      }`,
+        }`,
     };
   }
 }

@@ -53,26 +53,19 @@ export default function AdminDashboardContent({ stats, reviews = [] }: AdminDash
     const tourCount = stats?.tourCount || 120;
 
     const metrics = [
-        { label: "Global Revenue", value: `$${totalRevenue.toLocaleString()}`, sub: "+12.5% from last month", icon: DollarSign, color: "text-white", bg: "bg-[#138bc9]", primary: true },
-        { label: "Total Explorers", value: userCount, sub: "Active traveler accounts", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Certified Hosts", value: hostCount, sub: "Verified expedition guides", icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
-        { label: "Active Tours", value: tourCount, sub: "Live global expeditions", icon: Briefcase, color: "text-purple-600", bg: "bg-purple-50" },
+        { label: "Global Revenue", value: `$${totalRevenue.toLocaleString()}`, sub: "Official platform liquidity", icon: DollarSign, color: "text-white", bg: "bg-[#138bc9]", primary: true },
+        { label: "Total Explorers", value: userCount, sub: "Verified traveler identity nodes", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+        { label: "Certified Hosts", value: hostCount, sub: "Authorized expedition guides", icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: "Active Deployments", value: tourCount, sub: "Live orbital expeditions", icon: Briefcase, color: "text-purple-600", bg: "bg-purple-50" },
     ];
 
-    const chartData = stats?.barChartData || [
-        { month: 'Jan', count: 4500 },
-        { month: 'Feb', count: 5200 },
-        { month: 'Mar', count: 4800 },
-        { month: 'Apr', count: 6100 },
-        { month: 'May', count: 5900 },
-        { month: 'Jun', count: 7200 },
+    const chartData = stats?.areaChartData || stats?.barChartData || [
+        { month: 'Jan', count: 0 },
+        { month: 'Feb', count: 0 },
     ];
 
-    const pieData = stats?.pieCharData || [
-        { name: 'Adventure', value: 400 },
-        { name: 'Cultural', value: 300 },
-        { name: 'Nature', value: 300 },
-        { name: 'Urban', value: 200 },
+    const pieData = stats?.pieChartData || stats?.pieCharData || [
+        { name: 'Uncategorized', value: 100 },
     ];
 
     const COLORS = ['#138bc9', '#10b981', '#f59e0b', '#8b5cf6'];
