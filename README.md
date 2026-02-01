@@ -1,123 +1,175 @@
-# Tour Nest - Client
+# 💰 EdenSuite Client - Property Rental & Tour Management System
 
-A modern, high-performance travel and tour booking platform built with Next.js and Framer Motion.
+A modern, high-performance web application for EdenSuite, a comprehensive platform for property rentals, tour bookings, and host management. Built with Next.js 15, React 19, TypeScript, and Tailwind CSS.
 
+## 🌐 Live URL
 
-## 🌐 Live Links
+- **Frontend:** [https://eden-suite-client.vercel.app/](https://eden-suite-client.vercel.app/)
+- **Backend API:** [https://eden-suite-server.vercel.app/](https://eden-suite-server.vercel.app/)
 
-- **Client:** [https://tour-nest-client.vercel.app/](https://tour-nest-client.vercel.app/)
-- **Server:** [https://tournest-server.onrender.com/](https://tournest-server.onrender.com/)
+---
 
-## 📂 Repository Links
+## 🎯 Overview
 
-- **Client Repository:** [https://github.com/Farhad25906/TourNest-Client](https://github.com/Farhad25906/TourNest-Client)
-- **Server Repository:** [https://github.com/Farhad25906/TourNest-Server](https://github.com/Farhad25906/TourNest-Server)
+EdenSuite Client is a feature-rich property management and tour booking platform. It provides a seamless experience for Users to book stays/tours, Hosts to manage properties, and Admins to oversee the entire ecosystem with advanced analytics and moderation tools.
 
+### Key Highlights
 
-## 🔐 Credentials
+- ✅ **Modern Architecture** - Built with Next.js 15 (App Router) and React 19
+- ✅ **Role-Based Access** - Specialized dashboards for User, Host, and Admin
+- ✅ **Dynamic Booking** - Real-time tour and property booking system
+- ✅ **Financial Management** - Stripe integration for secure payments and payouts
+- ✅ **Stunning UI/UX** - Custom design with Tailwind CSS and Framer Motion
+- ✅ **Interactive Dashboards** - Rich data visualization with Recharts
+- ✅ **Type Safety** - Comprehensive TypeScript coverage
+- ✅ **Responsive Design** - Optimized for mobile, tablet, and desktop
 
-Admin: [farhad@ph.com](mailto:farhad@tournest.com) / 123456
+---
 
-Host: [farhadhossen2590@gmail.com](mailto:farhadhossen2590@gmail.com) / 123456
+## 🚀 Features
 
-Tourist: [farhadhossen9036@gmail.com](mailto:farhadhossen9036@gmail.com) / 123456
+### 🔐 Authentication
 
-## 🚀 TeckStack
+- **Secure Login/Register** - JWT-based authentication with refresh token logic
+- **Social Integration** - Ready for advanced auth patterns
+- **Role Selection** - Dynamic onboarding for Users and Hosts
+- **Profile Security** - Password management and secure session handling
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Library**: [React](https://reactjs.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **UI Components**: [Shadcn UI](https://ui.shadcn.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+### 👤 User Features
 
+- **Tour Discovery** - Browse and filter wide range of tours and destinations
+- **Property Booking** - Book rental properties with real-time availability
+- **Reviews & Ratings** - Share experiences on tours and properties
+- **Booking History** - Manage and track all past and upcoming bookings
+- **Profile Management** - Personalized user dashboard and profile settings
 
-### Deployment
+### 🏠 Host Features
 
-- **Frontend:** Vercel
-- **Backend:** Render
-- **Database:** Neon (PostgreSQL)
+- **Listing Management** - Create and manage property and tour listings
+- **Booking Requests** - Overview of incoming guest requests
+- **Earnings Dashboard** - Track revenue and manage payouts
+- **Communication** - Tools to interact with potential guests
+- **Host Analytics** - Insights into listing performance
 
-## ✨ Core Features (Core Functionalities)
+### 👨‍💼 Admin Features
 
-- **Interactive Tour Discovery**: Advanced filtering and search for global destinations.
-- **Unique Design Patterns**: Bento-grid layouts, mouse parallax effects, and animated scroll paths.
-- **Booking Management**: Real-time tour availability check and secure booking flow.
-- **Dynamic Testimonials**: Sophisticated cascading review system with live traveler chronicles.
-- **Blogging System**: Comprehensive travel stories and guide articles.
-- **Responsive Dashboard**: Dedicated interfaces for both Tourists and Guides.
-- **Payment Integration**: Seamless checkout experience using Stripe.
+- **Platform Overview** - Comprehensive dashboard with system-wide stats
+- **User Moderation** - Manage accounts for Users, Hosts, and Admins
+- **Content Approval** - Review and approve new listings
+- **Financial Oversight** - Monitor all transactions and payout requests
+- **Blog Management** - Create and manage platform-wide blog content
 
-## 👥 Role Based Features  
+---
 
-### For Users
+## 🛠️ Tech Stack
 
-1. **Registration & Login** - Secure authentication with JWT
-2. **Profile Creation** - Add personal info, travel interests, and visited countries
-4. **Discover Tours** - Search and filter compatible travel companions
-4. **Book Tours** - Book Your Tour 
-5. **Reviews & Ratings** - Rate and review fellow travelers after trips
+| Technology | Purpose | Version |
+|------------|---------|---------|
+| **Next.js** | React framework | v16.0.x |
+| **React** | UI library | v19.2.x |
+| **TypeScript** | Type safety | v5.x |
+| **Tailwind CSS** | Styling | v4.x |
+| **Framer Motion** | Animations | v12.2.x |
+| **Lucide React** | Icon library | v0.559.x |
+| **React Hook Form** | Form handling | v7.68.x |
+| **Zod** | Schema validation | v4.1.x |
+| **Sonner** | Toast notifications | v2.0.x |
+| **Recharts** | Data visualization | v3.6.x |
+| **Radix UI** | Headless components | Latest |
 
-### For Admins
+---
 
-1. **Dashboard Access** - Comprehensive platform overview
-2. **User Management** - Monitor and manage platform users
-3. **Platform Analytics** - Track user activity and engagement
+## 📁 Project Structure
 
-
-### For Hots
-
-1. **Create Tours** - On the Free Plan, a host can create up to 4 tours per year.
-2. **Write Blogs** - On the Free Plan, a host can publish up to 5 blogs per year.
-3. **Subscription Management** - Hosts can upgrade their subscription to unlock higher limits, premium features, and advanced management tools.
-4. **Payment management** - Manage Your Tour Payments.
-5. **Booking Mangement** - Manage Your All Bookings.
-
-## 🔒 Security Features
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- Protected API routes
-- Role-based access control (RBAC)
-- Secure payment processing
-
-## 📁 File Structure
-
-```text
-client/
-├── app/                  # Next.js App Router (Layouts & Pages)
-├── components/
-│   ├── module/           # Feature-specific components (Home, Tour, Booking)
-│   └── ui/               # Reusable base UI components (Shadcn)
-├── hooks/                # Custom React hooks
-├── lib/                  # Utility functions and shared logic
-├── services/             # API service layers (Axios/Fetch)
-└── public/               # Static assets (images, icons)
+```
+Eden-Suite-Client/
+├── app/                      # Next.js App Router
+│   ├── (commonLayout)/       # Public routes (Home, Blogs, Tours)
+│   ├── (dashboardLayout)/    # Protected routes
+│   │   ├── admin/            # Admin dashboard pages
+│   │   ├── host/             # Host dashboard pages
+│   │   └── user/             # User dashboard pages
+│   ├── layout.tsx            # Root layout
+│   └── globals.css           # Global styles
+├── components/               # Reusable UI components
+│   ├── ui/                   # shadcn/ui components
+│   └── modules/              # Feature-specific components
+├── services/                 # API service layer (RTK Query/Fetch)
+├── constants/                # App constants
+├── hooks/                    # Custom React hooks
+├── lib/                      # Utility libraries
+├── types/                    # TypeScript definitions
+├── zod/                      # Validation schemas
+├── public/                   # Static assets
+└── package.json
 ```
 
-## 🛠️ Installation Process
+---
 
-1. **Clone the repository**:
+## ⚙️ Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+NEXT_PUBLIC_BASE_API_URL=http://localhost:5000/api/v1
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm / pnpm / yarn
+
+### Installation
+
+1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd TourNest/client
+   git clone https://github.com/Farhad25906/Eden-Suite-Client.git
+   cd Eden-Suite-Client
    ```
 
-2. **Install dependencies**:
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. **Configure Environment Variables**:
-   Create a `.env.local` file and add:
-   ```env
-   NEXT_PUBLIC_BASE_API_URL=http://localhost:5000/api/v1
+3. **Set up environment variables**
+   ```bash
+   # Create .env.local and add your configuration
    ```
 
-4. **Run the development server**:
+4. **Run development server**
    ```bash
    npm run dev
    ```
 
-5. **Open the browser**:
-   Visit [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) to see the result.
+
+---
+
+## 🎮 Demo Login
+
+For testing purposes, you can use the following credentials (if seeded):
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | farhad@tournest.com | 123456 |
+
+---
+
+## 👨‍💻 Author
+
+**Farhad Hossen**
+- GitHub: [@Farhad25906](https://github.com/Farhad25906)
+- Email: farhadhossen2590@gmail.com
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
