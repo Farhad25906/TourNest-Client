@@ -174,8 +174,9 @@ For testing purposes, you can use the following credentials (if seeded):
 
 ## 📞 Support & Feedback
 
-For support, email **farhadhossen2590@gmail.com**.  
-We value your feedback! Please fill out our  
-👉 **[Feedback Form](https://forms.gle/RSLcQxuhhRV4YSiJ9)** 
-
+For support, email <strong>farhadhossen2590@gmail.com</strong>.<br />
+We value your feedback! Please fill out our
+<a href="https://forms.gle/RSLcQxuhhRV4YSiJ9" target="_blank" rel="noopener noreferrer">
+Feedback Form
+</a>
 
