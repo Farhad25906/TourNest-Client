@@ -1,4 +1,4 @@
-# 💰 EdenSuite Client - Property Rental & Tour Management System
+# 💰 Tournest - Tour Management System
 
 A modern, high-performance web application for EdenSuite, a comprehensive platform for property rentals, tour bookings, and host management. Built with Next.js 15, React 19, TypeScript, and Tailwind CSS.
 
