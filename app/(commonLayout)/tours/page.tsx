@@ -8,6 +8,8 @@ import { getAllTours } from "@/services/tour/tour.service";
 import { TourFilters } from "@/types/tour.interface";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GridSkeleton } from "@/components/shared/CardSkeleton";
+import { Filter, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Explore Tours | TourNest",
@@ -54,116 +56,93 @@ async function ToursContent({ searchParams }: { searchParams: any }) {
     const meta = response.meta || { page: 1, limit: 12, total: 0 };
 
     return (
-      <div className="space-y-6">
-        <SectionHeading
-          center={false}
-          badge="Adventures"
-          title="Explore Tours"
-          subtitle="Discover amazing adventures and experiences around the world"
-        />
+      <div className="space-y-12">
+        {/* Modern Header Section */}
+        <div className="relative rounded-[3rem] overflow-hidden bg-[#138bc9] p-12 md:p-20 text-white">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-24 -mb-24" />
 
-        {/* Filters */}
-        <ToursFilters />
-
-        {/* Results Count */}
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            Showing {tours.length} of {meta.total} tours
-          </p>
+          <div className="relative z-10 max-w-2xl">
+            <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">
+              Discover the world
+            </span>
+            <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">
+              Epic Adventures <br /><span className="text-blue-200">Wait for You</span>
+            </h1>
+            <p className="text-lg text-blue-50/80 font-medium">
+              From mountain peaks to hidden beaches, find and book your next unforgettable journey with expert local hosts.
+            </p>
+          </div>
         </div>
 
-        {/* Tours Grid */}
-        {tours.length > 0 ? (
-          <ToursGrid tours={tours} />
-        ) : (
-          <Card className="rounded-2xl border-blue-50">
-            <CardContent className="py-12 text-center">
-              <div className="mx-auto w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
-                <svg
-                  className="h-12 w-12 text-muted-foreground"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold">No tours found</h3>
-              <p className="text-muted-foreground mt-1 mb-4">
-                Try adjusting your search filters or check back later for new tours
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Filters */}
+          <aside className="lg:w-80 shrink-0">
+            <div className="sticky top-28 bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
+              <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <Filter className="w-5 h-5 text-[#138bc9]" />
+                Filters
+              </h2>
+              <ToursFilters />
+            </div>
+          </aside>
 
-        {/* Pagination */}
-        {meta.total > meta.limit && (
-          <PaginationControls
-            currentPage={meta.page}
-            totalPages={Math.ceil(meta.total / meta.limit)}
-            totalItems={meta.total}
-            itemsPerPage={meta.limit}
-          />
-        )}
+          {/* Main Content */}
+          <div className="flex-1 space-y-8">
+            <div className="flex items-center justify-between px-2">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-gray-900">Recommended Tours</h3>
+                <p className="text-sm text-gray-500 font-medium">Found {meta.total} unique experiences</p>
+              </div>
+            </div>
+
+            {/* Tours Grid */}
+            {tours.length > 0 ? (
+              <ToursGrid tours={tours} />
+            ) : (
+              <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-gray-200 py-20 text-center">
+                <div className="mx-auto w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mb-6">
+                  <MapPin className="h-10 w-10 text-gray-300" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-2">No adventures found</h3>
+                <p className="text-gray-500 max-w-xs mx-auto mb-8 font-medium">
+                  We couldn't find any tours matching your current filters. Try broadening your search!
+                </p>
+                <Button onClick={() => window.location.href = '/tours'} className="rounded-full px-8 py-6 h-auto font-black bg-[#138bc9]">
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {meta.total > meta.limit && (
+              <div className="pt-10 border-t border-gray-100">
+                <PaginationControls
+                  currentPage={meta.page}
+                  totalPages={Math.ceil(meta.total / meta.limit)}
+                  totalItems={meta.total}
+                  itemsPerPage={meta.limit}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   } catch (error) {
     console.error("Error loading tours:", error);
-
-    return (
-      <div className="space-y-6">
-        <SectionHeading
-          center={false}
-          badge="Adventures"
-          title="Explore Tours"
-          subtitle="Discover amazing adventures and experiences around the world"
-        />
-        <ToursFilters />
-        <Card className="border-destructive/20 bg-destructive/5 rounded-2xl overflow-hidden">
-          <CardContent className="py-12 text-center">
-            <div className="mx-auto w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
-              <svg
-                className="h-10 w-10 text-destructive"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.961-.833-2.732 0L4.346 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">Something went wrong</h3>
-            <p className="text-gray-600 mb-8 max-w-sm mx-auto">
-              We couldn't load the tours. This might be a temporary issue.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-8 py-3 bg-[#138bc9] text-white font-black rounded-full hover:bg-[#138bc9]/90 transition-all shadow-lg hover:shadow-xl"
-            >
-              Retry Loading
-            </button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <div className="py-20 text-center">Failed to load tours. Please try again.</div>;
   }
 }
 
 export default async function ToursPage({ searchParams }: ToursPageProps) {
   return (
-    <div className="container mx-auto py-8">
-      <Suspense fallback={<GridSkeleton count={9} />}>
-        <ToursContent searchParams={searchParams} />
-      </Suspense>
+    <div className="min-h-screen bg-gray-50/50 pt-28 pb-20">
+      <div className="container mx-auto px-4 lg:px-8">
+        <Suspense fallback={<GridSkeleton count={9} />}>
+          <ToursContent searchParams={searchParams} />
+        </Suspense>
+      </div>
     </div>
   );
 }

@@ -49,69 +49,83 @@ export default function PublicBlogsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="mb-8">
-            <SectionHeading
-              center={false}
-              badge="Stories"
-              title="Travel Blogs"
-              subtitle="Discover amazing travel experiences from around the world"
-            />
-          </div>
+    <div className="min-h-screen bg-gray-50/50 pt-28 pb-20">
+      {/* Header Section */}
+      <div className="container mx-auto px-4 lg:px-8 mb-16">
+        <div className="relative rounded-[3rem] overflow-hidden bg-white p-12 md:p-20 shadow-2xl shadow-blue-100/50 border border-white">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#138bc9]/5 rounded-full blur-3xl -mr-48 -mt-48" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-50/50 rounded-full blur-2xl -ml-32 -mb-32" />
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                placeholder="Search blogs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button type="submit" className="bg-[#138bc9] hover:bg-[#138bc9]/90 text-white font-bold h-12 px-8 rounded-xl shadow-md transition-all">
-              Search
-            </Button>
-          </form>
+          <div className="relative z-10 max-w-3xl mx-auto text-center">
+            <span className="px-5 py-2 bg-[#138bc9]/10 text-[#138bc9] rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">
+              Travel Journal
+            </span>
+            <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-8 tracking-tighter">
+              Stories from <br /><span className="text-[#138bc9]">Every Corner</span>
+            </h1>
+
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
+              <div className="relative flex-1">
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Search inspirations, guides, tips..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-16 pl-14 pr-6 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all text-lg font-medium shadow-inner"
+                />
+              </div>
+              <Button type="submit" className="h-16 px-10 rounded-2xl bg-[#138bc9] hover:bg-[#0e6ba3] text-white font-black text-lg transition-all shadow-lg shadow-blue-200">
+                Search
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
 
       {/* Blog List */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="flex items-center justify-between mb-10 px-4">
+          <h2 className="text-2xl font-black text-gray-900 italic">Latest Stories</h2>
+          <div className="flex gap-2">
+            <Button variant="ghost" className="rounded-xl font-bold text-gray-400 hover:text-[#138bc9]">Featured</Button>
+            <Button variant="ghost" className="rounded-xl font-bold text-gray-400 hover:text-[#138bc9]">Recent</Button>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="space-y-6">
+          <div className="space-y-10">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl shadow-sm border border-[#138bc9]/10 p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Skeleton className="w-12 h-12 rounded-full" />
+              <div key={i} className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-white p-8 animate-pulse">
+                <div className="flex items-center gap-4 mb-6">
+                  <Skeleton className="w-14 h-14 rounded-2xl bg-gray-100" />
                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-5 w-40 bg-gray-100" />
+                    <Skeleton className="h-3 w-28 bg-gray-100" />
                   </div>
                 </div>
-                <Skeleton className="h-6 w-3/4 mb-3" />
-                <div className="space-y-2 mb-4">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-                <Skeleton className="h-64 w-full rounded-2xl" />
+                <Skeleton className="h-8 w-3/4 mb-4 bg-gray-100" />
+                <Skeleton className="h-20 w-full mb-6 bg-gray-100 rounded-xl" />
+                <Skeleton className="h-80 w-full rounded-[2rem] bg-gray-100" />
               </div>
             ))}
           </div>
         ) : blogs.length > 0 ? (
-          blogs.map((blog) => (
-            <BlogCardPublic key={blog.id} blog={blog} />
-          ))
+          <div className="space-y-12">
+            {blogs.map((blog) => (
+              <div key={blog.id} className="transform transition-all duration-500 hover:translate-y-[-4px]">
+                <BlogCardPublic blog={blog} />
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No blogs found</h3>
-            <p className="text-gray-600">
-              {searchTerm ? "No blogs match your search" : "No blogs have been published yet"}
+          <div className="text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-gray-200">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search className="w-10 h-10 text-gray-300" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-2">No stories found</h3>
+            <p className="text-gray-500 font-medium">
+              {searchTerm ? "Maybe try different keywords?" : "We're currently writing new adventures. Check back soon!"}
             </p>
           </div>
         )}

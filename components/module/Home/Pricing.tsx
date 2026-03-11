@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import { CheckIcon, StarIcon, ClockIcon, SparklesIcon, Loader2 } from 'lucide-react'
+import { CheckIcon, StarIcon, ClockIcon, SparklesIcon, Loader2, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { getPublicSubscriptions } from '@/services/subscription.service'
 import { SectionHeading } from '@/components/ui/SectionHeading'
@@ -64,20 +64,13 @@ export function Pricing() {
 
     try {
       const response = await getPublicSubscriptions()
-      console.log('API Response:', response)
-
       if (response?.success && Array.isArray(response.data) && response.data.length > 0) {
         const transformed = response.data.map((plan: any, index: number) => {
           let features = []
-
           if (Array.isArray(plan.features)) {
             features = plan.features
           } else if (typeof plan.features === 'string') {
-            try {
-              features = JSON.parse(plan.features)
-            } catch {
-              features = plan.features ? [plan.features] : []
-            }
+            try { features = JSON.parse(plan.features) } catch { features = plan.features ? [plan.features] : [] }
           }
 
           return {
@@ -91,111 +84,81 @@ export function Pricing() {
             isActive: plan.isActive ?? true,
           }
         })
-
-        console.log('Transformed Plans:', transformed)
         setPlans(transformed)
       } else {
-        console.warn('No data received')
         setError(true)
       }
     } catch (err) {
-      console.error('Error loading plans:', err)
       setError(true)
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return <PricingSkeleton />
-  }
-
-  if (error || plans.length === 0) {
-    return (
-      <section className="py-24 bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ClockIcon className="w-8 h-8 text-blue-600" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Plans Coming Soon
-          </h2>
-          <p className="text-gray-600 mb-8">
-            We're setting up our subscription plans. Check back soon!
-          </p>
-          <button
-            onClick={loadPlans}
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-          >
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Retry
-          </button>
-        </div>
-      </section>
-    )
-  }
+  if (loading) return <PricingSkeleton />
 
   return (
-    <section className="py-24 bg-gradient-to-b from-blue-50 to-white">
-      <div className="max-w-7xl mx-auto px-6">
-        <SectionHeading
-          badge="Host Pricing Plans"
-          title="Choose Your Plan"
-          subtitle="Start hosting tours with flexible annual plans designed for your needs"
-        />
+    <section className="py-24 bg-gray-50/50 pt-32 pb-32 relative overflow-hidden">
+      {/* Decorative Background */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#138bc9]/5 rounded-full blur-[120px] -mr-64 -mt-64" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-100/30 rounded-full blur-[100px] -ml-40 -mb-40" />
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-20">
+          <span className="px-5 py-2 bg-[#138bc9]/10 text-[#138bc9] rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">
+            Host Packages
+          </span>
+          <h2 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tighter">
+            Grow Your <span className="text-[#138bc9]">Hosting Business</span>
+          </h2>
+          <p className="text-lg text-gray-500 font-medium max-w-2xl mx-auto">
+            Simple, transparent pricing to help you scale your tour hosting experience with expert tools and insights.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8 items-stretch">
+          {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative rounded-3xl p-8 flex flex-col transition-all duration-500 hover:translate-y-[-8px] ${plan.isPopular
-                  ? 'bg-gradient-to-br from-[#138bc9] to-[#0e6ba3] text-white shadow-2xl scale-105 border-0'
-                  : 'bg-white shadow-xl border border-blue-100 hover:shadow-2xl'
+              className={`relative rounded-[2.5rem] p-10 flex flex-col transition-all duration-500 hover:translate-y-[-10px] ${plan.isPopular
+                ? 'bg-gradient-to-br from-[#138bc9] to-[#0e6ba3] text-white shadow-2xl scale-105 z-10'
+                : 'bg-white shadow-xl shadow-blue-100/50 border border-white hover:shadow-2xl'
                 }`}
             >
-              {!plan.isActive && (
-                <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl z-10 flex flex-col items-center justify-center p-6">
-                  <div className="p-3 rounded-full bg-blue-100 mb-4">
-                    <ClockIcon className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    Coming Soon
-                  </h3>
-                  <p className="text-gray-600 text-center">
-                    This plan will be available soon!
-                  </p>
-                </div>
-              )}
-
               {plan.isPopular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 px-4 py-1 rounded-full bg-gradient-to-r from-[#138bc9] to-[#0e6ba3] text-white text-sm font-medium shadow-lg z-20">
-                  <StarIcon className="w-4 h-4" />
-                  Most Popular
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-2 rounded-full bg-white text-[#138bc9] text-xs font-black shadow-xl z-20 uppercase tracking-widest">
+                  <StarIcon className="w-4 h-4 fill-[#138bc9]" />
+                  Most Recommended
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className={`text-xl font-semibold mb-2 ${plan.isPopular ? 'text-white' : 'text-gray-900'}`}>
+              <div className="mb-10">
+                <h3 className={`text-2xl font-black mb-4 ${plan.isPopular ? 'text-white' : 'text-gray-900'}`}>
                   {plan.name}
                 </h3>
-                <div className="flex items-baseline gap-1">
-                  <span className={`text-4xl font-bold ${plan.isPopular ? 'text-white' : 'text-gray-900'}`}>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-5xl font-black ${plan.isPopular ? 'text-white' : 'text-[#138bc9]'}`}>
                     {plan.price === 0 ? 'Free' : `$${plan.price}`}
                   </span>
-                  <span className={plan.isPopular ? 'text-white/80' : 'text-gray-600'}>
+                  <span className={`text-sm font-bold uppercase tracking-widest ${plan.isPopular ? 'text-white/70' : 'text-gray-400'}`}>
                     {plan.duration}
                   </span>
                 </div>
-                <p className={`mt-2 text-sm ${plan.isPopular ? 'text-white/90' : 'text-gray-600'}`}>
+                <p className={`mt-4 text-base leading-relaxed ${plan.isPopular ? 'text-white/80' : 'text-gray-500 font-medium'}`}>
                   {plan.description}
                 </p>
               </div>
 
-              <ul className="space-y-3 mb-8 flex-1">
+              <div className={`h-px w-full mb-10 ${plan.isPopular ? 'bg-white/20' : 'bg-gray-100'}`} />
+
+              <ul className="space-y-4 mb-12 flex-1">
                 {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <CheckIcon className={`w-5 h-5 shrink-0 ${plan.isPopular ? 'text-blue-200' : 'text-[#138bc9]'}`} />
-                    <span className={`text-sm ${plan.isPopular ? 'text-white/95' : 'text-gray-700'}`}>
+                  <li key={idx} className="flex items-start gap-4">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${plan.isPopular ? 'bg-white/20' : 'bg-[#138bc9]/10'
+                      }`}>
+                      <CheckIcon className={`w-3.5 h-3.5 ${plan.isPopular ? 'text-white' : 'text-[#138bc9]'}`} />
+                    </div>
+                    <span className={`text-sm font-semibold italic ${plan.isPopular ? 'text-white/90' : 'text-gray-700'}`}>
                       {feature}
                     </span>
                   </li>
@@ -203,26 +166,35 @@ export function Pricing() {
               </ul>
 
               <button
-                className={`w-full py-4 rounded-full font-semibold transition-all ${!plan.isActive
-                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                    : plan.isPopular
-                      ? 'bg-white text-[#138bc9] hover:bg-blue-50 shadow-lg'
-                      : 'bg-[#138bc9] text-white hover:bg-[#138bc9]/90 shadow-md'
+                className={`w-full py-5 rounded-[1.5rem] font-black transition-all text-lg shadow-xl ${!plan.isActive
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : plan.isPopular
+                    ? 'bg-white text-[#138bc9] hover:bg-gray-50'
+                    : 'bg-[#138bc9] text-white hover:bg-[#0e6ba3]'
                   }`}
                 disabled={!plan.isActive}
                 onClick={() => router.push('/login')}
               >
-                {!plan.isActive ? 'Coming Soon' : 'Get Started'}
+                {!plan.isActive ? 'Waitlist' : 'Select Plan'}
               </button>
             </div>
           ))}
         </div>
 
-
-        <p className="text-center mt-8 text-gray-600 flex items-center justify-center gap-2">
-          <ClockIcon className="w-4 h-4" />
-          All plans are billed annually
-        </p>
+        <div className="mt-20 text-center">
+          <div className="inline-flex items-center gap-6 px-10 py-6 bg-white rounded-3xl shadow-lg border border-gray-50">
+            <div className="flex -space-x-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 overflow-hidden">
+                  <User className="w-6 h-6 opacity-20" />
+                </div>
+              ))}
+            </div>
+            <p className="text-sm font-bold text-gray-600">
+              Joined by <span className="text-[#138bc9]">500+ local hosts</span> worldwide
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   )

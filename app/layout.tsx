@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   description: "Explore amazing destinations and book unforgettable tours with our AI-powered travel platform. Get personalized recommendations and create memories that last a lifetime.",
 };
 
+import { Suspense } from "react";
+import GlobalLoader from "@/components/shared/GlobalLoader";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,6 +31,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Suspense fallback={null}>
+          <GlobalLoader />
+        </Suspense>
         <Toaster
           position='top-center'
           richColors
