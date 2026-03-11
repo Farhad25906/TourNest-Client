@@ -76,14 +76,14 @@ export function ReviewCard({ review, showTour = false, showStatus = false, isApp
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold">{review.rating.toFixed(1)}</span>
+            <span className="font-semibold">{(review.rating || 0).toFixed(1)}</span>
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         {showTour && review.tour && (
           <div className="mb-3">
@@ -92,18 +92,17 @@ export function ReviewCard({ review, showTour = false, showStatus = false, isApp
             </Badge>
           </div>
         )}
-        
+
         <p className="text-gray-700 whitespace-pre-line">{review.comment}</p>
-        
+
         <div className="flex gap-2 mt-4">
           {[...Array(5)].map((_, index) => (
             <Star
               key={index}
-              className={`w-4 h-4 ${
-                index < review.rating
+              className={`w-4 h-4 ${index < review.rating
                   ? "fill-yellow-400 text-yellow-400"
                   : "text-gray-300"
-              }`}
+                }`}
             />
           ))}
         </div>

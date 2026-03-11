@@ -29,6 +29,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader";
+
 
 interface SubscriptionPlan {
   id: string;
@@ -136,30 +138,34 @@ export default function BuySubscriptionPage() {
     <div className="min-h-screen bg-gray-50/30 pb-20 animate-in fade-in duration-700">
       {/* Hero Section */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-16 text-center space-y-6">
-          <Badge className="bg-[#138bc9]/5 text-[#138bc9] border-none font-bold px-4 py-1.5 rounded-full uppercase tracking-widest text-[10px]">
-            Membership tiers
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Scale your expedition empire.</h1>
-          <p className="text-gray-500 font-medium max-w-2xl mx-auto text-lg leading-relaxed">
-            Choose the membership that aligns with your growth trajectory. Unlock premium placement, extended listing capacity, and deep analytics.
-          </p>
-
-          {currentSubscription?.isActive && (
-            <div className="inline-flex items-center gap-4 p-2 pl-6 pr-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full shadow-sm">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
-                <span className="text-xs font-black text-gray-700 uppercase tracking-tight">
-                  Current: {currentSubscription.plan?.name}
-                </span>
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <DashboardPageHeader
+            title="Scale your expedition empire"
+            subtitle="Choose the membership that aligns with your growth trajectory"
+            icon={Sparkles}
+            badge="MEMBERSHIP TIERS"
+            className="mb-8"
+          >
+            {currentSubscription?.isActive && (
+              <div className="inline-flex items-center gap-4 p-2 pl-6 pr-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full shadow-sm">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
+                  <span className="text-xs font-black text-gray-700 uppercase tracking-tight">
+                    Current: {currentSubscription.plan?.name}
+                  </span>
+                </div>
+                <Badge className="bg-emerald-500 text-white border-none text-[9px] font-black uppercase">Active</Badge>
               </div>
-              <Badge className="bg-emerald-500 text-white border-none text-[9px] font-black uppercase">Active</Badge>
-            </div>
-          )}
+            )}
+          </DashboardPageHeader>
+
+          <p className="text-gray-500 font-medium max-w-3xl text-base leading-relaxed">
+            Unlock premium placement, extended listing capacity, and deep analytics to grow your tour business exponentially.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 -mt-12">
+      <div className="max-w-7xl mx-auto px-6 -mt-8">
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
           {plans.filter(p => p.isActive).map((plan) => {

@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 import DashboardMobileSidebar from "./DashboardMobileSidebar";
 import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
+import { logoutUser } from "@/services/auth/auth.services";
+import { useRouter } from "next/navigation";
 
 interface DashboardNavbarContentProps {
   userInfo: UserInfo;
@@ -22,10 +24,28 @@ const DashboardNavbarContent = ({
   navItems,
   dashboardHome,
 }: DashboardNavbarContentProps) => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!userInfo?.email) {
+      const performLogout = async () => {
+        try {
+          await logoutUser();
+          router.push("/login");
+        } catch (error) {
+          console.error("Auto logout error:", error);
+          router.push("/login");
+        }
+      };
+      performLogout();
+    }
+  }, [userInfo, router]);
+
+
 
   useEffect(() => {
     const checkSmallerScreen = () => {

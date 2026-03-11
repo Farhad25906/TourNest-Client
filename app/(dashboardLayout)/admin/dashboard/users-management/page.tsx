@@ -43,6 +43,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader";
+
 export default function UsersManagementPage() {
   const router = useRouter();
   const [users, setUsers] = useState<UserInfo[]>([]);
@@ -122,15 +124,12 @@ export default function UsersManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">Identity Control</h1>
-          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#138bc9]" />
-            Manage permissions and access for global explorers
-          </p>
-        </div>
+      <DashboardPageHeader
+        title="Identity Control"
+        subtitle="Manage permissions and access for global explorers"
+        icon={Users}
+        badge="Platform Security Active"
+      >
         <div className="flex gap-2">
           <Button onClick={fetchUsers} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-gray-50">
             <RefreshCw className="h-4 w-4" />
@@ -143,7 +142,7 @@ export default function UsersManagementPage() {
             </Button>
           </Link>
         </div>
-      </div>
+      </DashboardPageHeader>
 
       {/* Filters Hub */}
       <div className="bg-white rounded-[30px] border border-gray-100 p-2 shadow-sm flex flex-col md:flex-row gap-2">

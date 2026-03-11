@@ -45,6 +45,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { format } from "date-fns";
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader";
 
 const PAYMENT_STATUS_OPTIONS = [
   { value: "COMPLETED", label: "Settled", color: "bg-emerald-50 text-emerald-600" },
@@ -87,25 +88,28 @@ export default function HostEarningsDashboard() {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tight text-gray-900 italic">Financial Manifest</h1>
-          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
-            Official guide settlement oversight and revenue telemetry
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={fetchEarnings} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-400 gap-2 hover:bg-gray-50 h-12 px-6">
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-            Sync Ledger
-          </Button>
-          <Button variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-400 gap-2 hover:bg-gray-50 h-12 px-6">
-            <Download className="h-4 w-4" />
-            Audit Report
-          </Button>
-        </div>
-      </div>
+      <DashboardPageHeader
+        title="Financial Manifest"
+        subtitle="Official guide settlement oversight and revenue telemetry"
+        icon={ShieldCheck}
+        badge="LIVE SYNC"
+      >
+        <Button
+          onClick={fetchEarnings}
+          variant="outline"
+          className="rounded-2xl border-gray-100 font-bold text-gray-400 gap-2 hover:bg-gray-50 h-12 px-6"
+        >
+          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+          Sync Ledger
+        </Button>
+        <Button
+          variant="outline"
+          className="rounded-2xl border-gray-100 font-bold text-gray-400 gap-2 hover:bg-gray-50 h-12 px-6"
+        >
+          <Download className="h-4 w-4" />
+          Audit Report
+        </Button>
+      </DashboardPageHeader>
 
       {/* Finance Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">

@@ -40,6 +40,8 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import DashboardPageHeader from "./DashboardPageHeader";
+
 interface HostDashboardContentProps {
     tourStats: any;
     bookingStats: any;
@@ -66,22 +68,12 @@ export default function HostDashboardContent({ tourStats, bookingStats, reviews 
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-black tracking-tight text-gray-900">Guide Command</h1>
-                    <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
-                        Official expedition guide dashboard and telemetry
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Badge className="bg-[#138bc9]/10 text-[#138bc9] border-none px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-[#138bc9] animate-pulse" />
-                        Guide Console Active
-                    </Badge>
-                </div>
-            </div>
+            <DashboardPageHeader
+                title="Guide Command"
+                subtitle="Official expedition guide dashboard and telemetry"
+                icon={ShieldCheck}
+                badge="Guide Console Active"
+            />
 
             {/* Primary Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
+import DashboardPageHeader from "./DashboardPageHeader";
+
 interface UserDashboardContentProps {
     bookingStats: IBookingStats;
     reviews?: any[];
@@ -87,11 +89,12 @@ export default function UserDashboardContent({ bookingStats, reviews = [] }: Use
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 uppercase italic">Traveler Dashboard</h1>
-                <p className="text-sm font-medium text-gray-400 tracking-widest uppercase">Capture your journey. Plan your next great expedition.</p>
-            </div>
+            <DashboardPageHeader
+                title="Traveler Dashboard"
+                subtitle="Capture your journey. Plan your next great expedition."
+                icon={TrendingUpIcon}
+                badge="Explorer Profile Active"
+            />
 
             {/* Stats Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

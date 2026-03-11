@@ -8,20 +8,20 @@ import {
 } from "@/components/ui/card";
 import { Sparkles, MapPin } from "lucide-react";
 
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader";
+
 export default function CreateTourPage() {
     return (
         <div className="container mx-auto py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
             <div className="max-w-4xl mx-auto space-y-8">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-black tracking-tight text-gray-900">Blueprint Expedition</h1>
-                    <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-[#138bc9]" />
-                        Architect a new experience for global travelers
-                    </p>
-                </div>
+                <DashboardPageHeader
+                    title="Tour Configuration"
+                    subtitle="Architect a new experience for global travelers"
+                    icon={Sparkles}
+                />
 
                 <Card className="border-none shadow-2xl rounded-[40px] overflow-hidden bg-white">
-                    <div className="bg-[#138bc9] p-8 text-white">
+                    {/* <div className="bg-[#138bc9] p-8 text-white">
                         <CardHeader className="p-0">
                             <div className="flex items-center gap-2 mb-2 opacity-80">
                                 <MapPin className="h-4 w-4" />
@@ -32,7 +32,7 @@ export default function CreateTourPage() {
                                 Provide comprehensive details to showcase your expertise. High-quality descriptions and images lead to 40% higher conversion rates.
                             </CardDescription>
                         </CardHeader>
-                    </div>
+                    </div> */}
                     <CardContent className="p-8 md:p-12">
                         <CreateTourForm />
                     </CardContent>

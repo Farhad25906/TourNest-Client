@@ -66,6 +66,9 @@ export default function CreateTourForm() {
   const [excludedItems, setExcludedItems] = useState<string[]>([""]);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [duration, setDuration] = useState<number>(0);
   const router = useRouter();
 
   // Improved itinerary state
@@ -117,6 +120,9 @@ export default function CreateTourForm() {
         setExcludedItems([""]);
         setImages([]);
         setImagePreviews([]);
+        setStartDate("");
+        setEndDate("");
+        setDuration(0);
         setItinerary([
           {
             day: 1,
@@ -134,6 +140,19 @@ export default function CreateTourForm() {
       }, 1000);
     }
   }, [state]);
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end > start) {
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setDuration(diffDays || 1);
+      } else {
+        setDuration(0);
+      }
+    }
+  }, [startDate, endDate]);
 
   // Itinerary functions
   const addItineraryItem = () => {
@@ -428,6 +447,9 @@ export default function CreateTourForm() {
               id="startDate"
               name="startDate"
               type="datetime-local"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
               required
             />
             {hasErrors(state) &&
@@ -440,7 +462,15 @@ export default function CreateTourForm() {
 
           <Field>
             <FieldLabel htmlFor="endDate">End Date *</FieldLabel>
-            <Input id="endDate" name="endDate" type="datetime-local" required />
+            <Input
+              id="endDate"
+              name="endDate"
+              type="datetime-local"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate || new Date().toISOString().slice(0, 16)}
+              required
+            />
             {hasErrors(state) &&
               getFieldErrors(state, "endDate").map((error, index) => (
                 <p key={index} className="text-sm text-red-500 mt-1">
@@ -456,7 +486,10 @@ export default function CreateTourForm() {
               name="duration"
               type="number"
               min="1"
-              placeholder="7"
+              value={duration || ""}
+              readOnly
+              placeholder="Auto-calculated"
+              className="bg-gray-50 cursor-not-allowed"
               required
             />
             {hasErrors(state) &&

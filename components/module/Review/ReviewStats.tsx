@@ -19,7 +19,7 @@ interface ReviewStatsProps {
 
 export function ReviewStats({ stats }: ReviewStatsProps) {
   const totalRatings = Object.values(stats.ratingDistribution).reduce((a, b) => a + b, 0);
-  
+
   const getPercentage = (count: number) => {
     return totalRatings > 0 ? (count / totalRatings) * 100 : 0;
   };
@@ -57,7 +57,7 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
         {/* Overall Rating */}
         <div className="flex items-center gap-4">
           <div className="text-center">
-            <div className="text-4xl font-bold">{stats.averageRating.toFixed(1)}</div>
+            <div className="text-4xl font-bold">{(stats.averageRating || 0).toFixed(1)}</div>
             <div className="flex justify-center mt-1">
               {renderStars(stats.averageRating)}
             </div>
@@ -72,7 +72,7 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
           {[5, 4, 3, 2, 1].map((star) => {
             const count = stats.ratingDistribution[star as keyof typeof stats.ratingDistribution];
             const percentage = getPercentage(count);
-            
+
             return (
               <div key={star} className="flex items-center gap-3">
                 <div className="flex items-center gap-1 w-16">

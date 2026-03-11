@@ -125,16 +125,19 @@ const PublicNavbar = async () => {
     <header className="sticky top-0 z-50 w-full border-b border-[#138bc9]/10 bg-white/95 backdrop-blur-md shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-3 group">
-          <div className="relative">
+        <Link href="/" className="flex items-center space-x-2 group">
+          <div className="relative flex items-center gap-2">
             <div className="absolute inset-0 bg-[#138bc9]/30 rounded-xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
             <Image
               src={logo}
-              width={140}
-              height={140}
+              width={50}
+              height={50}
               alt="TourNest Logo"
               className="relative z-10 transition-transform duration-300 group-hover:scale-105"
             />
+            <span className="text-2xl font-bold text-[#138bc9] tracking-tight relative z-10">
+              TourNest
+            </span>
           </div>
         </Link>
 

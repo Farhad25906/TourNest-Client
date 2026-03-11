@@ -41,6 +41,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+import DashboardPageHeader from "./DashboardPageHeader";
+
 interface AdminDashboardContentProps {
     stats: any;
     reviews?: any[];
@@ -72,22 +74,12 @@ export default function AdminDashboardContent({ stats, reviews = [] }: AdminDash
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-black tracking-tight text-gray-900">Command Center</h1>
-                    <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-[#138bc9]" />
-                        Enterprise-wide system overview and analytics
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Badge className="bg-emerald-50 text-emerald-600 border-none px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        System Operational
-                    </Badge>
-                </div>
-            </div>
+            <DashboardPageHeader
+                title="Command Center"
+                subtitle="Enterprise-wide system overview and analytics"
+                icon={ShieldCheck}
+                badge="System Operational"
+            />
 
             {/* Primary Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

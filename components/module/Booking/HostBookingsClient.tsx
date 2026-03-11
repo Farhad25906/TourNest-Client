@@ -25,6 +25,8 @@ interface HostBookingsClientProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
+import DashboardPageHeader from "../Dashboard/DashboardPageHeader";
+
 export default function HostBookingsClient({ searchParams }: HostBookingsClientProps) {
   const router = useRouter();
   const nextSearchParams = useNextSearchParams();
@@ -108,14 +110,11 @@ export default function HostBookingsClient({ searchParams }: HostBookingsClientP
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">Reservations</h1>
-          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <CalendarCheck className="h-4 w-4 text-[#138bc9]" />
-            Manage all bookings across your tours
-          </p>
-        </div>
+      <DashboardPageHeader
+        title="Reservations"
+        subtitle="Manage all bookings across your tours"
+        icon={CalendarCheck}
+      >
         <div className="flex items-center gap-2">
           <div className="bg-white rounded-2xl border border-gray-100 p-1 flex items-center shadow-sm">
             <Search className="ml-3 text-gray-400 w-4 h-4" />
@@ -135,7 +134,7 @@ export default function HostBookingsClient({ searchParams }: HostBookingsClientP
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="rounded-2xl border-gray-100 h-12 px-4 font-bold text-gray-600 gap-2 hover:bg-[#138bc9]/5 hover:border-[#138bc9]/20 transition-all duration-300">
+              <Button variant="outline" className="rounded-2xl border-gray-100 h-10 px-4 font-bold text-gray-600 gap-2 hover:bg-[#138bc9]/5 hover:border-[#138bc9]/20 transition-all duration-300">
                 <Filter className="w-4 h-4" />
                 Filters
               </Button>
@@ -156,7 +155,7 @@ export default function HostBookingsClient({ searchParams }: HostBookingsClientP
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
+      </DashboardPageHeader>
 
       <div className="grid grid-cols-1 gap-6">
         <Tabs

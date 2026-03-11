@@ -4,6 +4,8 @@ import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { HostToursTable } from "@/components/module/Tour/HostToursTable";
 import HostTourStats from "@/components/module/Tour/HostTourStats";
 import { getMyTours, getMyTourStats } from "@/services/tour/tour.service";
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader";
+import { ShieldCheck } from "lucide-react"; // Assuming ShieldCheck is needed for the icon prop
 
 async function ToursContent() {
   const [toursResponse, statsResponse] = await Promise.all([
@@ -17,16 +19,13 @@ async function ToursContent() {
   const stats = statsResponse?.data || null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Tours</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your tours, view statistics, and track performance
-          </p>
-        </div>
-        {/* <CreateTourButton /> */}
-      </div>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <DashboardPageHeader
+        title="Expedition Fleet"
+        subtitle="Manage and monitor your active tour inventory"
+        icon={ShieldCheck}
+        badge="Inventory Live"
+      />
 
       {stats && <HostTourStats stats={stats} />}
 

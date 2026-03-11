@@ -14,6 +14,7 @@ import { BlogCard } from "@/components/module/Blogs/BlogCard"
 import { UpdateBlogDialog } from "@/components/module/Blogs/UpdateBlogDialog"
 import { DeleteBlogDialog } from "@/components/module/Blogs/DeleteBlogDialog"
 import { cn } from "@/lib/utils"
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader"
 
 export default function MyBlogsPage() {
   const [blogs, setBlogs] = useState<IBlog[]>([])
@@ -103,16 +104,14 @@ export default function MyBlogsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">Content Studio</h1>
-          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#138bc9]" />
-            Craft and manage your travel stories
-          </p>
-        </div>
+      <DashboardPageHeader
+        title="Content Studio"
+        subtitle="Craft and manage your travel stories"
+        icon={Sparkles}
+        badge="CREATIVE MODE"
+      >
         <CreateBlogDialog />
-      </div>
+      </DashboardPageHeader>
 
       {/* Statistics Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

@@ -80,6 +80,8 @@ interface ReviewStats {
   };
 }
 
+import DashboardPageHeader from "@/components/module/Dashboard/DashboardPageHeader";
+
 export default function HostReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
@@ -158,6 +160,8 @@ export default function HostReviewsPage() {
   };
 
   const displayStats = stats || calculateStats();
+  const averageRating = displayStats?.averageRating ?? 0;
+  const totalReviews = displayStats?.totalReviews ?? 0;
 
   if (loading) {
     return (
@@ -176,25 +180,23 @@ export default function HostReviewsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">Guest Feedback</h1>
-          <p className="text-sm font-medium text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#138bc9]" />
-            What travelers are saying about your expeditions
-          </p>
-        </div>
-        <Button onClick={loadData} variant="outline" className="rounded-2xl border-gray-100 font-bold text-gray-500 gap-2 hover:bg-[#138bc9]/5 hover:text-[#138bc9] transition-all">
+      <DashboardPageHeader
+        title="Guest Feedback"
+        subtitle="What travelers are saying about your expeditions"
+        icon={Sparkles}
+        badge="Live Feedback Protocol"
+      >
+        <Button onClick={loadData} variant="outline" className="rounded-2xl border-gray-100 h-10 px-4 font-bold text-gray-500 gap-2 hover:bg-[#138bc9]/5 hover:text-[#138bc9] transition-all">
           <RefreshCw className="h-4 w-4" />
           Sync Reviews
         </Button>
-      </div>
+      </DashboardPageHeader>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "Overall Rating", value: displayStats.averageRating.toFixed(1), icon: Star, color: "text-amber-500", bgColor: "bg-amber-50", sub: "Out of 5 stars" },
-          { label: "Total Reviews", value: displayStats.totalReviews, icon: MessageSquare, color: "text-blue-500", bgColor: "bg-blue-50", sub: "Growth in feedback" },
+          { label: "Overall Rating", value: averageRating.toFixed(1), icon: Star, color: "text-amber-500", bgColor: "bg-amber-50", sub: "Out of 5 stars" },
+          { label: "Total Reviews", value: totalReviews, icon: MessageSquare, color: "text-blue-500", bgColor: "bg-blue-50", sub: "Growth in feedback" },
           { label: "Satisfied Guests", value: (displayStats.ratingDistribution?.[5] || 0) + (displayStats.ratingDistribution?.[4] || 0), icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-50", sub: "4-5 star reviews" },
           { label: "Needs Attention", value: displayStats.ratingDistribution?.[1] || 0, icon: AlertCircle, color: "text-rose-500", bgColor: "bg-rose-50", sub: "1 star responses" }
         ].map((stat, i) => (
