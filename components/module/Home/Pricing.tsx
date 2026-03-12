@@ -98,7 +98,7 @@ export function Pricing() {
   if (loading) return <PricingSkeleton />
 
   return (
-    <section className="py-24 bg-gray-50/50 pt-32 pb-32 relative overflow-hidden">
+    <section className="py-20 bg-gray-50/50 relative overflow-hidden">
       {/* Decorative Background */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#138bc9]/5 rounded-full blur-[120px] -mr-64 -mt-64" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-100/30 rounded-full blur-[100px] -ml-40 -mb-40" />

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from "@/components/ui/skeleton"
@@ -13,7 +14,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading'
 
 export default function PublicBlogsPage() {
   const router = useRouter()
-  const { isAuthenticated, login } = useAuthClient()
+  const { isAuthenticated, isHost, user } = useAuthClient()
 
   const [blogs, setBlogs] = useState<IBlog[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,93 +44,96 @@ export default function PublicBlogsPage() {
     }
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    fetchBlogs()
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50/50 pt-28 pb-20">
-      {/* Header Section */}
-      <div className="container mx-auto px-4 lg:px-8 mb-16">
-        <div className="relative rounded-[3rem] overflow-hidden bg-white p-12 md:p-20 shadow-2xl shadow-blue-100/50 border border-white">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#138bc9]/5 rounded-full blur-3xl -mr-48 -mt-48" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-50/50 rounded-full blur-2xl -ml-32 -mb-32" />
-
-          <div className="relative z-10 max-w-3xl mx-auto text-center">
-            <span className="px-5 py-2 bg-[#138bc9]/10 text-[#138bc9] rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">
-              Travel Journal
-            </span>
-            <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-8 tracking-tighter">
-              Stories from <br /><span className="text-[#138bc9]">Every Corner</span>
-            </h1>
-
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
-              <div className="relative flex-1">
-                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  placeholder="Search inspirations, guides, tips..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-16 pl-14 pr-6 rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all text-lg font-medium shadow-inner"
-                />
-              </div>
-              <Button type="submit" className="h-16 px-10 rounded-2xl bg-[#138bc9] hover:bg-[#0e6ba3] text-white font-black text-lg transition-all shadow-lg shadow-blue-200">
-                Search
-              </Button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      {/* Blog List */}
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-10 px-4">
-          <h2 className="text-2xl font-black text-gray-900 italic">Latest Stories</h2>
-          <div className="flex gap-2">
-            <Button variant="ghost" className="rounded-xl font-bold text-gray-400 hover:text-[#138bc9]">Featured</Button>
-            <Button variant="ghost" className="rounded-xl font-bold text-gray-400 hover:text-[#138bc9]">Recent</Button>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="space-y-10">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-white p-8 animate-pulse">
-                <div className="flex items-center gap-4 mb-6">
-                  <Skeleton className="w-14 h-14 rounded-2xl bg-gray-100" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-5 w-40 bg-gray-100" />
-                    <Skeleton className="h-3 w-28 bg-gray-100" />
-                  </div>
+    <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pt-20">
+      <main className="flex flex-1 justify-center py-6 px-4">
+        <div className="layout-content-container flex flex-col max-w-[680px] flex-1 gap-6">
+          {/* Create Post Placeholder - Only for Hosts */}
+          {isHost && (
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+              <div className="flex gap-4">
+                <div className="size-10 rounded-full bg-cover bg-center shrink-0 relative overflow-hidden">
+                  <Image
+                    src={user?.profilePhoto || "https://lh3.googleusercontent.com/a/default-user=s120-c-no"}
+                    alt="User"
+                    fill
+                    className="object-cover"
+                  />
                 </div>
-                <Skeleton className="h-8 w-3/4 mb-4 bg-gray-100" />
-                <Skeleton className="h-20 w-full mb-6 bg-gray-100 rounded-xl" />
-                <Skeleton className="h-80 w-full rounded-[2rem] bg-gray-100" />
+                <button className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full px-5 text-left text-slate-500 dark:text-slate-400 text-sm transition-colors">
+                  What's on your travel mind, {user?.name?.split(' ')[0] || 'Traveler'}?
+                </button>
               </div>
-            ))}
-          </div>
-        ) : blogs.length > 0 ? (
-          <div className="space-y-12">
-            {blogs.map((blog) => (
-              <div key={blog.id} className="transform transition-all duration-500 hover:translate-y-[-4px]">
-                <BlogCardPublic blog={blog} />
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-around">
+                <button className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg">
+                  <span className="material-symbols-outlined text-red-500">videocam</span> Live
+                </button>
+                <button className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg">
+                  <span className="material-symbols-outlined text-green-500">photo_library</span> Photo
+                </button>
+                <button className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg">
+                  <span className="material-symbols-outlined text-yellow-500">mood</span> Activity
+                </button>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-gray-200">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="w-10 h-10 text-gray-300" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">No stories found</h3>
-            <p className="text-gray-500 font-medium">
-              {searchTerm ? "Maybe try different keywords?" : "We're currently writing new adventures. Check back soon!"}
-            </p>
+          )}
+
+          {/* Blog Feed */}
+          {loading ? (
+            <div className="flex flex-col items-center py-8">
+              <div className="size-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+              <p className="text-slate-500 text-sm mt-3 font-medium">Checking for more adventures...</p>
+            </div>
+          ) : blogs.length > 0 ? (
+            <div className="flex flex-col gap-6">
+              {blogs.map((blog) => (
+                <BlogCardPublic key={blog.id} blog={blog} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span className="material-symbols-outlined text-5xl text-slate-300 mb-4">search_off</span>
+              <h3 className="text-xl font-bold">No stories found</h3>
+              <p className="text-slate-500">Check back later for new adventures.</p>
+            </div>
+          )}
+
+          {/* Loading Indicator for More */}
+          {!loading && blogs.length > 0 && (
+            <div className="flex flex-col items-center py-8">
+              <div className="size-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+              <p className="text-slate-500 text-sm mt-3 font-medium">Checking for more adventures...</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Sidebar (Desktop Only) */}
+        <aside className="hidden xl:flex flex-col w-[300px] gap-6 sticky top-24 self-start ml-8">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h4 className="text-slate-900 dark:text-slate-100 font-bold mb-4 uppercase text-xs tracking-widest">Trending Locations</h4>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 group cursor-pointer">
+                <div className="size-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary">location_on</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold group-hover:text-primary transition-colors">Banff, Canada</p>
+                  <p className="text-xs text-slate-500">12.5k posts this week</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 group cursor-pointer">
+                <div className="size-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary">location_on</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold group-hover:text-primary transition-colors">Agra, India</p>
+                  <p className="text-xs text-slate-500">8.2k posts this week</p>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </aside>
+      </main>
     </div>
   )
 }

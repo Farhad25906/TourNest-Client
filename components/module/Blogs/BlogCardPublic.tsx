@@ -27,8 +27,6 @@ interface BlogCardProps {
 export function BlogCardPublic({ blog }: BlogCardProps) {
   const router = useRouter();
   const { isAuthenticated, login, user } = useAuthClient();
-  console.log(isAuthenticated, login, user);
-
 
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(blog.likesCount);
@@ -37,11 +35,9 @@ export function BlogCardPublic({ blog }: BlogCardProps) {
   const [commenting, setCommenting] = useState(false);
   const [liking, setLiking] = useState(false);
 
-
   const handleLike = async () => {
     if (!isAuthenticated) {
       toast.error(`Login Required!! Please login to like this blog`);
-
       login();
       return;
     }
@@ -53,39 +49,11 @@ export function BlogCardPublic({ blog }: BlogCardProps) {
       if (result.success) {
         setIsLiked(!isLiked);
         setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
-        toast.success("Success!Blog created successfully.");
       }
     } catch (error) {
-      toast.error(`Error `);
+      toast.error(`Error liking blog`);
     } finally {
       setLiking(false);
-    }
-  };
-
-  const handleComment = async () => {
-    if (!isAuthenticated) {
-      toast.error(`Login Required!! Please login to comment on this blog`);
-      login();
-      return;
-    }
-
-    if (!newComment.trim()) {
-      toast.error(`Error `);
-      return;
-    }
-
-    try {
-      setCommenting(true);
-      const result = await commentOnBlog(blog.id, newComment);
-
-      if (result.success) {
-        toast.success("Success!Blog created successfully.");
-        setNewComment("");
-      }
-    } catch (error) {
-      toast.error(`Error `);
-    } finally {
-      setCommenting(false);
     }
   };
 
@@ -97,185 +65,95 @@ export function BlogCardPublic({ blog }: BlogCardProps) {
     );
 
     if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
     const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
-  };
-
-  const formatCategory = (category: string) => {
-    return category.toLowerCase().replace(/_/g, " ");
+    return `${diffInDays} days ago`;
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-6 overflow-hidden">
-      {/* Header */}
-      <div className="p-4 flex items-center justify-between">
+    <article className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden mb-6">
+      {/* Author Header */}
+      <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="w-12 h-12">
-            <AvatarImage src={blog.host?.profilePhoto} alt={blog.host?.name} />
-            <AvatarFallback>{blog.host?.name?.[0] || "H"}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-semibold text-gray-900">
+          <div className="size-11 rounded-full bg-cover bg-center border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+            <Image
+              src={blog.host?.profilePhoto || "https://lh3.googleusercontent.com/a/default-user=s120-c-no"}
+              alt={blog.host?.name || "Host"}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="text-slate-900 dark:text-slate-100 font-bold text-[15px] leading-tight hover:underline cursor-pointer">
               {blog.host?.name || "Travel Host"}
             </h3>
-            <p className="text-sm text-gray-500">
-              {getTimeAgo(blog.createdAt)}
-            </p>
+            <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[13px]">
+              <span>{getTimeAgo(blog.createdAt)}</span>
+              <span>•</span>
+              <span className="material-symbols-outlined text-[14px]">public</span>
+            </div>
           </div>
         </div>
-
-        {!isAuthenticated && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Lock className="w-4 h-4" />
-            <span>Login to interact</span>
-          </div>
-        )}
+        <button className="text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-full">
+          <span className="material-symbols-outlined">more_horiz</span>
+        </button>
       </div>
 
-      {/* Content */}
+      {/* Post Content Text */}
       <div className="px-4 pb-3">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">{blog.title}</h2>
-        <p className="text-gray-700 mb-3">
-          {blog.content.substring(0, 200)}...
+        <h2 className="text-slate-900 dark:text-slate-100 font-bold mb-1">{blog.title}</h2>
+        <p className="text-slate-800 dark:text-slate-200 text-[15px] leading-normal line-clamp-3">
+          {blog.content}
         </p>
-        {blog.excerpt && (
-          <p className="text-gray-600 text-sm italic">{blog.excerpt}</p>
-        )}
-        <span className="inline-block px-3 py-1 bg-[#138bc9]/10 text-[#138bc9] text-xs font-medium rounded-full mt-2">
-          {formatCategory(blog.category)}
-        </span>
+        <div className="mt-2 flex gap-2">
+          <span className="text-primary hover:underline cursor-pointer text-sm font-medium">#{blog.category.toLowerCase().replace(/_/g, "")}</span>
+        </div>
       </div>
 
-      {/* Cover Image */}
+      {/* Featured Image */}
       {blog.coverImage && (
-        <div className="w-full">
+        <div className="w-full bg-slate-100 dark:bg-slate-800 min-h-[300px] relative">
           <Image
             src={blog.coverImage}
             alt={blog.title}
             width={800}
             height={400}
-            className="w-full h-64 object-cover"
+            className="w-full h-auto object-cover"
           />
         </div>
       )}
 
-      {/* Stats */}
-      <div className="px-4 py-3 flex items-center justify-between text-sm text-gray-600 border-t">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
-            {blog.views} views
-          </span>
-          <span className="flex items-center gap-1">
-            <Heart className="w-4 h-4" />
-            {likesCount} likes
-          </span>
-          <span className="flex items-center gap-1">
-            <MessageCircle className="w-4 h-4" />
-            {blog._count?.comments || 0} comments
-          </span>
+      {/* Social Stats */}
+      <div className="px-4 py-3 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-1.5">
+          <div className="flex -space-x-1">
+            <span className="z-20 bg-primary text-white size-5 rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
+              <span className="material-symbols-outlined text-[12px] fill-1">thumb_up</span>
+            </span>
+          </div>
+          <span className="text-slate-500 dark:text-slate-400 text-[14px]">{likesCount}</span>
+        </div>
+        <div className="flex gap-3 text-slate-500 dark:text-slate-400 text-[14px]">
+          <span>{blog._count?.comments || 0} comments</span>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="px-4 py-2 border-t border-gray-200 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          className={`flex-1 gap-2 ${isLiked ? "text-red-600" : "text-gray-600"
-            }`}
+      {/* Interaction Buttons */}
+      <div className="flex p-1">
+        <button
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-lg ${isLiked ? "text-primary" : "text-slate-600 dark:text-slate-400"}`}
           onClick={handleLike}
           disabled={liking}
         >
-          <Heart className={`w-5 h-5 ${isLiked ? "fill-red-600" : ""}`} />
-          {liking ? "..." : "Like"}
-        </Button>
-
-        <Button
-          variant="ghost"
-          className="flex-1 gap-2 text-gray-600"
-          onClick={() => {
-            if (!isAuthenticated) {
-              toast.error(
-                `Login Required!! Please login to comment on this blog`
-              );
-              login();
-              return;
-            }
-            setShowComments(!showComments);
-          }}
-        >
-          <MessageCircle className="w-5 h-5" />
-          Comment
-        </Button>
-
-        <Button
-          variant="ghost"
-          className="flex-1 gap-2 text-gray-600"
-          onClick={() => {
-            navigator.clipboard.writeText(
-              `${window.location.origin}/blogs/${blog.id}`
-            );
-            toast.success("Link Copied!Blog link copied to clipboard.");
-          }}
-        >
-          <Share2 className="w-5 h-5" />
-          Share
-        </Button>
+          <span className={`material-symbols-outlined ${isLiked ? "fill-1" : ""}`}>thumb_up</span> Like
+        </button>
+        <button className="flex-1 flex items-center justify-center gap-2 py-2.5 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-lg">
+          <span className="material-symbols-outlined">chat_bubble</span> Comment
+        </button>
+        <button className="flex-1 flex items-center justify-center gap-2 py-2.5 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-lg">
+          <span className="material-symbols-outlined">share</span> Share
+        </button>
       </div>
-
-      {/* Comments Section */}
-      {showComments && (
-        <div className="border-t border-gray-200">
-          <div className="px-4 py-3">
-            <h4 className="font-semibold text-gray-900 mb-4">Comments</h4>
-
-            {/* Add Comment */}
-            <div className="mt-4 pt-4 border-t">
-              {isAuthenticated ? (
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-8 h-8">
-                    {/* <AvatarImage src={user?.profilePhoto} /> */}
-                    <AvatarFallback>{user?.name?.[0] || "?"}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 flex items-center gap-2">
-                    <Input
-                      placeholder="Write a comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleComment()}
-                      disabled={commenting}
-                      className="border-gray-300 rounded-full"
-                    />
-                    <Button
-                      size="icon"
-                      onClick={handleComment}
-                      disabled={commenting || !newComment.trim()}
-                      className="rounded-full bg-[#138bc9] hover:bg-[#138bc9]/90"
-                    >
-                      {commenting ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <Lock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-600 mb-3">
-                    Login to join the conversation
-                  </p>
-                  <Button onClick={login} size="sm">
-                    Login to Comment
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </article>
   );
 }

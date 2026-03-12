@@ -32,6 +32,7 @@ import { UserRole } from "@/lib/auth-utils";
 
 const PublicNavbar = async () => {
   const navItems = [
+    { href: "/destinations", label: "Destinations", icon: MapPin },
     { href: "/tours", label: "Tours", icon: MapPin },
     { href: "/blogs", label: "Blogs", icon: BookOpen },
     { href: "/pricing", label: "Pricing", icon: CreditCard },

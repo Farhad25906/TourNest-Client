@@ -13,13 +13,12 @@ import {
     MapPin,
     Search,
     Plus,
-    RefreshCw,
     MoreHorizontal,
     Edit,
     Trash2,
     Star,
-    Image as ImageIcon,
-    Loader2
+    Loader2,
+    Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -58,7 +56,6 @@ export default function DestinationsManagementPage() {
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>("");
-    const [imageUrl, setImageUrl] = useState<string>("");
     const [submitting, setSubmitting] = useState(false);
 
     const fetchDestinations = async () => {
@@ -89,17 +86,11 @@ export default function DestinationsManagementPage() {
                 isFeatured: destination.isFeatured
             });
             setImagePreview(destination.image);
-            setImageUrl("");
             setSelectedFile(null);
         } else {
             setSelectedDestination(null);
-            setFormData({
-                name: "",
-                description: "",
-                isFeatured: false
-            });
+            setFormData({ name: "", description: "", isFeatured: false });
             setImagePreview("");
-            setImageUrl("");
             setSelectedFile(null);
         }
         setIsDialogOpen(true);
@@ -109,27 +100,14 @@ export default function DestinationsManagementPage() {
         const file = e.target.files?.[0];
         if (file) {
             setSelectedFile(file);
-            setImageUrl(""); // Clear URL input when file is selected
-            // Create preview
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
+            reader.onloadend = () => setImagePreview(reader.result as string);
             reader.readAsDataURL(file);
-        }
-    };
-
-    const handleUrlChange = (url: string) => {
-        setImageUrl(url);
-        if (url) {
-            setSelectedFile(null); // Clear file when URL is entered
-            setImagePreview(url);
         }
     };
 
     const handleRemoveImage = () => {
         setSelectedFile(null);
-        setImageUrl("");
         setImagePreview("");
     };
 
@@ -137,19 +115,13 @@ export default function DestinationsManagementPage() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            // Prepare FormData
             const submitData = new FormData();
-
-            // Append JSON data
             const jsonData = {
                 name: formData.name,
                 description: formData.description,
                 isFeatured: formData.isFeatured,
-                ...(imageUrl && !selectedFile ? { image: imageUrl } : {})
             };
             submitData.append('data', JSON.stringify(jsonData));
-
-            // Append file if selected
             if (selectedFile) {
                 submitData.append('file', selectedFile);
             }
@@ -178,11 +150,8 @@ export default function DestinationsManagementPage() {
     const handleToggleFeatured = async (destination: IDestination) => {
         try {
             if (!destination.id) return;
-
-            // Create FormData for the update
             const toggleData = new FormData();
             toggleData.append('data', JSON.stringify({ isFeatured: !destination.isFeatured }));
-
             const res = await updateDestination(destination.id, toggleData);
             if (res.success) {
                 toast.success(`Priority protocol ${!destination.isFeatured ? 'activated' : 'deactivated'}`);
@@ -221,20 +190,18 @@ export default function DestinationsManagementPage() {
                         Manage global sectors and high-priority destinations
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button
-                        onClick={() => handleOpenDialog()}
-                        className="rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 font-black gap-2 shadow-lg shadow-[#138bc9]/20 uppercase tracking-widest text-[10px] h-11 px-6 text-white"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add New Sector
-                    </Button>
-                </div>
+                <Button
+                    onClick={() => handleOpenDialog()}
+                    className="rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 font-black gap-2 shadow-lg shadow-[#138bc9]/20 uppercase tracking-widest text-[10px] h-11 px-6 text-white"
+                >
+                    <Plus className="h-4 w-4" />
+                    Add New Sector
+                </Button>
             </div>
 
-            {/* Filters Hub */}
-            <div className="bg-white rounded-[30px] border border-gray-100 p-2 shadow-sm flex flex-col md:flex-row gap-2">
-                <div className="relative flex-1">
+            {/* Search */}
+            <div className="bg-white rounded-[30px] border border-gray-100 p-2 shadow-sm">
+                <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                         placeholder="Scan for sector names or coordinates..."
@@ -327,21 +294,28 @@ export default function DestinationsManagementPage() {
                 </div>
             )}
 
-            {/* Upsert Dialog */}
+            {/* Upsert Dialog — fully responsive */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="max-w-md rounded-[40px] border-none p-0 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
-                    <form onSubmit={handleSubmit} className="flex flex-col h-full">
-                        <div className="p-8 space-y-6 overflow-y-auto flex-1">
+                <DialogContent className="
+                    w-[calc(100vw-32px)] max-w-lg
+                    rounded-[28px] sm:rounded-[40px]
+                    border-none p-0 overflow-hidden shadow-2xl
+                    max-h-[92dvh] flex flex-col
+                ">
+                    <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+                        {/* Scrollable body */}
+                        <div className="overflow-y-auto flex-1 p-5 sm:p-8 space-y-5 sm:space-y-6">
                             <DialogHeader>
-                                <DialogTitle className="text-2xl font-black tracking-tight text-gray-900 uppercase italic">
+                                <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 uppercase italic">
                                     {selectedDestination ? "Optimize Sector" : "Initialize Mapping"}
                                 </DialogTitle>
-                                <DialogDescription className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                                <DialogDescription className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                     Configure orbital coordinates and visual data
                                 </DialogDescription>
                             </DialogHeader>
 
                             <div className="space-y-4">
+                                {/* Sector Name */}
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sector Identity</Label>
                                     <Input
@@ -353,14 +327,18 @@ export default function DestinationsManagementPage() {
                                     />
                                 </div>
 
-                                {/* Image Upload Section */}
+                                {/* Image Upload */}
                                 <div className="space-y-3">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Visual Feed</Label>
 
-                                    {/* Image Preview */}
-                                    {imagePreview && (
+                                    {imagePreview ? (
+                                        /* Preview with remove button */
                                         <div className="relative rounded-2xl overflow-hidden border-2 border-gray-100">
-                                            <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                                            <img
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                className="w-full h-40 sm:h-48 object-cover"
+                                            />
                                             <Button
                                                 type="button"
                                                 size="icon"
@@ -371,50 +349,43 @@ export default function DestinationsManagementPage() {
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
+                                    ) : (
+                                        /* Upload drop-zone */
+                                        <label
+                                            htmlFor="file-upload"
+                                            className="flex flex-col items-center justify-center gap-3 w-full h-36 sm:h-44 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/60 cursor-pointer hover:border-[#138bc9]/40 hover:bg-[#138bc9]/5 transition-colors"
+                                        >
+                                            <div className="h-10 w-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+                                                <Upload className="h-5 w-5" />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-xs font-black text-gray-600 uppercase tracking-wider">Click to upload image</p>
+                                                <p className="text-[10px] font-bold text-gray-400 mt-0.5">PNG, JPG, WEBP accepted</p>
+                                            </div>
+                                            <Input
+                                                id="file-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                        </label>
                                     )}
-
-                                    {/* File Upload */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="file-upload" className="text-xs font-bold text-gray-600">Upload Image File</Label>
-                                        <Input
-                                            id="file-upload"
-                                            type="file"
-                                            accept="image/*"
-                                            className="rounded-2xl border-gray-100 h-12 font-bold focus:ring-[#138bc9]/20 cursor-pointer"
-                                            onChange={handleFileChange}
-                                        />
-                                    </div>
-
-                                    {/* OR Divider */}
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-px bg-gray-200" />
-                                        <span className="text-[10px] font-black text-gray-400 uppercase">Or</span>
-                                        <div className="flex-1 h-px bg-gray-200" />
-                                    </div>
-
-                                    {/* URL Input */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="image-url" className="text-xs font-bold text-gray-600">Paste Image URL</Label>
-                                        <Input
-                                            id="image-url"
-                                            placeholder="https://example.com/image.jpg"
-                                            className="rounded-2xl border-gray-100 h-12 font-bold focus:ring-[#138bc9]/20"
-                                            value={imageUrl}
-                                            onChange={e => handleUrlChange(e.target.value)}
-                                        />
-                                    </div>
                                 </div>
 
+                                {/* Description */}
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sector Brief</Label>
                                     <Textarea
                                         placeholder="Provide mission details..."
-                                        className="rounded-2xl border-gray-100 min-h-[100px] font-bold py-4 focus:ring-[#138bc9]/20"
+                                        className="rounded-2xl border-gray-100 min-h-[90px] sm:min-h-[100px] font-bold py-4 focus:ring-[#138bc9]/20 resize-none"
                                         value={formData.description || ""}
                                         onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 pt-2">
+
+                                {/* Featured toggle */}
+                                <div className="flex items-center gap-2 pt-1">
                                     <input
                                         type="checkbox"
                                         id="isFeatured"
@@ -422,23 +393,29 @@ export default function DestinationsManagementPage() {
                                         checked={formData.isFeatured}
                                         onChange={e => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
                                     />
-                                    <Label htmlFor="isFeatured" className="text-[10px] font-black uppercase tracking-widest text-gray-600 cursor-pointer">Set as High Priority Sector</Label>
+                                    <Label
+                                        htmlFor="isFeatured"
+                                        className="text-[10px] font-black uppercase tracking-widest text-gray-600 cursor-pointer"
+                                    >
+                                        Set as High Priority Sector
+                                    </Label>
                                 </div>
                             </div>
                         </div>
 
-                        <DialogFooter className="bg-gray-50/50 p-6 flex gap-2">
+                        {/* Sticky footer */}
+                        <DialogFooter className="bg-gray-50/70 border-t border-gray-100 p-4 sm:p-6 flex flex-row gap-2 shrink-0">
                             <Button
                                 type="button"
                                 variant="ghost"
-                                className="rounded-2xl font-black uppercase tracking-widest text-[10px] h-12 flex-1"
+                                className="rounded-2xl font-black uppercase tracking-widest text-[10px] h-11 sm:h-12 flex-1"
                                 onClick={() => setIsDialogOpen(false)}
                             >
                                 Abort
                             </Button>
                             <Button
                                 disabled={submitting}
-                                className="rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 font-black uppercase tracking-widest text-[10px] h-12 flex-1 text-white shadow-lg shadow-[#138bc9]/20"
+                                className="rounded-2xl bg-[#138bc9] hover:bg-[#138bc9]/90 font-black uppercase tracking-widest text-[10px] h-11 sm:h-12 flex-1 text-white shadow-lg shadow-[#138bc9]/20"
                             >
                                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Authorize Operation"}
                             </Button>
@@ -449,21 +426,27 @@ export default function DestinationsManagementPage() {
 
             {/* Delete Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <DialogContent className="max-w-sm rounded-[40px] border-none p-8 shadow-2xl">
-                    <div className="text-center space-y-6">
-                        <div className="h-16 w-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto">
-                            <Trash2 className="h-8 w-8" />
+                <DialogContent className="
+                    w-[calc(100vw-32px)] max-w-sm
+                    rounded-[28px] sm:rounded-[40px]
+                    border-none p-6 sm:p-8 shadow-2xl
+                ">
+                    <div className="text-center space-y-5 sm:space-y-6">
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto">
+                            <Trash2 className="h-7 w-7 sm:h-8 sm:w-8" />
                         </div>
                         <div className="space-y-2">
-                            <h2 className="text-xl font-black text-gray-900 uppercase">Redact Sector?</h2>
+                            <h2 className="text-lg sm:text-xl font-black text-gray-900 uppercase">Redact Sector?</h2>
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter leading-relaxed">
-                                You are about to purge <span className="text-gray-900">"{selectedDestination?.name}"</span> from the global registry. This protocol is irreversible.
+                                You are about to purge{" "}
+                                <span className="text-gray-900">"{selectedDestination?.name}"</span>{" "}
+                                from the global registry. This protocol is irreversible.
                             </p>
                         </div>
                         <div className="flex gap-3">
                             <Button
                                 variant="ghost"
-                                className="rounded-2xl h-12 flex-1 font-black uppercase tracking-widest text-[10px]"
+                                className="rounded-2xl h-11 sm:h-12 flex-1 font-black uppercase tracking-widest text-[10px]"
                                 onClick={() => setIsDeleteDialogOpen(false)}
                             >
                                 Abort
@@ -471,7 +454,7 @@ export default function DestinationsManagementPage() {
                             <Button
                                 disabled={submitting}
                                 variant="destructive"
-                                className="rounded-2xl h-12 flex-1 font-black uppercase tracking-widest text-[10px] bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200"
+                                className="rounded-2xl h-11 sm:h-12 flex-1 font-black uppercase tracking-widest text-[10px] bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200"
                                 onClick={handleDelete}
                             >
                                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Redaction"}

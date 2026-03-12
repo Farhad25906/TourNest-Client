@@ -44,7 +44,7 @@ export function HowItWorks() {
   })
 
   return (
-    <section ref={ref} className="py-32 bg-slate-50 relative overflow-hidden">
+    <section ref={ref} className="py-20 bg-slate-50 relative overflow-hidden">
       {/* Decorative SVG Path - Background */}
       <div className="absolute top-[40%] left-0 w-full px-20 hidden lg:block pointer-events-none opacity-20">
         <svg width="100%" height="100" viewBox="0 0 1000 100" fill="none" preserveAspectRatio="none">

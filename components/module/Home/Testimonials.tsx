@@ -42,7 +42,7 @@ export function Testimonials() {
   if (!loading && reviews.length === 0) return null
 
   return (
-    <section ref={sectionRef} className="py-32 bg-white relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-white relative overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <motion.div

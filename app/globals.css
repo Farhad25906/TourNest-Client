@@ -37,6 +37,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --font-display: "Be Vietnam Pro", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -117,8 +118,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-display;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   }
 }
 
@@ -128,6 +134,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -138,6 +145,7 @@
     from {
       width: 0%;
     }
+
     to {
       width: 35%;
     }
@@ -147,6 +155,7 @@
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -157,6 +166,7 @@
       opacity: 0;
       transform: translateX(30px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -164,36 +174,48 @@
   }
 
   @keyframes float-slow {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translate(0, 0);
     }
+
     50% {
       transform: translate(20px, -30px);
     }
   }
 
   @keyframes float-medium {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translate(0, 0);
     }
+
     50% {
       transform: translate(-25px, -40px);
     }
   }
 
   @keyframes float-fast {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translate(0, 0);
     }
+
     50% {
       transform: translate(15px, 35px);
     }
   }
 
   @keyframes gradient-x {
-    0%, 100% {
+
+    0%,
+    100% {
       background-position: 0% 50%;
     }
+
     50% {
       background-position: 100% 50%;
     }
@@ -203,6 +225,7 @@
     from {
       transform: rotate(0deg);
     }
+
     to {
       transform: rotate(360deg);
     }

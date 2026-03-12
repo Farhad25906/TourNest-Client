@@ -55,77 +55,71 @@ async function ToursContent({ searchParams }: { searchParams: any }) {
     const tours = response.data || [];
     const meta = response.meta || { page: 1, limit: 12, total: 0 };
 
+    console.log(tours);
+    
     return (
-      <div className="space-y-12">
-        {/* Modern Header Section */}
-        <div className="relative rounded-[3rem] overflow-hidden bg-[#138bc9] p-12 md:p-20 text-white">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl -ml-24 -mb-24" />
-
-          <div className="relative z-10 max-w-2xl">
-            <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-xs font-black uppercase tracking-widest mb-6 inline-block">
-              Discover the world
-            </span>
-            <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">
-              Epic Adventures <br /><span className="text-blue-200">Wait for You</span>
-            </h1>
-            <p className="text-lg text-blue-50/80 font-medium">
-              From mountain peaks to hidden beaches, find and book your next unforgettable journey with expert local hosts.
-            </p>
-          </div>
+      <div className="flex flex-col gap-4 mb-8">
+        {/* New Hero Section from HTML */}
+        <div className="flex flex-col gap-4 mb-8">
+          <h1 className="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-tight">Explore Our World Tours</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl font-normal leading-relaxed">
+            Discover handcrafted experiences at unbeatable prices. From tropical escapes to mountain expeditions, find your next journey here.
+          </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Filters */}
-          <aside className="lg:w-80 shrink-0">
-            <div className="sticky top-28 bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
-              <h2 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                <Filter className="w-5 h-5 text-[#138bc9]" />
-                Filters
-              </h2>
-              <ToursFilters />
+        {/* Filters Section from HTML */}
+        {/* <div className="flex flex-wrap gap-3 mb-10">
+          <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary text-white px-5 shadow-sm">
+            <span className="text-sm font-medium">All Tours</span>
+          </button>
+          <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 transition-colors">
+            <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">Adventure</span>
+            <span className="material-symbols-outlined text-lg">keyboard_arrow_down</span>
+          </button>
+          <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 transition-colors">
+            <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">Cultural</span>
+            <span className="material-symbols-outlined text-lg">keyboard_arrow_down</span>
+          </button>
+          <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 transition-colors">
+            <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">Beach</span>
+            <span className="material-symbols-outlined text-lg">keyboard_arrow_down</span>
+          </button>
+          <button className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 hover:bg-slate-50 transition-colors">
+            <span className="text-slate-700 dark:text-slate-200 text-sm font-medium">Budget</span>
+            <span className="material-symbols-outlined text-lg">keyboard_arrow_down</span>
+          </button>
+        </div> */}
+
+        {/* Tours Grid */}
+        <div className="flex-1 space-y-8">
+          {tours.length > 0 ? (
+            <ToursGrid tours={tours} />
+          ) : (
+            <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-gray-200 py-20 text-center">
+              <div className="mx-auto w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mb-6">
+                <MapPin className="h-10 w-10 text-gray-300" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">No adventures found</h3>
+              <p className="text-gray-500 max-w-xs mx-auto mb-8 font-medium">
+                We couldn't find any tours matching your current filters. Try broadening your search!
+              </p>
+              <Button onClick={() => window.location.href = '/tours'} className="rounded-full px-8 py-6 h-auto font-black bg-[#138bc9]">
+                Clear All Filters
+              </Button>
             </div>
-          </aside>
+          )}
 
-          {/* Main Content */}
-          <div className="flex-1 space-y-8">
-            <div className="flex items-center justify-between px-2">
-              <div className="space-y-1">
-                <h3 className="text-2xl font-black text-gray-900">Recommended Tours</h3>
-                <p className="text-sm text-gray-500 font-medium">Found {meta.total} unique experiences</p>
-              </div>
+          {/* Pagination */}
+          {meta.total > meta.limit && (
+            <div className="flex items-center justify-center mt-16 gap-2">
+              <PaginationControls
+                currentPage={meta.page}
+                totalPages={Math.ceil(meta.total / meta.limit)}
+                totalItems={meta.total}
+                itemsPerPage={meta.limit}
+              />
             </div>
-
-            {/* Tours Grid */}
-            {tours.length > 0 ? (
-              <ToursGrid tours={tours} />
-            ) : (
-              <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-gray-200 py-20 text-center">
-                <div className="mx-auto w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mb-6">
-                  <MapPin className="h-10 w-10 text-gray-300" />
-                </div>
-                <h3 className="text-2xl font-black text-gray-900 mb-2">No adventures found</h3>
-                <p className="text-gray-500 max-w-xs mx-auto mb-8 font-medium">
-                  We couldn't find any tours matching your current filters. Try broadening your search!
-                </p>
-                <Button onClick={() => window.location.href = '/tours'} className="rounded-full px-8 py-6 h-auto font-black bg-[#138bc9]">
-                  Clear All Filters
-                </Button>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {meta.total > meta.limit && (
-              <div className="pt-10 border-t border-gray-100">
-                <PaginationControls
-                  currentPage={meta.page}
-                  totalPages={Math.ceil(meta.total / meta.limit)}
-                  totalItems={meta.total}
-                  itemsPerPage={meta.limit}
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     );
@@ -137,12 +131,12 @@ async function ToursContent({ searchParams }: { searchParams: any }) {
 
 export default async function ToursPage({ searchParams }: ToursPageProps) {
   return (
-    <div className="min-h-screen bg-gray-50/50 pt-28 pb-20">
-      <div className="container mx-auto px-4 lg:px-8">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark pt-28 pb-20">
+      <main className="flex-1 max-w-[1280px] mx-auto w-full px-6 lg:px-20 py-8">
         <Suspense fallback={<GridSkeleton count={9} />}>
           <ToursContent searchParams={searchParams} />
         </Suspense>
-      </div>
+      </main>
     </div>
   );
 }
