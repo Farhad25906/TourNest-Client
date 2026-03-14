@@ -28,6 +28,9 @@ export interface AdminInfo {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+
+  socialLinks?: SocialLinks;
+  preferenceSettings?: PreferenceSettings;
 }
 
 export interface HostInfo {
@@ -52,6 +55,17 @@ export interface HostInfo {
   totalEarnings: string;
   lastPayoutAt?: string | null;
 
+  averageRating?: number;
+  totalReviews: number;
+
+  socialLinks?: SocialLinks;
+  achievements?: string[];
+  languages?: string[];
+  emergencyContact?: EmergencyContact;
+  favorites?: string[];
+  preferenceSettings?: PreferenceSettings;
+  followerCount?: number;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -70,8 +84,35 @@ export interface TouristInfo {
   totalSpent?: string;
   isDeleted: boolean;
 
+  socialLinks?: SocialLinks;
+  achievements?: string[];
+  languages?: string[];
+  emergencyContact?: EmergencyContact;
+  favorites?: string[];
+  preferenceSettings?: PreferenceSettings;
+
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SocialLinks {
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  website?: string;
+}
+
+export interface EmergencyContact {
+  name: string;
+  phone: string;
+  relation: string;
+}
+
+export interface PreferenceSettings {
+  theme?: "light" | "dark";
+  notifications?: boolean;
+  language?: string;
 }
 
 // Request interfaces
@@ -105,14 +146,11 @@ export interface CreateHostRequest {
 export interface UpdateTouristProfile {
   name?: string;
   profilePhoto?: string;
-  phone?: string | null;
   bio?: string | null;
-  hometown?: string | null;
-  visitedLocations?: string[];
-  isVerified?: boolean;
-  tourLimit?: number;
-  currentTourCount?: number;
-  subscriptionId?: string | null;
+  contactNumber?: string | null;
+  interests?: string | null;
+  location?: string | null;
+  visitedCountries?: string | null;
 }
 
 export interface UpdateHostProfile {

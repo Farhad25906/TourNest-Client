@@ -42,6 +42,7 @@ export const getUserInfo = async (): Promise<UserInfo | null> => {
       role: userData.role,
       status: userData.status,
       needPasswordChange: userData.needPasswordChange,
+      profilePhoto: userData.profilePhoto,
       createdAt: userData.createdAt,
       updatedAt: userData.updatedAt,
     };
@@ -74,6 +75,24 @@ export const getUserInfo = async (): Promise<UserInfo | null> => {
           totalEarnings: userData.totalEarnings ?? "0",
           lastPayoutAt: userData.lastPayoutAt ?? null,
 
+          averageRating: userData.averageRating ?? 0,
+          totalReviews: userData.totalReviews ?? 0,
+
+          socialLinks: userData.socialLinks || {},
+          achievements: userData.achievements || [],
+          languages: userData.languages || [],
+          emergencyContact: userData.emergencyContact || {
+            name: "",
+            phone: "",
+            relation: "",
+          },
+          favorites: userData.favorites || [],
+          preferenceSettings: userData.preferenceSettings || {
+            theme: "light",
+            notifications: true,
+          },
+          followerCount: userData.followerCount ?? 0,
+
           createdAt: userData.createdAt,
           updatedAt: userData.updatedAt,
         };
@@ -87,6 +106,11 @@ export const getUserInfo = async (): Promise<UserInfo | null> => {
           contactNumber: userData.contactNumber ?? "",
           profilePhoto: userData.profilePhoto ?? "",
           isDeleted: userData.isDeleted ?? false,
+          socialLinks: userData.socialLinks || {},
+          preferenceSettings: userData.preferenceSettings || {
+            theme: "light",
+            notifications: true,
+          },
           createdAt: userData.createdAt,
           updatedAt: userData.updatedAt,
         };
@@ -105,6 +129,21 @@ export const getUserInfo = async (): Promise<UserInfo | null> => {
           visitedCountries: userData.visitedCountries ?? "",
           totalSpent: userData.totalSpent ?? "0",
           isDeleted: userData.isDeleted ?? false,
+
+          socialLinks: userData.socialLinks || {},
+          achievements: userData.achievements || [],
+          languages: userData.languages || [],
+          emergencyContact: userData.emergencyContact || {
+            name: "",
+            phone: "",
+            relation: "",
+          },
+          favorites: userData.favorites || [],
+          preferenceSettings: userData.preferenceSettings || {
+            theme: "light",
+            notifications: true,
+          },
+
           createdAt: userData.createdAt,
           updatedAt: userData.updatedAt,
         };
@@ -128,12 +167,24 @@ export const updateProfile = async (
   try {
     const data: Record<string, any> = {};
 
+    const complexFields = ["socialLinks", "emergencyContact", "preferenceSettings"];
+
     for (const [key, value] of formData.entries()) {
       if (key === "file") continue;
 
       const stringValue = value?.toString();
 
       if (stringValue === undefined || stringValue === "") continue;
+
+      // 📦 Complex JSON fields - parse if they were already stringified
+      if (complexFields.includes(key)) {
+        try {
+          data[key] = JSON.parse(stringValue);
+        } catch (error) {
+          data[key] = stringValue;
+        }
+        continue;
+      }
 
       // 🔢 Numeric fields
       if (
@@ -475,9 +526,8 @@ export const getAllUsers = async (params?: {
     if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
     if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
-    const url = `/users${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
+    const url = `/users${queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
 
     const res = await serverFetch.get(url);
     const result = await res.json();
